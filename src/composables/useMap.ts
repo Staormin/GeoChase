@@ -60,6 +60,25 @@ export function useMap(containerId: string) {
 
       isMapInitialized.value = true;
 
+      // Handle zoom-based visibility for point labels (matches MIN_ZOOM_FOR_NOTES = 12)
+      const updatePointLabelVisibility = () => {
+        if (!map.value) return;
+        const zoom = map.value.getZoom();
+        const labels = document.querySelectorAll('.point-label');
+        for (const label of labels) {
+          if (zoom >= 12) {
+            (label as HTMLElement).style.opacity = '1';
+          } else {
+            (label as HTMLElement).style.opacity = '0';
+          }
+        }
+      };
+
+      // Listen to zoom events
+      map.value.on('zoomend', updatePointLabelVisibility);
+      // Set initial visibility
+      updatePointLabelVisibility();
+
       // Use multiple RAF calls to ensure proper sizing
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {

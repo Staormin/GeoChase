@@ -141,6 +141,16 @@ style.textContent = `
     line-height: 1.5;
     white-space: pre-wrap;
   }
+
+  /* Point labels - initially hidden, shown at zoom level 10+ */
+  .point-label {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .leaflet-zoom-animated.leaflet-zoom-hide .point-label {
+    opacity: 0;
+  }
 `;
 document.head.append(style);
 

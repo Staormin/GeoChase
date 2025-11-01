@@ -137,14 +137,24 @@ export function useDrawing(mapRef: any) {
       return;
     }
 
-    // Create Leaflet marker (native pin) and add to points group
-    const marker = L.marker([lat, lon]).addTo(mapRef.pointsGroup.value);
+    // Get point name from store
+    const point = layersStore.points.find((p) => p.id === pointId);
+    const pointName = point?.name || 'Point';
+
+    // Create Leaflet marker (native pin) with permanent tooltip and add to points group
+    const marker = L.marker([lat, lon])
+      .bindTooltip(pointName, {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -20],
+        className: 'point-label',
+      })
+      .addTo(mapRef.pointsGroup.value);
 
     const newLeafletId = L.stamp(marker);
     layersStore.storeLeafletId('point', pointId, newLeafletId);
 
     // Update the point element's leafletId in the store
-    const point = layersStore.points.find((p) => p.id === pointId);
     if (point) {
       point.leafletId = newLeafletId;
     }
@@ -430,8 +440,15 @@ export function useDrawing(mapRef: any) {
       color: color || DEFAULT_COLOR,
     } as PointElement;
 
-    // Create Leaflet marker (native pin) and add to points group
-    const marker = L.marker([lat, lon]).addTo(mapRef.pointsGroup.value);
+    // Create Leaflet marker (native pin) with permanent tooltip and add to points group
+    const marker = L.marker([lat, lon])
+      .bindTooltip(pointElement.name, {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -20],
+        className: 'point-label',
+      })
+      .addTo(mapRef.pointsGroup.value);
 
     // Store Leaflet ID
     pointElement.leafletId = L.stamp(marker);
