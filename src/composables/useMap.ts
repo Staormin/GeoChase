@@ -13,6 +13,12 @@ export function useMap(containerId: string) {
   const isMapInitialized = ref(false);
   const mapLayers = ref<L.Layer[]>([]);
 
+  // FeatureGroups for better layer management
+  const circlesGroup = ref<L.FeatureGroup | null>(null);
+  const linesGroup = ref<L.FeatureGroup | null>(null);
+  const pointsGroup = ref<L.FeatureGroup | null>(null);
+  const polygonsGroup = ref<L.FeatureGroup | null>(null);
+
   const initMap = async () => {
     const element = document.querySelector(`#${containerId}`);
     if (!element || isMapInitialized.value) {
@@ -46,6 +52,12 @@ export function useMap(containerId: string) {
       });
       tileLayer.addTo(map.value as any);
 
+      // Initialize FeatureGroups for organized layer management
+      circlesGroup.value = L.featureGroup().addTo(map.value as L.Map);
+      linesGroup.value = L.featureGroup().addTo(map.value as L.Map);
+      pointsGroup.value = L.featureGroup().addTo(map.value as L.Map);
+      polygonsGroup.value = L.featureGroup().addTo(map.value as L.Map);
+
       isMapInitialized.value = true;
 
       // Use multiple RAF calls to ensure proper sizing
@@ -63,6 +75,17 @@ export function useMap(containerId: string) {
 
   const destroyMap = () => {
     if (map.value) {
+      // Clear FeatureGroups
+      circlesGroup.value?.clearLayers();
+      linesGroup.value?.clearLayers();
+      pointsGroup.value?.clearLayers();
+      polygonsGroup.value?.clearLayers();
+
+      circlesGroup.value = null;
+      linesGroup.value = null;
+      pointsGroup.value = null;
+      polygonsGroup.value = null;
+
       map.value.off();
       map.value.remove();
       map.value = null;
@@ -87,6 +110,12 @@ export function useMap(containerId: string) {
   };
 
   const clearLayers = (): void => {
+    // Clear all FeatureGroups
+    circlesGroup.value?.clearLayers();
+    linesGroup.value?.clearLayers();
+    pointsGroup.value?.clearLayers();
+    polygonsGroup.value?.clearLayers();
+
     // Clear tracked layers
     for (const layer of mapLayers.value) {
       if (map.value) {
@@ -94,16 +123,6 @@ export function useMap(containerId: string) {
       }
     }
     mapLayers.value = [];
-
-    // Also clear all drawing layers from the map
-    if (map.value) {
-      map.value.eachLayer((layer: L.Layer) => {
-        // Don't remove the tile layer
-        if (!(layer instanceof L.TileLayer)) {
-          map.value?.removeLayer(layer);
-        }
-      });
-    }
   };
 
   const setCenter = (lat: number, lon: number, zoom?: number): void => {
@@ -139,9 +158,37 @@ export function useMap(containerId: string) {
     return { lat: latlng.lat, lon: latlng.lng };
   };
 
-  const fitBounds = (bounds: [[number, number], [number, number]]): void => {
+  const fitBounds = (
+    bounds: [[number, number], [number, number]],
+    options?: L.FitBoundsOptions
+  ): void => {
     if (map.value) {
-      map.value.fitBounds(bounds);
+      map.value.fitBounds(bounds, options);
+    }
+  };
+
+  const flyTo = (lat: number, lon: number, zoom?: number, options?: L.ZoomPanOptions): void => {
+    if (map.value) {
+      const targetZoom = zoom ?? map.value.getZoom();
+      const flyOptions: L.ZoomPanOptions = {
+        duration: 1.5,
+        ...options,
+      };
+      map.value.flyTo([lat, lon], targetZoom, flyOptions);
+    }
+  };
+
+  const flyToBounds = (
+    bounds: [[number, number], [number, number]],
+    options?: L.FitBoundsOptions
+  ): void => {
+    if (map.value) {
+      const flyOptions: L.FitBoundsOptions = {
+        duration: 1.5,
+        padding: [50, 50],
+        ...options,
+      };
+      map.value.flyToBounds(bounds, flyOptions);
     }
   };
 
@@ -194,6 +241,10 @@ export function useMap(containerId: string) {
     map,
     isMapInitialized,
     mapLayers,
+    circlesGroup,
+    linesGroup,
+    pointsGroup,
+    polygonsGroup,
     initMap,
     destroyMap,
     addLayer,
@@ -205,6 +256,8 @@ export function useMap(containerId: string) {
     latLngToContainerPoint,
     containerPointToLatLng,
     fitBounds,
+    flyTo,
+    flyToBounds,
     onMapClick,
     onMapRightClick,
   };

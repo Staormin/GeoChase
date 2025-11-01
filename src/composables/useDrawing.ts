@@ -14,7 +14,6 @@ import { generateCircle } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 
 const DEFAULT_COLOR = '#000000';
-const DEFAULT_RADIUS = 8;
 
 export function useDrawing(mapRef: any) {
   const layersStore = useLayersStore();
@@ -29,7 +28,7 @@ export function useDrawing(mapRef: any) {
     radiusKm: number,
     color?: string
   ) => {
-    if (!mapRef.map?.value) {
+    if (!mapRef.map?.value || !mapRef.circlesGroup?.value) {
       return;
     }
 
@@ -41,7 +40,7 @@ export function useDrawing(mapRef: any) {
       weight: 3,
       opacity: 1,
       className: `circle-layer circle-${circleId}`,
-    }).addTo(mapRef.map.value);
+    }).addTo(mapRef.circlesGroup.value);
 
     const newLeafletId = L.stamp(polyline);
     layersStore.storeLeafletId('circle', circleId, newLeafletId);
@@ -65,7 +64,7 @@ export function useDrawing(mapRef: any) {
     intersectLon?: number,
     color?: string
   ) => {
-    if (!mapRef.map?.value) {
+    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
       return;
     }
 
@@ -79,7 +78,7 @@ export function useDrawing(mapRef: any) {
       weight: 3,
       opacity: 1,
       className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.map.value);
+    }).addTo(mapRef.linesGroup.value);
 
     const newLeafletId = L.stamp(polyline);
     layersStore.storeLeafletId('lineSegment', lineId, newLeafletId);
@@ -100,13 +99,13 @@ export function useDrawing(mapRef: any) {
         opacity: 1,
         fillOpacity: 0.9,
         className: `intersection-marker intersection-${lineId}`,
-      }).addTo(mapRef.map.value);
+      }).addTo(mapRef.linesGroup.value);
     }
   };
 
   // Helper function to redraw a parallel line on the map without adding to store
   const redrawParallelOnMap = (lineId: string, latitude: number, color?: string) => {
-    if (!mapRef.map?.value) {
+    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
       return;
     }
 
@@ -120,7 +119,7 @@ export function useDrawing(mapRef: any) {
       weight: 3,
       opacity: 1,
       className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.map.value);
+    }).addTo(mapRef.linesGroup.value);
 
     const newLeafletId = L.stamp(polyline);
     layersStore.storeLeafletId('lineSegment', lineId, newLeafletId);
@@ -133,21 +132,13 @@ export function useDrawing(mapRef: any) {
   };
 
   // Helper function to redraw a point on the map without adding to store
-  const redrawPointOnMap = (pointId: string, lat: number, lon: number, color?: string) => {
-    if (!mapRef.map?.value) {
+  const redrawPointOnMap = (pointId: string, lat: number, lon: number, _color?: string) => {
+    if (!mapRef.map?.value || !mapRef.pointsGroup?.value) {
       return;
     }
 
-    const pointColor = color || DEFAULT_COLOR;
-    const marker = L.circleMarker([lat, lon], {
-      radius: DEFAULT_RADIUS,
-      color: pointColor,
-      fill: true,
-      fillColor: pointColor,
-      fillOpacity: 1,
-      weight: 3,
-      className: `point-layer point-${pointId}`,
-    }).addTo(mapRef.map.value);
+    // Create Leaflet marker (native pin) and add to points group
+    const marker = L.marker([lat, lon]).addTo(mapRef.pointsGroup.value);
 
     const newLeafletId = L.stamp(marker);
     layersStore.storeLeafletId('point', pointId, newLeafletId);
@@ -161,7 +152,7 @@ export function useDrawing(mapRef: any) {
 
   // Circle drawing
   const drawCircle = (centerLat: number, centerLon: number, radiusKm: number, name?: string) => {
-    if (!mapRef.map?.value) {
+    if (!mapRef.map?.value || !mapRef.circlesGroup?.value) {
       return null;
     }
 
@@ -178,13 +169,13 @@ export function useDrawing(mapRef: any) {
     const points = generateCircle(centerLat, centerLon, radiusKm, 360);
     const latLngs = points.map((p) => [p.lat, p.lon] as [number, number]);
 
-    // Create Leaflet polyline
+    // Create Leaflet polyline and add to circles group
     const polyline = L.polyline(latLngs, {
       color: circleElement.color,
       weight: 3,
       opacity: 1,
       className: `circle-layer circle-${circleId}`,
-    }).addTo(mapRef.map.value);
+    }).addTo(mapRef.circlesGroup.value);
 
     // Store Leaflet ID
     circleElement.leafletId = L.stamp(polyline);
@@ -193,13 +184,13 @@ export function useDrawing(mapRef: any) {
     // Add to store
     layersStore.addCircle(circleElement);
 
-    // Fit map to circle bounds
-    if (mapRef.fitBounds) {
+    // Fly to circle bounds with animation
+    if (mapRef.flyToBounds) {
       const bounds: [[number, number], [number, number]] = [
         [centerLat - radiusKm / 111, centerLon - radiusKm / 111],
         [centerLat + radiusKm / 111, centerLon + radiusKm / 111],
       ];
-      mapRef.fitBounds(bounds);
+      mapRef.flyToBounds(bounds);
     }
 
     return circleElement;
@@ -245,7 +236,7 @@ export function useDrawing(mapRef: any) {
       weight: 3,
       opacity: 1,
       className: `circle-layer circle-${circleId}`,
-    }).addTo(mapRef.map.value);
+    }).addTo(mapRef.circlesGroup.value);
 
     // Update Leaflet ID in store
     const newLeafletId = L.stamp(polyline);
@@ -266,7 +257,7 @@ export function useDrawing(mapRef: any) {
     intersectLon?: number,
     intersectDistance?: number
   ): LineSegmentElement | null => {
-    if (!mapRef.map?.value) {
+    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
       return null;
     }
 
@@ -291,13 +282,13 @@ export function useDrawing(mapRef: any) {
       [endLat, endLon] as [number, number],
     ];
 
-    // Create Leaflet polyline
+    // Create Leaflet polyline and add to lines group
     const polyline = L.polyline(latLngs, {
       color: lineElement.color,
       weight: 3,
       opacity: 1,
       className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.map.value);
+    }).addTo(mapRef.linesGroup.value);
 
     // Store Leaflet ID
     lineElement.leafletId = L.stamp(polyline);
@@ -313,14 +304,14 @@ export function useDrawing(mapRef: any) {
         opacity: 1,
         fillOpacity: 0.9,
         className: `intersection-marker intersection-${lineId}`,
-      }).addTo(mapRef.map.value);
+      }).addTo(mapRef.linesGroup.value);
     }
 
     // Add to store
     layersStore.addLineSegment(lineElement);
 
-    // Fit map to line segment bounds
-    if (mapRef.fitBounds) {
+    // Fly to line segment bounds with animation
+    if (mapRef.flyToBounds) {
       const minLat = Math.min(startLat, endLat);
       const maxLat = Math.max(startLat, endLat);
       const minLon = Math.min(startLon, endLon);
@@ -329,7 +320,7 @@ export function useDrawing(mapRef: any) {
         [minLat, minLon],
         [maxLat, maxLon],
       ];
-      mapRef.fitBounds(bounds);
+      mapRef.flyToBounds(bounds);
     }
 
     return lineElement;
@@ -398,7 +389,7 @@ export function useDrawing(mapRef: any) {
       weight: 3,
       opacity: 1,
       className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.map.value);
+    }).addTo(mapRef.linesGroup.value);
 
     // Update Leaflet ID in store
     const newLeafletId = L.stamp(polyline);
@@ -414,7 +405,7 @@ export function useDrawing(mapRef: any) {
         opacity: 1,
         fillOpacity: 0.9,
         className: `intersection-marker intersection-${lineId}`,
-      }).addTo(mapRef.map.value);
+      }).addTo(mapRef.linesGroup.value);
     }
   };
 
@@ -426,7 +417,7 @@ export function useDrawing(mapRef: any) {
     color?: string,
     elevation?: number
   ): PointElement | null => {
-    if (!mapRef.map?.value) {
+    if (!mapRef.map?.value || !mapRef.pointsGroup?.value) {
       return null;
     }
 
@@ -436,19 +427,11 @@ export function useDrawing(mapRef: any) {
       name: name || `Point ${layersStore.pointCount + 1}`,
       coordinates: { lat, lon },
       elevation,
-      color: DEFAULT_COLOR,
+      color: color || DEFAULT_COLOR,
     } as PointElement;
 
-    // Create Leaflet circle marker
-    const marker = L.circleMarker([lat, lon], {
-      radius: DEFAULT_RADIUS,
-      color: pointElement.color,
-      fill: true,
-      fillColor: pointElement.color,
-      fillOpacity: 1,
-      weight: 3,
-      className: `point-layer point-${pointId}`,
-    }).addTo(mapRef.map.value);
+    // Create Leaflet marker (native pin) and add to points group
+    const marker = L.marker([lat, lon]).addTo(mapRef.pointsGroup.value);
 
     // Store Leaflet ID
     pointElement.leafletId = L.stamp(marker);
@@ -457,14 +440,14 @@ export function useDrawing(mapRef: any) {
     // Add to store
     layersStore.addPoint(pointElement);
 
-    // Fit map to point with some padding
-    if (mapRef.fitBounds) {
+    // Fly to point with some padding and animation
+    if (mapRef.flyToBounds) {
       const padding = 0.01; // ~1km padding
       const bounds: [[number, number], [number, number]] = [
         [lat - padding, lon - padding],
         [lat + padding, lon + padding],
       ];
-      mapRef.fitBounds(bounds);
+      mapRef.flyToBounds(bounds);
     }
 
     return pointElement;
@@ -566,6 +549,60 @@ export function useDrawing(mapRef: any) {
     }
   };
 
+  // Helper to remove polygons affected by point deletion
+  const removeAffectedPolygons = (deletedCoords: { lat: number; lon: number }) => {
+    const polygonsToRemove: string[] = [];
+
+    for (const polygon of layersStore.polygons) {
+      const containsPoint = polygon.points.some(
+        (p) =>
+          Math.abs(p.lat - deletedCoords.lat) < 0.000_001 &&
+          Math.abs(p.lon - deletedCoords.lon) < 0.000_001
+      );
+
+      if (containsPoint) {
+        const remainingPoints = polygon.points.filter(
+          (p) =>
+            Math.abs(p.lat - deletedCoords.lat) >= 0.000_001 ||
+            Math.abs(p.lon - deletedCoords.lon) >= 0.000_001
+        );
+
+        if (remainingPoints.length < 3 && polygon.id) {
+          polygonsToRemove.push(polygon.id);
+        }
+      }
+    }
+
+    for (const polygonId of polygonsToRemove) {
+      const polygon = layersStore.polygons.find((p) => p.id === polygonId);
+      if (polygon && mapRef.map?.value) {
+        if (polygon.leafletId !== undefined) {
+          mapRef.map.value.eachLayer((layer: any) => {
+            if (L.stamp(layer) === polygon.leafletId) {
+              mapRef.map.value.removeLayer(layer);
+            }
+          });
+        }
+        mapRef.map.value.eachLayer((layer: any) => {
+          const className = layer.options?.className;
+          if (className && className.includes(`polygon-${polygonId}`)) {
+            mapRef.map.value.removeLayer(layer);
+          }
+        });
+      }
+    }
+  };
+
+  // Helper to remove layer by leafletId
+  const removeLayerById = (leafletId: number) => {
+    if (!mapRef.map?.value) return;
+    mapRef.map.value.eachLayer((layer: any) => {
+      if (L.stamp(layer) === leafletId) {
+        mapRef.map.value.removeLayer(layer);
+      }
+    });
+  };
+
   // Delete element from map
   const deleteElement = (elementType: string, elementId: string | undefined) => {
     if (!mapRef.map?.value || !elementId) {
@@ -573,129 +610,53 @@ export function useDrawing(mapRef: any) {
     }
 
     // Remove from map using Leaflet's layer management
-    // Use both className and leafletId as fallbacks for robustness
     switch (elementType) {
       case 'circle': {
         const circle = layersStore.circles.find((c) => c.id === elementId);
-        if (circle && circle.leafletId !== undefined) {
-          mapRef.map.value.eachLayer((layer: any) => {
-            if (L.stamp(layer) === circle.leafletId) {
-              mapRef.map.value.removeLayer(layer);
-            }
-          });
+        if (circle?.leafletId !== undefined) {
+          removeLayerById(circle.leafletId);
         }
-
         break;
       }
       case 'lineSegment': {
-        // Remove the line segment layer
         const segment = layersStore.lineSegments.find((s) => s.id === elementId);
-        if (segment && segment.leafletId !== undefined) {
-          mapRef.map.value.eachLayer((layer: any) => {
-            if (L.stamp(layer) === segment.leafletId) {
-              mapRef.map.value.removeLayer(layer);
-            }
-          });
+        if (segment?.leafletId !== undefined) {
+          removeLayerById(segment.leafletId);
         }
 
         // Also remove intersection marker if present
-        const intersectionPoint = layersStore.lineSegments.find((s) => s.id === elementId);
-        if (intersectionPoint && intersectionPoint.leafletId !== undefined) {
-          mapRef.map.value.eachLayer((layer: any) => {
-            // Check if this is an intersection marker for this line by looking at className
-            const className = layer.options?.className;
-            if (className && className.includes(`intersection-${elementId}`)) {
-              mapRef.map.value.removeLayer(layer);
-            }
-          });
-        }
-
+        mapRef.map.value.eachLayer((layer: any) => {
+          const className = layer.options?.className;
+          if (className?.includes(`intersection-${elementId}`)) {
+            mapRef.map.value.removeLayer(layer);
+          }
+        });
         break;
       }
       case 'point': {
         const point = layersStore.points.find((p) => p.id === elementId);
-        if (point && point.leafletId !== undefined) {
-          mapRef.map.value.eachLayer((layer: any) => {
-            if (L.stamp(layer) === point.leafletId) {
-              mapRef.map.value.removeLayer(layer);
-            }
-          });
+        if (point?.leafletId !== undefined) {
+          removeLayerById(point.leafletId);
         }
 
-        // Before deleting the point, collect polygons that will become invalid
-        const deletedCoords = point?.coordinates;
-        const polygonsToRemove: string[] = [];
-
-        if (deletedCoords) {
-          for (const polygon of layersStore.polygons) {
-            // Check if this polygon contains the point being deleted
-            const containsPoint = polygon.points.some(
-              (p) =>
-                Math.abs(p.lat - deletedCoords.lat) < 0.000001 &&
-                Math.abs(p.lon - deletedCoords.lon) < 0.000001
-            );
-
-            if (containsPoint) {
-              // Count remaining points after removing this one
-              const remainingPoints = polygon.points.filter(
-                (p) =>
-                  Math.abs(p.lat - deletedCoords.lat) >= 0.000001 ||
-                  Math.abs(p.lon - deletedCoords.lon) >= 0.000001
-              );
-
-              // If polygon would have less than 3 points, mark it for removal from map
-              if (remainingPoints.length < 3 && polygon.id) {
-                polygonsToRemove.push(polygon.id);
-              }
-            }
-          }
+        if (point?.coordinates) {
+          removeAffectedPolygons(point.coordinates);
         }
-
-        // Remove affected polygons from the map BEFORE deleting the point from store
-        for (const polygonId of polygonsToRemove) {
-          const polygon = layersStore.polygons.find((p) => p.id === polygonId);
-          if (polygon) {
-            // Remove from map
-            if (polygon.leafletId !== undefined) {
-              mapRef.map.value.eachLayer((layer: any) => {
-                if (L.stamp(layer) === polygon.leafletId) {
-                  mapRef.map.value.removeLayer(layer);
-                }
-              });
-            }
-            // Fallback: also try removing by className
-            mapRef.map.value.eachLayer((layer: any) => {
-              const className = layer.options?.className;
-              if (className && className.includes(`polygon-${polygonId}`)) {
-                mapRef.map.value.removeLayer(layer);
-              }
-            });
-          }
-        }
-
         break;
       }
       case 'polygon': {
         const polygon = layersStore.polygons.find((p) => p.id === elementId);
-        if (polygon) {
-          // Try to remove by leafletId first
-          if (polygon.leafletId !== undefined) {
-            mapRef.map.value.eachLayer((layer: any) => {
-              if (L.stamp(layer) === polygon.leafletId) {
-                mapRef.map.value.removeLayer(layer);
-              }
-            });
-          }
-
-          // Fallback: also try removing by className
-          mapRef.map.value.eachLayer((layer: any) => {
-            const className = layer.options?.className;
-            if (className && className.includes(`polygon-${elementId}`)) {
-              mapRef.map.value.removeLayer(layer);
-            }
-          });
+        if (polygon?.leafletId !== undefined) {
+          removeLayerById(polygon.leafletId);
         }
 
+        // Fallback: also try removing by className
+        mapRef.map.value.eachLayer((layer: any) => {
+          const className = layer.options?.className;
+          if (className?.includes(`polygon-${elementId}`)) {
+            mapRef.map.value.removeLayer(layer);
+          }
+        });
         break;
       }
       // No default
@@ -736,35 +697,21 @@ export function useDrawing(mapRef: any) {
   // Clear all elements
   const clearAllElements = () => {
     layersStore.clearLayers();
-    if (mapRef.map?.value) {
-      // Remove all custom layers (not tiles)
-      mapRef.map.value.eachLayer((layer: any) => {
-        if (
-          layer instanceof L.Polyline ||
-          layer instanceof L.CircleMarker ||
-          layer instanceof L.Polygon
-        ) {
-          mapRef.map?.value?.removeLayer(layer);
-        }
-      });
-    }
+    // Clear all FeatureGroups
+    mapRef.circlesGroup?.value?.clearLayers();
+    mapRef.linesGroup?.value?.clearLayers();
+    mapRef.pointsGroup?.value?.clearLayers();
+    mapRef.polygonsGroup?.value?.clearLayers();
   };
 
   // Redraw all elements on map (useful after loading project)
   // eslint-disable-next-line complexity
   const redrawAllElements = () => {
-    // Clear only map layers, not the store (store is already populated)
-    if (mapRef.map?.value) {
-      mapRef.map.value.eachLayer((layer: any) => {
-        if (
-          layer instanceof L.Polyline ||
-          layer instanceof L.CircleMarker ||
-          layer instanceof L.Polygon
-        ) {
-          mapRef.map?.value?.removeLayer(layer);
-        }
-      });
-    }
+    // Clear only map layers using FeatureGroups, not the store (store is already populated)
+    mapRef.circlesGroup?.value?.clearLayers();
+    mapRef.linesGroup?.value?.clearLayers();
+    mapRef.pointsGroup?.value?.clearLayers();
+    mapRef.polygonsGroup?.value?.clearLayers();
 
     const circles = layersStore.circles;
     const lineSegments = layersStore.lineSegments;
@@ -821,10 +768,10 @@ export function useDrawing(mapRef: any) {
       }
     }
 
-    // Fit map to all elements if any exist
+    // Fly to all elements if any exist with animation
     if (
       (circles.length > 0 || lineSegments.length > 0 || points.length > 0 || polygons.length > 0) &&
-      mapRef.fitBounds
+      mapRef.flyToBounds
     ) {
       // Calculate bounds that include all elements
       let minLat = 90,
@@ -866,7 +813,7 @@ export function useDrawing(mapRef: any) {
       }
 
       if (minLat <= maxLat && minLon <= maxLon) {
-        mapRef.fitBounds([
+        mapRef.flyToBounds([
           [minLat, minLon],
           [maxLat, maxLon],
         ]);
@@ -876,7 +823,7 @@ export function useDrawing(mapRef: any) {
 
   // Parallel drawing
   const drawParallel = (latitude: number, name?: string): LineSegmentElement | null => {
-    if (!mapRef.map?.value) {
+    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
       return null;
     }
 
@@ -901,7 +848,7 @@ export function useDrawing(mapRef: any) {
       weight: 3,
       opacity: 1,
       className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.map.value);
+    }).addTo(mapRef.linesGroup.value);
 
     // Store Leaflet ID
     lineElement.leafletId = L.stamp(polyline);
@@ -910,13 +857,13 @@ export function useDrawing(mapRef: any) {
     // Add to store
     layersStore.addLineSegment(lineElement);
 
-    // Fit map to parallel bounds
-    if (mapRef.fitBounds) {
+    // Fly to parallel bounds with animation
+    if (mapRef.flyToBounds) {
       const bounds: [[number, number], [number, number]] = [
         [latitude - 1, -180],
         [latitude + 1, 180],
       ];
-      mapRef.fitBounds(bounds);
+      mapRef.flyToBounds(bounds);
     }
 
     return lineElement;
@@ -957,7 +904,7 @@ export function useDrawing(mapRef: any) {
       weight: 3,
       opacity: 1,
       className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.map.value);
+    }).addTo(mapRef.linesGroup.value);
 
     // Update Leaflet ID in store
     const newLeafletId = L.stamp(polyline);
@@ -966,7 +913,7 @@ export function useDrawing(mapRef: any) {
 
   // Polygon drawing
   const drawPolygon = (points: { lat: number; lon: number }[], name?: string, color?: string) => {
-    if (!mapRef.map?.value) {
+    if (!mapRef.map?.value || !mapRef.polygonsGroup?.value) {
       return null;
     }
 
@@ -984,7 +931,7 @@ export function useDrawing(mapRef: any) {
       color: polygonColor,
     };
 
-    // Create Leaflet polygon
+    // Create Leaflet polygon and add to polygons group
     const latLngs = points.map((p) => [p.lat, p.lon] as [number, number]);
     const polygon = L.polygon(latLngs, {
       color: polygonColor,
@@ -993,7 +940,7 @@ export function useDrawing(mapRef: any) {
       weight: 3,
       opacity: 1,
       className: `polygon-layer polygon-${polygonId}`,
-    }).addTo(mapRef.map.value);
+    }).addTo(mapRef.polygonsGroup.value);
 
     // Store Leaflet ID
     polygonElement.leafletId = L.stamp(polygon);
@@ -1002,10 +949,10 @@ export function useDrawing(mapRef: any) {
     // Add to store
     layersStore.addPolygon(polygonElement);
 
-    // Fit map to polygon bounds
-    if (mapRef.fitBounds) {
+    // Fly to polygon bounds with animation
+    if (mapRef.flyToBounds) {
       const bounds = polygon.getBounds();
-      mapRef.fitBounds([
+      mapRef.flyToBounds([
         [bounds.getSouth(), bounds.getWest()],
         [bounds.getNorth(), bounds.getEast()],
       ]);
@@ -1020,7 +967,7 @@ export function useDrawing(mapRef: any) {
     points: { lat: number; lon: number }[],
     color = '#90EE90'
   ) => {
-    if (!mapRef.map?.value) {
+    if (!mapRef.map?.value || !mapRef.polygonsGroup?.value) {
       return;
     }
 
@@ -1034,7 +981,7 @@ export function useDrawing(mapRef: any) {
       weight: 3,
       opacity: 1,
       className: `polygon-layer polygon-${polygonId}`,
-    }).addTo(mapRef.map.value);
+    }).addTo(mapRef.polygonsGroup.value);
 
     const newLeafletId = L.stamp(polygon);
     layersStore.storeLeafletId('polygon', polygonId, newLeafletId);

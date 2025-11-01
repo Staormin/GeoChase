@@ -373,72 +373,72 @@ function handleGoTo(
   let zoom: number;
 
   switch (elementType) {
-  case 'circle': {
-    const circle = element as CircleElement;
-    lat = circle.center.lat;
-    lon = circle.center.lon;
-    // Calculate zoom based on radius: more zoomed in formula
-    zoom = Math.max(6, Math.min(18, 15 - Math.log2(circle.radius / 1.5)));
-  
-  break;
-  }
-  case 'lineSegment': {
-    const segment = element as LineSegmentElement;
-    if (segment.mode === 'parallel') {
-      // For parallel, center on the parallel's latitude
-      lat = segment.longitude === undefined ? 0 : segment.longitude;
-      lon = 0;
-      zoom = 3;
-    } else if (segment.endpoint) {
-      // Center on segment midpoint
-      lat = (segment.center.lat + segment.endpoint.lat) / 2;
-      lon = (segment.center.lon + segment.endpoint.lon) / 2;
+    case 'circle': {
+      const circle = element as CircleElement;
+      lat = circle.center.lat;
+      lon = circle.center.lon;
+      // Calculate zoom based on radius: more zoomed in formula
+      zoom = Math.max(6, Math.min(18, 15 - Math.log2(circle.radius / 1.5)));
 
-      // Calculate zoom based on line length: more zoomed in formula
-      const length = calculateDistance(
-        segment.center.lat,
-        segment.center.lon,
-        segment.endpoint.lat,
-        segment.endpoint.lon
-      );
-      zoom = Math.max(6, Math.min(18, 15 - Math.log2(length / 1.5)));
-    } else {
-      // Fallback to segment start
-      lat = segment.center.lat;
-      lon = segment.center.lon;
-      zoom = 13;
+      break;
     }
-  
-  break;
-  }
-  case 'polygon': {
-    const polygon = element as PolygonElement;
-    // Calculate center of polygon
-    const sumLat = polygon.points.reduce((sum, p) => sum + p.lat, 0);
-    const sumLon = polygon.points.reduce((sum, p) => sum + p.lon, 0);
-    lat = sumLat / polygon.points.length;
-    lon = sumLon / polygon.points.length;
+    case 'lineSegment': {
+      const segment = element as LineSegmentElement;
+      if (segment.mode === 'parallel') {
+        // For parallel, center on the parallel's latitude
+        lat = segment.longitude === undefined ? 0 : segment.longitude;
+        lon = 0;
+        zoom = 3;
+      } else if (segment.endpoint) {
+        // Center on segment midpoint
+        lat = (segment.center.lat + segment.endpoint.lat) / 2;
+        lon = (segment.center.lon + segment.endpoint.lon) / 2;
 
-    // Calculate bounds to determine zoom
-    const lats = polygon.points.map((p) => p.lat);
-    const lons = polygon.points.map((p) => p.lon);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLon = Math.min(...lons);
-    const maxLon = Math.max(...lons);
+        // Calculate zoom based on line length: more zoomed in formula
+        const length = calculateDistance(
+          segment.center.lat,
+          segment.center.lon,
+          segment.endpoint.lat,
+          segment.endpoint.lon
+        );
+        zoom = Math.max(6, Math.min(18, 15 - Math.log2(length / 1.5)));
+      } else {
+        // Fallback to segment start
+        lat = segment.center.lat;
+        lon = segment.center.lon;
+        zoom = 13;
+      }
 
-    // Calculate diagonal distance of bounding box
-    const diagonal = calculateDistance(minLat, minLon, maxLat, maxLon);
-    zoom = Math.max(6, Math.min(18, 15 - Math.log2(diagonal / 1.5)));
-  
-  break;
-  }
-  default: {
-    const point = element as PointElement;
-    lat = point.coordinates.lat;
-    lon = point.coordinates.lon;
-    zoom = 16; // Closer zoom for points
-  }
+      break;
+    }
+    case 'polygon': {
+      const polygon = element as PolygonElement;
+      // Calculate center of polygon
+      const sumLat = polygon.points.reduce((sum, p) => sum + p.lat, 0);
+      const sumLon = polygon.points.reduce((sum, p) => sum + p.lon, 0);
+      lat = sumLat / polygon.points.length;
+      lon = sumLon / polygon.points.length;
+
+      // Calculate bounds to determine zoom
+      const lats = polygon.points.map((p) => p.lat);
+      const lons = polygon.points.map((p) => p.lon);
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLon = Math.min(...lons);
+      const maxLon = Math.max(...lons);
+
+      // Calculate diagonal distance of bounding box
+      const diagonal = calculateDistance(minLat, minLon, maxLat, maxLon);
+      zoom = Math.max(6, Math.min(18, 15 - Math.log2(diagonal / 1.5)));
+
+      break;
+    }
+    default: {
+      const point = element as PointElement;
+      lat = point.coordinates.lat;
+      lon = point.coordinates.lon;
+      zoom = 16; // Closer zoom for points
+    }
   }
 
   mapContainer.setCenter(lat, lon, zoom);

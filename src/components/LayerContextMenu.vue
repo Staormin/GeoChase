@@ -157,7 +157,12 @@
 </template>
 
 <script lang="ts" setup>
-import type { CircleElement, LineSegmentElement, PointElement, PolygonElement } from '@/services/storage';
+import type {
+  CircleElement,
+  LineSegmentElement,
+  PointElement,
+  PolygonElement,
+} from '@/services/storage';
 import { computed, inject, ref } from 'vue';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';

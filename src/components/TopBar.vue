@@ -1,5 +1,11 @@
 <template>
-  <div v-if="!uiStore.navigatingElement && !uiStore.freeHandDrawing.isDrawing && !uiStore.animationState.isPlaying">
+  <div
+    v-if="
+      !uiStore.navigatingElement &&
+      !uiStore.freeHandDrawing.isDrawing &&
+      !uiStore.animationState.isPlaying
+    "
+  >
     <!-- Top navigation drawer -->
     <v-navigation-drawer
       v-model="topBarOpen"

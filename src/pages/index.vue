@@ -354,64 +354,64 @@ function navigateToElement(element: any, onComplete?: () => void) {
   let zoom = 15;
 
   switch (element.type) {
-  case 'circle': {
-    lat = element.center.lat;
-    lon = element.center.lon;
-    // Zoom out a bit to show the whole circle
-    const radiusInDegrees = element.radius / 111; // Rough conversion
-    zoom = Math.max(6, Math.min(18, 13 - Math.log2(radiusInDegrees)));
-
-  break;
-  }
-  case 'lineSegment': {
-    if (element.mode === 'parallel' && element.longitude !== undefined) {
-      lat = 0;
-      lon = element.longitude;
-      zoom = 6;
-    } else {
+    case 'circle': {
       lat = element.center.lat;
       lon = element.center.lon;
-      if (element.endpoint) {
-        const distance = calculateDistance(
-          element.center.lat,
-          element.center.lon,
-          element.endpoint.lat,
-          element.endpoint.lon
-        );
-        zoom = Math.max(6, Math.min(18, 15 - Math.log2(distance / 1.5)));
-      }
+      // Zoom out a bit to show the whole circle
+      const radiusInDegrees = element.radius / 111; // Rough conversion
+      zoom = Math.max(6, Math.min(18, 13 - Math.log2(radiusInDegrees)));
+
+      break;
     }
+    case 'lineSegment': {
+      if (element.mode === 'parallel' && element.longitude !== undefined) {
+        lat = 0;
+        lon = element.longitude;
+        zoom = 6;
+      } else {
+        lat = element.center.lat;
+        lon = element.center.lon;
+        if (element.endpoint) {
+          const distance = calculateDistance(
+            element.center.lat,
+            element.center.lon,
+            element.endpoint.lat,
+            element.endpoint.lon
+          );
+          zoom = Math.max(6, Math.min(18, 15 - Math.log2(distance / 1.5)));
+        }
+      }
 
-  break;
-  }
-  case 'point': {
-    lat = element.coordinates.lat;
-    lon = element.coordinates.lon;
-    zoom = 16;
+      break;
+    }
+    case 'point': {
+      lat = element.coordinates.lat;
+      lon = element.coordinates.lon;
+      zoom = 16;
 
-  break;
-  }
-  case 'polygon': {
-    const sumLat = element.points.reduce((sum: number, p: any) => sum + p.lat, 0);
-    const sumLon = element.points.reduce((sum: number, p: any) => sum + p.lon, 0);
-    lat = sumLat / element.points.length;
-    lon = sumLon / element.points.length;
+      break;
+    }
+    case 'polygon': {
+      const sumLat = element.points.reduce((sum: number, p: any) => sum + p.lat, 0);
+      const sumLon = element.points.reduce((sum: number, p: any) => sum + p.lon, 0);
+      lat = sumLat / element.points.length;
+      lon = sumLon / element.points.length;
 
-    const lats = element.points.map((p: any) => p.lat);
-    const lons = element.points.map((p: any) => p.lon);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLon = Math.min(...lons);
-    const maxLon = Math.max(...lons);
-    const diagonal = calculateDistance(minLat, minLon, maxLat, maxLon);
-    zoom = Math.max(6, Math.min(18, 15 - Math.log2(diagonal / 1.5)));
+      const lats = element.points.map((p: any) => p.lat);
+      const lons = element.points.map((p: any) => p.lon);
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLon = Math.min(...lons);
+      const maxLon = Math.max(...lons);
+      const diagonal = calculateDistance(minLat, minLon, maxLat, maxLon);
+      zoom = Math.max(6, Math.min(18, 15 - Math.log2(diagonal / 1.5)));
 
-  break;
-  }
-  default: {
-    onComplete?.();
-    return;
-  }
+      break;
+    }
+    default: {
+      onComplete?.();
+      return;
+    }
   }
 
   // Smooth fly to element - use moveend event to know when animation completes
@@ -783,14 +783,14 @@ onMounted(async () => {
           if (circle) {
             navigation.navigateCircleForward(circle, zoomLevel);
             const coords = navigation.getCircleNavigationCoords(circle);
-            map.setView([coords.lat, coords.lon], zoomLevel, { animate: false });
+            map.flyTo([coords.lat, coords.lon], zoomLevel, { duration: 0.5 });
           }
         } else if (elementType === 'lineSegment') {
           const segment = layersStore.lineSegments.find((s) => s.id === elementId);
           if (segment) {
             navigation.navigateSegmentForward(segment, zoomLevel);
             const coords = navigation.getSegmentNavigationCoords(segment);
-            map.setView([coords.lat, coords.lon], zoomLevel, { animate: false });
+            map.flyTo([coords.lat, coords.lon], zoomLevel, { duration: 0.5 });
           }
         }
 
@@ -804,14 +804,14 @@ onMounted(async () => {
           if (circle) {
             navigation.navigateCircleBackward(circle, zoomLevel);
             const coords = navigation.getCircleNavigationCoords(circle);
-            map.setView([coords.lat, coords.lon], zoomLevel, { animate: false });
+            map.flyTo([coords.lat, coords.lon], zoomLevel, { duration: 0.5 });
           }
         } else if (elementType === 'lineSegment') {
           const segment = layersStore.lineSegments.find((s) => s.id === elementId);
           if (segment) {
             navigation.navigateSegmentBackward(segment, zoomLevel);
             const coords = navigation.getSegmentNavigationCoords(segment);
-            map.setView([coords.lat, coords.lon], zoomLevel, { animate: false });
+            map.flyTo([coords.lat, coords.lon], zoomLevel, { duration: 0.5 });
           }
         }
 

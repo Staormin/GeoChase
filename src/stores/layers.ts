@@ -179,16 +179,16 @@ export const useLayersStore = defineStore('layers', () => {
         // Check if this polygon contains the deleted point's coordinates
         const containsPoint = polygon.points.some(
           (p) =>
-            Math.abs(p.lat - deletedCoords.lat) < 0.000001 &&
-            Math.abs(p.lon - deletedCoords.lon) < 0.000001
+            Math.abs(p.lat - deletedCoords.lat) < 0.000_001 &&
+            Math.abs(p.lon - deletedCoords.lon) < 0.000_001
         );
 
         if (containsPoint) {
           // Count remaining points after removing this one
           const remainingPoints = polygon.points.filter(
             (p) =>
-              Math.abs(p.lat - deletedCoords.lat) >= 0.000001 ||
-              Math.abs(p.lon - deletedCoords.lon) >= 0.000001
+              Math.abs(p.lat - deletedCoords.lat) >= 0.000_001 ||
+              Math.abs(p.lon - deletedCoords.lon) >= 0.000_001
           );
 
           // If polygon would have less than 3 points, mark it for deletion
@@ -505,7 +505,10 @@ export const useLayersStore = defineStore('layers', () => {
 
     // Assign timestamps to elements that don't have them (for old projects)
     // Use a sequential counter to maintain original order
-    let baseTimestamp = Date.now() - (validCircles.length + validLineSegments.length + validPoints.length + validPolygons.length) * 1000;
+    let baseTimestamp =
+      Date.now() -
+      (validCircles.length + validLineSegments.length + validPoints.length + validPolygons.length) *
+        1000;
 
     for (const circle of validCircles) {
       if (!circle.createdAt) {
