@@ -247,7 +247,7 @@ import type {
   PolygonElement,
 } from '@/services/storage';
 import { computed, inject, ref } from 'vue';
-import LayerContextMenu from '@/components/LayerContextMenu.vue';
+import LayerContextMenu from '@/components/layers/LayerContextMenu.vue';
 import { calculateBearing, calculateDistance, destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';

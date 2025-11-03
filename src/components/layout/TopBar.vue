@@ -264,7 +264,7 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue';
-import SidebarAddressSearch from '@/components/SidebarAddressSearch.vue';
+import SidebarAddressSearch from '@/components/sidebar/SidebarAddressSearch.vue';
 import { downloadGPX, generateCompleteGPX, getTimestamp } from '@/services/gpx';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';

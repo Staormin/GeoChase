@@ -1,474 +1,22 @@
 /**
- * Composable for drawing shapes on the map
+ * Composable for drawing shapes on the map (orchestrator)
  */
 
-import type {
-  CircleElement,
-  LineSegmentElement,
-  PointElement,
-  PolygonElement,
-} from '@/services/storage';
 import L from 'leaflet';
-import { v4 as uuidv4 } from 'uuid';
-import { generateCircle } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
-
-const DEFAULT_COLOR = '#000000';
+import { useCircleDrawing } from './useCircleDrawing';
+import { useLineDrawing } from './useLineDrawing';
+import { usePointDrawing } from './usePointDrawing';
+import { usePolygonDrawing } from './usePolygonDrawing';
 
 export function useDrawing(mapRef: any) {
   const layersStore = useLayersStore();
 
-  const generateId = () => uuidv4();
-
-  // Helper function to redraw a circle on the map without adding to store
-  const redrawCircleOnMap = (
-    circleId: string,
-    centerLat: number,
-    centerLon: number,
-    radiusKm: number,
-    color?: string
-  ) => {
-    if (!mapRef.map?.value || !mapRef.circlesGroup?.value) {
-      return;
-    }
-
-    const points = generateCircle(centerLat, centerLon, radiusKm, 360);
-    const latLngs = points.map((p) => [p.lat, p.lon] as [number, number]);
-
-    const polyline = L.polyline(latLngs, {
-      color: color || DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `circle-layer circle-${circleId}`,
-    }).addTo(mapRef.circlesGroup.value);
-
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('circle', circleId, newLeafletId);
-
-    // Update the circle element's leafletId in the store
-    const circle = layersStore.circles.find((c) => c.id === circleId);
-    if (circle) {
-      circle.leafletId = newLeafletId;
-    }
-  };
-
-  // Helper function to redraw a line segment on the map without adding to store
-  const redrawLineSegmentOnMap = (
-    lineId: string,
-    startLat: number,
-    startLon: number,
-    endLat: number,
-    endLon: number,
-    mode: 'coordinate' | 'azimuth' | 'intersection' = 'coordinate',
-    intersectLat?: number,
-    intersectLon?: number,
-    color?: string
-  ) => {
-    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
-      return;
-    }
-
-    const latLngs = [
-      [startLat, startLon] as [number, number],
-      [endLat, endLon] as [number, number],
-    ];
-
-    const polyline = L.polyline(latLngs, {
-      color: color || DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
-
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, newLeafletId);
-
-    // Update the line segment element's leafletId in the store
-    const segment = layersStore.lineSegments.find((s) => s.id === lineId);
-    if (segment) {
-      segment.leafletId = newLeafletId;
-    }
-
-    // For intersection mode, show the intersection point marker
-    if (mode === 'intersection' && intersectLat && intersectLon) {
-      L.circleMarker([intersectLat, intersectLon], {
-        radius: 8,
-        fillColor: '#FFD700',
-        color: '#FFA500',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.9,
-        className: `intersection-marker intersection-${lineId}`,
-      }).addTo(mapRef.linesGroup.value);
-    }
-  };
-
-  // Helper function to redraw a parallel line on the map without adding to store
-  const redrawParallelOnMap = (lineId: string, latitude: number, color?: string) => {
-    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
-      return;
-    }
-
-    const latLngs: [number, number][] = [
-      [latitude, -180],
-      [latitude, 180],
-    ];
-
-    const polyline = L.polyline(latLngs, {
-      color: color || DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
-
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, newLeafletId);
-
-    // Update the line segment element's leafletId in the store
-    const segment = layersStore.lineSegments.find((s) => s.id === lineId);
-    if (segment) {
-      segment.leafletId = newLeafletId;
-    }
-  };
-
-  // Helper function to redraw a point on the map without adding to store
-  const redrawPointOnMap = (pointId: string, lat: number, lon: number, _color?: string) => {
-    if (!mapRef.map?.value || !mapRef.pointsGroup?.value) {
-      return;
-    }
-
-    // Get point name from store
-    const point = layersStore.points.find((p) => p.id === pointId);
-    const pointName = point?.name || 'Point';
-
-    // Create Leaflet marker (native pin) with permanent tooltip and add to points group
-    const marker = L.marker([lat, lon])
-      .bindTooltip(pointName, {
-        permanent: true,
-        direction: 'top',
-        offset: [0, -20],
-        className: 'point-label',
-      })
-      .addTo(mapRef.pointsGroup.value);
-
-    const newLeafletId = L.stamp(marker);
-    layersStore.storeLeafletId('point', pointId, newLeafletId);
-
-    // Update the point element's leafletId in the store
-    if (point) {
-      point.leafletId = newLeafletId;
-    }
-  };
-
-  // Circle drawing
-  const drawCircle = (centerLat: number, centerLon: number, radiusKm: number, name?: string) => {
-    if (!mapRef.map?.value || !mapRef.circlesGroup?.value) {
-      return null;
-    }
-
-    const circleId = generateId();
-    const circleElement: CircleElement = {
-      id: circleId,
-      name: name || `Circle ${layersStore.circleCount + 1}`,
-      center: { lat: centerLat, lon: centerLon },
-      radius: radiusKm,
-      color: DEFAULT_COLOR,
-    };
-
-    // Generate circle points
-    const points = generateCircle(centerLat, centerLon, radiusKm, 360);
-    const latLngs = points.map((p) => [p.lat, p.lon] as [number, number]);
-
-    // Create Leaflet polyline and add to circles group
-    const polyline = L.polyline(latLngs, {
-      color: circleElement.color,
-      weight: 3,
-      opacity: 1,
-      className: `circle-layer circle-${circleId}`,
-    }).addTo(mapRef.circlesGroup.value);
-
-    // Store Leaflet ID
-    circleElement.leafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('circle', circleId, circleElement.leafletId);
-
-    // Add to store
-    layersStore.addCircle(circleElement);
-
-    // Fly to circle bounds with animation
-    if (mapRef.flyToBounds) {
-      const bounds: [[number, number], [number, number]] = [
-        [centerLat - radiusKm / 111, centerLon - radiusKm / 111],
-        [centerLat + radiusKm / 111, centerLon + radiusKm / 111],
-      ];
-      mapRef.flyToBounds(bounds);
-    }
-
-    return circleElement;
-  };
-
-  // Update existing circle
-  const updateCircle = (
-    circleId: string | undefined,
-    centerLat: number,
-    centerLon: number,
-    radiusKm: number,
-    name: string
-  ) => {
-    if (!mapRef.map?.value || !circleId) {
-      return;
-    }
-
-    // Update store
-    layersStore.updateCircle(circleId, {
-      name,
-      center: { lat: centerLat, lon: centerLon },
-      radius: radiusKm,
-    });
-
-    // Remove old circle from map
-    const circle = layersStore.circles.find((c) => c.id === circleId);
-    if (circle && circle.leafletId) {
-      const elements = document.querySelectorAll(`.circle-${circleId}`);
-      for (const el of elements) {
-        const svgElement = el.closest('svg');
-        if (svgElement) {
-          svgElement.remove();
-        }
-      }
-    }
-
-    // Redraw circle
-    const points = generateCircle(centerLat, centerLon, radiusKm, 360);
-    const latLngs = points.map((p) => [p.lat, p.lon] as [number, number]);
-
-    const polyline = L.polyline(latLngs, {
-      color: DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `circle-layer circle-${circleId}`,
-    }).addTo(mapRef.circlesGroup.value);
-
-    // Update Leaflet ID in store
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('circle', circleId, newLeafletId);
-  };
-
-  // Line segment drawing
-  const drawLineSegment = (
-    startLat: number,
-    startLon: number,
-    endLat: number,
-    endLon: number,
-    name?: string,
-    mode: 'coordinate' | 'azimuth' | 'intersection' = 'coordinate',
-    distance?: number,
-    azimuth?: number,
-    intersectLat?: number,
-    intersectLon?: number,
-    intersectDistance?: number
-  ): LineSegmentElement | null => {
-    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
-      return null;
-    }
-
-    const lineId = generateId();
-    const lineElement = {
-      id: lineId,
-      name: name || `Line Segment ${layersStore.lineSegmentCount + 1}`,
-      center: { lat: startLat, lon: startLon },
-      endpoint: { lat: endLat, lon: endLon },
-      mode,
-      distance,
-      azimuth,
-      intersectionPoint:
-        intersectLat && intersectLon ? { lat: intersectLat, lon: intersectLon } : undefined,
-      intersectionDistance: intersectDistance,
-      color: DEFAULT_COLOR,
-    } as LineSegmentElement;
-
-    // Draw line as simple 2-point straight line (matches POC and GPX output)
-    const latLngs = [
-      [startLat, startLon] as [number, number],
-      [endLat, endLon] as [number, number],
-    ];
-
-    // Create Leaflet polyline and add to lines group
-    const polyline = L.polyline(latLngs, {
-      color: lineElement.color,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
-
-    // Store Leaflet ID
-    lineElement.leafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, lineElement.leafletId);
-
-    // For intersection mode, show the intersection point marker
-    if (mode === 'intersection' && intersectLat && intersectLon) {
-      L.circleMarker([intersectLat, intersectLon], {
-        radius: 8,
-        fillColor: '#FFD700', // Gold
-        color: '#FFA500', // Orange
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.9,
-        className: `intersection-marker intersection-${lineId}`,
-      }).addTo(mapRef.linesGroup.value);
-    }
-
-    // Add to store
-    layersStore.addLineSegment(lineElement);
-
-    // Fly to line segment bounds with animation
-    if (mapRef.flyToBounds) {
-      const minLat = Math.min(startLat, endLat);
-      const maxLat = Math.max(startLat, endLat);
-      const minLon = Math.min(startLon, endLon);
-      const maxLon = Math.max(startLon, endLon);
-      const bounds: [[number, number], [number, number]] = [
-        [minLat, minLon],
-        [maxLat, maxLon],
-      ];
-      mapRef.flyToBounds(bounds);
-    }
-
-    return lineElement;
-  };
-
-  // Update existing line segment
-  const updateLineSegment = (
-    lineId: string | undefined,
-    startLat: number,
-    startLon: number,
-    endLat: number,
-    endLon: number,
-    name: string,
-    mode: 'coordinate' | 'azimuth' | 'intersection' = 'coordinate',
-    distance?: number,
-    azimuth?: number,
-    intersectLat?: number,
-    intersectLon?: number,
-    intersectDistance?: number
-  ) => {
-    if (!mapRef.map?.value || !lineId) {
-      return;
-    }
-
-    // Update store
-    layersStore.updateLineSegment(lineId, {
-      name,
-      center: { lat: startLat, lon: startLon },
-      endpoint: { lat: endLat, lon: endLon },
-      mode,
-      distance,
-      azimuth,
-      intersectionPoint:
-        intersectLat && intersectLon ? { lat: intersectLat, lon: intersectLon } : undefined,
-      intersectionDistance: intersectDistance,
-    });
-
-    // Remove old line from map using className
-    const lineClass = `line-${lineId}`;
-    const lineElements = document.querySelectorAll(`.${lineClass}`);
-    for (const el of lineElements) {
-      const svgElement = el.closest('svg');
-      if (svgElement) {
-        svgElement.remove();
-      }
-    }
-
-    // Also remove intersection marker if present
-    const className = `intersection-${lineId}`;
-    const intersectionElements = document.querySelectorAll(`.${className}`);
-    for (const el of intersectionElements) {
-      const svgElement = el.closest('svg');
-      if (svgElement) {
-        svgElement.remove();
-      }
-    }
-
-    // Redraw line segment
-    const latLngs = [
-      [startLat, startLon] as [number, number],
-      [endLat, endLon] as [number, number],
-    ];
-
-    const polyline = L.polyline(latLngs, {
-      color: DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
-
-    // Update Leaflet ID in store
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, newLeafletId);
-
-    // For intersection mode, show the intersection point marker
-    if (mode === 'intersection' && intersectLat && intersectLon) {
-      L.circleMarker([intersectLat, intersectLon], {
-        radius: 8,
-        fillColor: '#FFD700',
-        color: '#FFA500',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.9,
-        className: `intersection-marker intersection-${lineId}`,
-      }).addTo(mapRef.linesGroup.value);
-    }
-  };
-
-  // Point drawing
-  const drawPoint = (
-    lat: number,
-    lon: number,
-    name?: string,
-    color?: string,
-    elevation?: number
-  ): PointElement | null => {
-    if (!mapRef.map?.value || !mapRef.pointsGroup?.value) {
-      return null;
-    }
-
-    const pointId = generateId();
-    const pointElement = {
-      id: pointId,
-      name: name || `Point ${layersStore.pointCount + 1}`,
-      coordinates: { lat, lon },
-      elevation,
-      color: color || DEFAULT_COLOR,
-    } as PointElement;
-
-    // Create Leaflet marker (native pin) with permanent tooltip and add to points group
-    const marker = L.marker([lat, lon])
-      .bindTooltip(pointElement.name, {
-        permanent: true,
-        direction: 'top',
-        offset: [0, -20],
-        className: 'point-label',
-      })
-      .addTo(mapRef.pointsGroup.value);
-
-    // Store Leaflet ID
-    pointElement.leafletId = L.stamp(marker);
-    layersStore.storeLeafletId('point', pointId, pointElement.leafletId);
-
-    // Add to store
-    layersStore.addPoint(pointElement);
-
-    // Fly to point with some padding and animation
-    if (mapRef.flyToBounds) {
-      const padding = 0.01; // ~1km padding
-      const bounds: [[number, number], [number, number]] = [
-        [lat - padding, lon - padding],
-        [lat + padding, lon + padding],
-      ];
-      mapRef.flyToBounds(bounds);
-    }
-
-    return pointElement;
-  };
+  // Initialize specialized drawing composables
+  const circleDrawing = useCircleDrawing(mapRef);
+  const lineDrawing = useLineDrawing(mapRef);
+  const pointDrawing = usePointDrawing(mapRef);
+  const polygonDrawing = usePolygonDrawing(mapRef);
 
   // Update element visibility
   const updateElementVisibility = (
@@ -508,7 +56,12 @@ export function useDrawing(mapRef: any) {
         case 'circle': {
           const circle = layersStore.circles.find((c) => c.id === elementId);
           if (circle && circle.id) {
-            redrawCircleOnMap(circle.id, circle.center.lat, circle.center.lon, circle.radius);
+            circleDrawing.redrawCircleOnMap(
+              circle.id,
+              circle.center.lat,
+              circle.center.lon,
+              circle.radius
+            );
           }
 
           break;
@@ -517,9 +70,12 @@ export function useDrawing(mapRef: any) {
           const segment = layersStore.lineSegments.find((s) => s.id === elementId);
           if (segment && segment.id && segment.mode === 'parallel') {
             // For parallel lines, redraw them using drawParallel
-            drawParallel(segment.longitude === undefined ? 0 : segment.longitude, segment.name);
+            lineDrawing.drawParallel(
+              segment.longitude === undefined ? 0 : segment.longitude,
+              segment.name
+            );
           } else if (segment && segment.id && segment.endpoint) {
-            redrawLineSegmentOnMap(
+            lineDrawing.redrawLineSegmentOnMap(
               segment.id,
               segment.center.lat,
               segment.center.lon,
@@ -536,7 +92,7 @@ export function useDrawing(mapRef: any) {
         case 'point': {
           const point = layersStore.points.find((p) => p.id === elementId);
           if (point && point.id) {
-            redrawPointOnMap(point.id, point.coordinates.lat, point.coordinates.lon);
+            pointDrawing.redrawPointOnMap(point.id, point.coordinates.lat, point.coordinates.lon);
           }
 
           break;
@@ -544,7 +100,7 @@ export function useDrawing(mapRef: any) {
         case 'polygon': {
           const polygon = layersStore.polygons.find((p) => p.id === elementId);
           if (polygon && polygon.id) {
-            redrawPolygonOnMap(polygon.id, polygon.points, polygon.color);
+            polygonDrawing.redrawPolygonOnMap(polygon.id, polygon.points, polygon.color);
           }
 
           break;
@@ -738,7 +294,7 @@ export function useDrawing(mapRef: any) {
     // Redraw circles (using redraw helper to avoid adding to store twice)
     for (const circle of circles) {
       if (circle.id) {
-        redrawCircleOnMap(
+        circleDrawing.redrawCircleOnMap(
           circle.id,
           circle.center.lat,
           circle.center.lon,
@@ -753,10 +309,10 @@ export function useDrawing(mapRef: any) {
       if (segment.id) {
         if (segment.mode === 'parallel' && segment.longitude !== undefined) {
           // Redraw parallel line
-          redrawParallelOnMap(segment.id, segment.longitude, segment.color);
+          lineDrawing.redrawParallelOnMap(segment.id, segment.longitude, segment.color);
         } else if (segment.endpoint) {
           // Redraw regular line segment
-          redrawLineSegmentOnMap(
+          lineDrawing.redrawLineSegmentOnMap(
             segment.id,
             segment.center.lat,
             segment.center.lon,
@@ -774,14 +330,19 @@ export function useDrawing(mapRef: any) {
     // Redraw points (using redraw helper to avoid adding to store twice)
     for (const point of points) {
       if (point.id) {
-        redrawPointOnMap(point.id, point.coordinates.lat, point.coordinates.lon, point.color);
+        pointDrawing.redrawPointOnMap(
+          point.id,
+          point.coordinates.lat,
+          point.coordinates.lon,
+          point.color
+        );
       }
     }
 
     // Redraw polygons (using redraw helper to avoid adding to store twice)
     for (const polygon of polygons) {
       if (polygon.id) {
-        redrawPolygonOnMap(polygon.id, polygon.points, polygon.color);
+        polygonDrawing.redrawPolygonOnMap(polygon.id, polygon.points, polygon.color);
       }
     }
 
@@ -838,187 +399,20 @@ export function useDrawing(mapRef: any) {
     }
   };
 
-  // Parallel drawing
-  const drawParallel = (latitude: number, name?: string): LineSegmentElement | null => {
-    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
-      return null;
-    }
-
-    const lineId = generateId();
-    const lineElement = {
-      id: lineId,
-      name: name || `Parallel ${layersStore.lineSegmentCount + 1}`,
-      center: { lat: latitude, lon: 0 },
-      mode: 'parallel' as const,
-      longitude: latitude,
-      color: DEFAULT_COLOR,
-    } as LineSegmentElement;
-
-    // Draw parallel (horizontal line) from west to east at constant latitude
-    const latLngs: [number, number][] = [
-      [latitude, -180],
-      [latitude, 180],
-    ];
-
-    const polyline = L.polyline(latLngs, {
-      color: lineElement.color,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
-
-    // Store Leaflet ID
-    lineElement.leafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, lineElement.leafletId);
-
-    // Add to store
-    layersStore.addLineSegment(lineElement);
-
-    // Fly to parallel bounds with animation
-    if (mapRef.flyToBounds) {
-      const bounds: [[number, number], [number, number]] = [
-        [latitude - 1, -180],
-        [latitude + 1, 180],
-      ];
-      mapRef.flyToBounds(bounds);
-    }
-
-    return lineElement;
-  };
-
-  // Update existing parallel
-  const updateParallel = (lineId: string, latitude: number, name: string) => {
-    if (!mapRef.map?.value || !lineId) {
-      return;
-    }
-
-    // Update store
-    layersStore.updateLineSegment(lineId, {
-      name,
-      center: { lat: latitude, lon: 0 },
-      mode: 'parallel',
-      longitude: latitude,
-    });
-
-    // Remove old parallel from map
-    const line = layersStore.lineSegments.find((l) => l.id === lineId);
-    if (line && line.leafletId) {
-      mapRef.map.value.eachLayer((layer: any) => {
-        if (L.stamp(layer) === line.leafletId) {
-          mapRef.map.value.removeLayer(layer);
-        }
-      });
-    }
-
-    // Redraw parallel
-    const latLngs: [number, number][] = [
-      [latitude, -180],
-      [latitude, 180],
-    ];
-
-    const polyline = L.polyline(latLngs, {
-      color: DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
-
-    // Update Leaflet ID in store
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, newLeafletId);
-  };
-
-  // Polygon drawing
-  const drawPolygon = (points: { lat: number; lon: number }[], name?: string, color?: string) => {
-    if (!mapRef.map?.value || !mapRef.polygonsGroup?.value) {
-      return null;
-    }
-
-    if (points.length < 3) {
-      console.warn('Polygon must have at least 3 points');
-      return null;
-    }
-
-    const polygonId = generateId();
-    const polygonColor = color || '#90EE90'; // Light green
-    const polygonElement: PolygonElement = {
-      id: polygonId,
-      name: name || `Polygon ${layersStore.polygonCount + 1}`,
-      points,
-      color: polygonColor,
-    };
-
-    // Create Leaflet polygon and add to polygons group
-    const latLngs = points.map((p) => [p.lat, p.lon] as [number, number]);
-    const polygon = L.polygon(latLngs, {
-      color: polygonColor,
-      fillColor: polygonColor,
-      fillOpacity: 0.2,
-      weight: 3,
-      opacity: 1,
-      className: `polygon-layer polygon-${polygonId}`,
-    }).addTo(mapRef.polygonsGroup.value);
-
-    // Store Leaflet ID
-    polygonElement.leafletId = L.stamp(polygon);
-    layersStore.storeLeafletId('polygon', polygonId, polygonElement.leafletId);
-
-    // Add to store
-    layersStore.addPolygon(polygonElement);
-
-    // Fly to polygon bounds with animation
-    if (mapRef.flyToBounds) {
-      const bounds = polygon.getBounds();
-      mapRef.flyToBounds([
-        [bounds.getSouth(), bounds.getWest()],
-        [bounds.getNorth(), bounds.getEast()],
-      ]);
-    }
-
-    return polygonElement;
-  };
-
-  // Helper function to redraw a polygon on the map without adding to store
-  const redrawPolygonOnMap = (
-    polygonId: string,
-    points: { lat: number; lon: number }[],
-    color = '#90EE90'
-  ) => {
-    if (!mapRef.map?.value || !mapRef.polygonsGroup?.value) {
-      return;
-    }
-
-    const polygonColor = color;
-    const latLngs = points.map((p) => [p.lat, p.lon] as [number, number]);
-
-    const polygon = L.polygon(latLngs, {
-      color: polygonColor,
-      fillColor: polygonColor,
-      fillOpacity: 0.2,
-      weight: 3,
-      opacity: 1,
-      className: `polygon-layer polygon-${polygonId}`,
-    }).addTo(mapRef.polygonsGroup.value);
-
-    const newLeafletId = L.stamp(polygon);
-    layersStore.storeLeafletId('polygon', polygonId, newLeafletId);
-
-    // Update the polygon element's leafletId in the store
-    const polygonElement = layersStore.polygons.find((p) => p.id === polygonId);
-    if (polygonElement) {
-      polygonElement.leafletId = newLeafletId;
-    }
-  };
-
   return {
-    drawCircle,
-    updateCircle,
-    drawLineSegment,
-    updateLineSegment,
-    drawParallel,
-    updateParallel,
-    drawPoint,
-    drawPolygon,
+    // Circle methods
+    drawCircle: circleDrawing.drawCircle,
+    updateCircle: circleDrawing.updateCircle,
+    // Line methods
+    drawLineSegment: lineDrawing.drawLineSegment,
+    updateLineSegment: lineDrawing.updateLineSegment,
+    drawParallel: lineDrawing.drawParallel,
+    updateParallel: lineDrawing.updateParallel,
+    // Point methods
+    drawPoint: pointDrawing.drawPoint,
+    // Polygon methods
+    drawPolygon: polygonDrawing.drawPolygon,
+    // Utility methods
     updateElementVisibility,
     deleteElement,
     clearAllElements,

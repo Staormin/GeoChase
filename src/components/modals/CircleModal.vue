@@ -72,7 +72,6 @@ import { useUIStore } from '@/stores/ui';
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const coordinatesStore = useCoordinatesStore();
-inject('mapContainer');
 const drawing = inject('drawing') as any;
 
 const form = ref({
