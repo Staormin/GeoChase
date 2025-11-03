@@ -87,7 +87,12 @@ export function useDrawing(mapRef: any) {
       case 'point': {
         const point = layersStore.points.find((p) => p.id === elementId);
         if (point && point.id) {
-          pointDrawing.redrawPointOnMap(point.id, point.coordinates.lat, point.coordinates.lon, point.color);
+          pointDrawing.redrawPointOnMap(
+            point.id,
+            point.coordinates.lat,
+            point.coordinates.lon,
+            point.color
+          );
         }
         break;
       }

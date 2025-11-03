@@ -1,8 +1,5 @@
 <template>
-  <div
-    v-if="uiStore.viewCaptureState.isCapturing"
-    class="view-capture-helper"
-  >
+  <div v-if="uiStore.viewCaptureState.isCapturing" class="view-capture-helper">
     <div class="helper-content">
       <v-icon size="24">mdi-camera</v-icon>
       <div class="helper-text">
@@ -12,9 +9,7 @@
         <div class="helper-instructions">
           Pan and zoom to desired view, then click anywhere to capture
         </div>
-        <div class="helper-cancel">
-          Press <kbd>ESC</kbd> to cancel
-        </div>
+        <div class="helper-cancel">Press <kbd>ESC</kbd> to cancel</div>
       </div>
     </div>
   </div>

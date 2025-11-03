@@ -37,88 +37,6 @@ export function useAnimation(
     });
   }
 
-  // Calculate bounds that include all elements
-  function calculateAllElementsBounds() {
-    const allElements = getAllElementsSorted();
-    let minLat = 90,
-      maxLat = -90,
-      minLon = 180,
-      maxLon = -180;
-
-    for (const element of allElements) {
-      switch (element.type) {
-        case 'circle': {
-          const lat = element.center.lat;
-          const lon = element.center.lon;
-          const radiusInDegrees = element.radius / 111; // Approximate: 111km per degree
-          minLat = Math.min(minLat, lat - radiusInDegrees);
-          maxLat = Math.max(maxLat, lat + radiusInDegrees);
-          minLon = Math.min(minLon, lon - radiusInDegrees);
-          maxLon = Math.max(maxLon, lon + radiusInDegrees);
-          break;
-        }
-        case 'lineSegment': {
-          minLat = Math.min(minLat, element.center.lat, element.endpoint?.lat || 90);
-          maxLat = Math.max(maxLat, element.center.lat, element.endpoint?.lat || -90);
-          minLon = Math.min(minLon, element.center.lon, element.endpoint?.lon || 180);
-          maxLon = Math.max(maxLon, element.center.lon, element.endpoint?.lon || -180);
-          break;
-        }
-        case 'point': {
-          minLat = Math.min(minLat, element.coordinates.lat);
-          maxLat = Math.max(maxLat, element.coordinates.lat);
-          minLon = Math.min(minLon, element.coordinates.lon);
-          maxLon = Math.max(maxLon, element.coordinates.lon);
-          break;
-        }
-        case 'polygon': {
-          for (const point of element.points) {
-            minLat = Math.min(minLat, point.lat);
-            maxLat = Math.max(maxLat, point.lat);
-            minLon = Math.min(minLon, point.lon);
-            maxLon = Math.max(maxLon, point.lon);
-          }
-          break;
-        }
-      }
-    }
-
-    if (minLat <= maxLat && minLon <= maxLon) {
-      return {
-        bounds: [
-          [minLat, minLon],
-          [maxLat, maxLon],
-        ] as [[number, number], [number, number]],
-        center: [(minLat + maxLat) / 2, (minLon + maxLon) / 2] as [number, number],
-      };
-    }
-
-    return null;
-  }
-
-  // Get coordinates for an element's center
-  function getElementCoordinates(element: any): [number, number] | null {
-    switch (element.type) {
-      case 'circle': {
-        return [element.center.lat, element.center.lon];
-      }
-      case 'lineSegment': {
-        return [element.center.lat, element.center.lon];
-      }
-      case 'point': {
-        return [element.coordinates.lat, element.coordinates.lon];
-      }
-      case 'polygon': {
-        const sumLat = element.points.reduce((sum: number, p: any) => sum + p.lat, 0);
-        const sumLon = element.points.reduce((sum: number, p: any) => sum + p.lon, 0);
-        return [sumLat / element.points.length, sumLon / element.points.length];
-      }
-      default: {
-        return null;
-      }
-    }
-  }
-
   function navigateToElement(element: any, onComplete?: () => void) {
     if (!mapContainer.map?.value) {
       onComplete?.();
@@ -232,30 +150,22 @@ export function useAnimation(
     // Start view is already set in startAnimationSequence
     // Just smoothly fly to the captured end view
     if (mapContainer.flyTo) {
-      mapContainer.flyTo(
-        config.endView.lat,
-        config.endView.lon,
-        config.endView.zoom,
-        {
-          duration: totalDuration, // flyTo expects milliseconds
-        }
-      );
+      mapContainer.flyTo(config.endView.lat, config.endView.lon, config.endView.zoom, {
+        duration: totalDuration, // flyTo expects milliseconds
+      });
     }
 
     // Stop animation after duration completes
-    setTimeout(
-      () => {
-        if (uiStore.animationState.isPlaying) {
-          uiStore.stopAnimation();
-          uiStore.addToast('Animation complete!', 'success');
-          // Keep sidebars closed after animation
-          sidebarOpen.value = false;
-          uiStore.setSidebarOpen(false);
-          uiStore.setLeftSidebarOpen(false);
-        }
-      },
-      totalDuration + 500
-    );
+    setTimeout(() => {
+      if (uiStore.animationState.isPlaying) {
+        uiStore.stopAnimation();
+        uiStore.addToast('Animation complete!', 'success');
+        // Keep sidebars closed after animation
+        sidebarOpen.value = false;
+        uiStore.setSidebarOpen(false);
+        uiStore.setLeftSidebarOpen(false);
+      }
+    }, totalDuration + 500);
   }
 
   // Store original visibility state before animation
@@ -374,11 +284,7 @@ export function useAnimation(
     if (config.type === 'smoothZoomOut') {
       // For smooth zoom out, set the start view IMMEDIATELY before countdown
       if (config.startView && mapContainer.setCenter) {
-        mapContainer.setCenter(
-          config.startView.lat,
-          config.startView.lon,
-          config.startView.zoom
-        );
+        mapContainer.setCenter(config.startView.lat, config.startView.lon, config.startView.zoom);
       }
 
       // For smoothZoomOut, keep elements at their current visibility state
@@ -469,11 +375,4 @@ export function useAnimation(
       }
     }
   );
-
-  return {
-    startAnimationSequence,
-    animateStartToFinish,
-    animateSmoothZoomOut,
-    navigateToElement,
-  };
 }

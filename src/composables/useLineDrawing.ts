@@ -39,7 +39,10 @@ export function useLineDrawing(mapRef: any) {
       const startTime = performance.now();
 
       // Create the feature ONCE and update its geometry during animation
-      const initialCoordinates = [fromLonLat([startLon, startLat]), fromLonLat([startLon, startLat])];
+      const initialCoordinates = [
+        fromLonLat([startLon, startLat]),
+        fromLonLat([startLon, startLat]),
+      ];
       const geometry = new LineString(initialCoordinates);
       const animatingFeature = new Feature({
         geometry,

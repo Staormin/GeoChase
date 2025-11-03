@@ -295,7 +295,7 @@ export function useMap(containerId: string, uiStore?: any) {
     if (map.value) {
       const view = map.value.getView();
       const currentZoom = view.getZoom();
-      const targetZoom = zoom ?? (currentZoom !== undefined ? currentZoom : DEFAULT_MAP_ZOOM);
+      const targetZoom = zoom ?? (currentZoom === undefined ? DEFAULT_MAP_ZOOM : currentZoom);
       const duration = options?.duration || 1500;
 
       // Ensure map size is updated before animation
@@ -346,8 +346,8 @@ export function useMap(containerId: string, uiStore?: any) {
 
     // Default padding
     let paddingTop = 50;
-    let paddingRight = 50;
-    let paddingBottom = 50;
+    const paddingRight = 50;
+    const paddingBottom = 50;
     let paddingLeft = 50;
 
     // Account for open panels (default: true)
@@ -381,7 +381,16 @@ export function useMap(containerId: string, uiStore?: any) {
     previousTopBarState?: boolean,
     newTopBarState?: boolean
   ): void => {
-    console.log('refitMap called - sidebar:', previousSidebarState, '->', newSidebarState, 'topBar:', previousTopBarState, '->', newTopBarState);
+    console.log(
+      'refitMap called - sidebar:',
+      previousSidebarState,
+      '->',
+      newSidebarState,
+      'topBar:',
+      previousTopBarState,
+      '->',
+      newTopBarState
+    );
 
     if (!map.value) {
       console.log('refitMap early return - no map');
@@ -403,7 +412,12 @@ export function useMap(containerId: string, uiStore?: any) {
     const mapWidth = mapSize[0];
     const mapHeight = mapSize[1];
     const currentCenter = view.getCenter();
-    if (!currentCenter || currentCenter.length !== 2 || currentCenter[0] === undefined || currentCenter[1] === undefined) {
+    if (
+      !currentCenter ||
+      currentCenter.length !== 2 ||
+      currentCenter[0] === undefined ||
+      currentCenter[1] === undefined
+    ) {
       console.log('refitMap early return - no currentCenter');
       return;
     }
@@ -426,13 +440,27 @@ export function useMap(containerId: string, uiStore?: any) {
         const previousVisibleCenter = sidebarWidth + (mapWidth - sidebarWidth) / 2;
         const newVisibleCenter = mapWidth / 2;
         offsetPixelsX = previousVisibleCenter - newVisibleCenter;
-        console.log('Sidebar closing - Previous center:', previousVisibleCenter, 'New center:', newVisibleCenter, 'Offset:', offsetPixelsX);
+        console.log(
+          'Sidebar closing - Previous center:',
+          previousVisibleCenter,
+          'New center:',
+          newVisibleCenter,
+          'Offset:',
+          offsetPixelsX
+        );
       } else if (!previousSidebarState && newSidebarState) {
         // Sidebar was closed, now open - shift LEFT to keep content visible
         const previousVisibleCenter = mapWidth / 2;
         const newVisibleCenter = sidebarWidth + (mapWidth - sidebarWidth) / 2;
         offsetPixelsX = previousVisibleCenter - newVisibleCenter;
-        console.log('Sidebar opening - Previous center:', previousVisibleCenter, 'New center:', newVisibleCenter, 'Offset:', offsetPixelsX);
+        console.log(
+          'Sidebar opening - Previous center:',
+          previousVisibleCenter,
+          'New center:',
+          newVisibleCenter,
+          'Offset:',
+          offsetPixelsX
+        );
       }
     }
 
@@ -446,13 +474,27 @@ export function useMap(containerId: string, uiStore?: any) {
         const previousVisibleCenter = topBarHeight + (mapHeight - topBarHeight) / 2;
         const newVisibleCenter = mapHeight / 2;
         offsetPixelsY = newVisibleCenter - previousVisibleCenter;
-        console.log('Top bar closing - Previous center:', previousVisibleCenter, 'New center:', newVisibleCenter, 'Offset:', offsetPixelsY);
+        console.log(
+          'Top bar closing - Previous center:',
+          previousVisibleCenter,
+          'New center:',
+          newVisibleCenter,
+          'Offset:',
+          offsetPixelsY
+        );
       } else if (!previousTopBarState && newTopBarState) {
         // Top bar was closed, now open - shift DOWN to keep content visible
         const previousVisibleCenter = mapHeight / 2;
         const newVisibleCenter = topBarHeight + (mapHeight - topBarHeight) / 2;
         offsetPixelsY = newVisibleCenter - previousVisibleCenter;
-        console.log('Top bar opening - Previous center:', previousVisibleCenter, 'New center:', newVisibleCenter, 'Offset:', offsetPixelsY);
+        console.log(
+          'Top bar opening - Previous center:',
+          previousVisibleCenter,
+          'New center:',
+          newVisibleCenter,
+          'Offset:',
+          offsetPixelsY
+        );
       }
     }
 
@@ -503,7 +545,7 @@ export function useMap(containerId: string, uiStore?: any) {
 
   const onMapRightClick = (callback: (lat: number, lon: number) => void): (() => void) => {
     const element = document.querySelector(`#${containerId}`);
-    if (!element) {
+    if (!element || !map.value) {
       return () => {};
     }
 
@@ -514,7 +556,8 @@ export function useMap(containerId: string, uiStore?: any) {
         return;
       }
 
-      const pixel = [mouseEvent.offsetX, mouseEvent.offsetY];
+      // Use map.getEventPixel to correctly convert DOM event to OpenLayers pixel coordinates
+      const pixel = map.value.getEventPixel(mouseEvent);
       const coordinate = map.value.getCoordinateFromPixel(pixel);
       if (coordinate) {
         const lonLat = toLonLat(coordinate);
@@ -573,25 +616,25 @@ export function useMap(containerId: string, uiStore?: any) {
 
           // Get all canvas elements from the map
           const canvases = document.querySelectorAll(`#${containerId} canvas`);
-          canvases.forEach((canvas) => {
+          for (const canvas of canvases) {
             const htmlCanvas = canvas as HTMLCanvasElement;
             if (htmlCanvas.width > 0) {
               const opacity = (canvas.parentNode as HTMLElement)?.style.opacity || '1';
-              mapContext.globalAlpha = parseFloat(opacity);
+              mapContext.globalAlpha = Number.parseFloat(opacity);
               const transform = htmlCanvas.style.transform;
 
               // Get canvas position
               const matrix = transform?.match(/matrix.*\((.+)\)/);
               if (matrix && matrix[1]) {
                 const values = matrix[1].split(', ');
-                const x = parseFloat(values[4] || '0');
-                const y = parseFloat(values[5] || '0');
+                const x = Number.parseFloat(values[4] || '0');
+                const y = Number.parseFloat(values[5] || '0');
                 mapContext.drawImage(htmlCanvas, x, y);
               } else {
                 mapContext.drawImage(htmlCanvas, 0, 0);
               }
             }
-          });
+          }
 
           // Convert to data URL
           const dataURL = mapCanvas.toDataURL('image/png');

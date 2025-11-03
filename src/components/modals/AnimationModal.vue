@@ -48,19 +48,13 @@
               <!-- Image Preview -->
               <div v-if="form.startView?.screenshot" class="view-preview mb-2">
                 <img
-                  :src="form.startView.screenshot"
                   alt="Start view preview"
                   class="preview-image"
+                  :src="form.startView.screenshot"
                 />
               </div>
 
-              <v-btn
-                block
-                color="primary"
-                size="small"
-                variant="tonal"
-                @click="handleSetStartView"
-              >
+              <v-btn block color="primary" size="small" variant="tonal" @click="handleSetStartView">
                 <v-icon start>mdi-camera-plus</v-icon>
                 {{ form.startView ? 'Update' : 'Set' }} Start
               </v-btn>
@@ -77,20 +71,10 @@
 
               <!-- Image Preview -->
               <div v-if="form.endView?.screenshot" class="view-preview mb-2">
-                <img
-                  :src="form.endView.screenshot"
-                  alt="End view preview"
-                  class="preview-image"
-                />
+                <img alt="End view preview" class="preview-image" :src="form.endView.screenshot" />
               </div>
 
-              <v-btn
-                block
-                color="primary"
-                size="small"
-                variant="tonal"
-                @click="handleSetEndView"
-              >
+              <v-btn block color="primary" size="small" variant="tonal" @click="handleSetEndView">
                 <v-icon start>mdi-camera-plus</v-icon>
                 {{ form.endView ? 'Update' : 'Set' }} End
               </v-btn>
@@ -173,30 +157,13 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-
-interface ViewCapture {
-  lat: number;
-  lon: number;
-  zoom: number;
-  screenshot?: string;
-}
-
-interface AnimationConfig {
-  type: 'smoothZoomOut' | 'startToFinish';
-  startingPoint: string; // element ID
-  zoomSpeed: number; // 1-10
-  transitionSpeed: number; // 1-10
-  hideLabelsAndNotes: boolean;
-  startView?: ViewCapture;
-  endView?: ViewCapture;
-}
 
 // Use UI store's animation config directly so it updates when views are captured
 const form = computed({
@@ -235,32 +202,15 @@ const allElements = computed(() => {
 
 const totalElements = computed(() => allElements.value.length);
 
-const elementOptions = computed(() => {
-  if (allElements.value.length === 0) return [];
-
-  return allElements.value.map((el, index) => ({
-    value: el.id,
-    title: el.name || `${el.displayType} ${index + 1}`,
-    subtitle: `${el.displayType} • ${index === 0 ? 'Oldest' : index === allElements.value.length - 1 ? 'Newest' : `#${index + 1}`}`,
-  }));
-});
-
-// Set default starting point to oldest element
-const oldestElement = computed(() => allElements.value[0]?.id || '');
-
 const canStartAnimation = computed(() => {
   if (totalElements.value === 0) return false;
-  if (form.value.type === 'smoothZoomOut') {
-    // For smoothZoomOut, require both start and end views to be set
-    if (!form.value.startView || !form.value.endView) return false;
-  }
+  if (
+    form.value.type === 'smoothZoomOut' && // For smoothZoomOut, require both start and end views to be set
+    (!form.value.startView || !form.value.endView)
+  )
+    return false;
   return true;
 });
-
-function getElementName(elementId: string) {
-  const element = allElements.value.find((el) => el.id === elementId);
-  return element?.name || 'Unknown';
-}
 
 function getSpeedLabel(speed: number) {
   if (speed <= 2) return 'Very Slow';

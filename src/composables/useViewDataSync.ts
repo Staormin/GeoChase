@@ -2,12 +2,12 @@
  * Composable for syncing view data (panels state and map view) with project storage
  */
 
+import type { MapContainer } from './useMap';
 import type { ViewData } from '@/services/storage';
 import { fromLonLat } from 'ol/proj';
 import { watch } from 'vue';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
-import type { MapContainer } from './useMap';
 
 export function useViewDataSync(mapContainer: MapContainer) {
   const projectsStore = useProjectsStore();

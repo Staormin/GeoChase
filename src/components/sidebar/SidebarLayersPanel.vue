@@ -359,7 +359,9 @@ const allCirclesVisible = computed(() => {
 });
 
 const allLinesVisible = computed(() => {
-  return layersStore.lineSegments.every((l) => l.id && uiStore.isElementVisible('lineSegment', l.id));
+  return layersStore.lineSegments.every(
+    (l) => l.id && uiStore.isElementVisible('lineSegment', l.id)
+  );
 });
 
 const allPointsVisible = computed(() => {
@@ -666,26 +668,30 @@ function toggleAllElementsOfType(elementType: 'circle' | 'lineSegment' | 'point'
   let allVisible: boolean;
 
   switch (elementType) {
-    case 'circle':
+    case 'circle': {
       elements = layersStore.circles;
       typeName = 'circles';
       allVisible = allCirclesVisible.value;
       break;
-    case 'lineSegment':
+    }
+    case 'lineSegment': {
       elements = layersStore.lineSegments;
       typeName = 'lines';
       allVisible = allLinesVisible.value;
       break;
-    case 'point':
+    }
+    case 'point': {
       elements = layersStore.points;
       typeName = 'points';
       allVisible = allPointsVisible.value;
       break;
-    case 'polygon':
+    }
+    case 'polygon': {
       elements = layersStore.polygons;
       typeName = 'polygons';
       allVisible = allPolygonsVisible.value;
       break;
+    }
   }
 
   // Toggle visibility: if all are visible, hide all; otherwise show all
