@@ -1,5 +1,6 @@
 import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
+import { inAndOut as easeInAndOut } from 'ol/easing';
 import { getDistance } from 'ol/sphere';
 import { type Ref, watch } from 'vue';
 import { useLayersStore } from '@/stores/layers';
@@ -115,7 +116,10 @@ export function useAnimation(
 
     // Use OpenLayers view.animate() with callback
     if (mapContainer.flyTo) {
-      mapContainer.flyTo(lat, lon, zoom, { duration: flyDuration });
+      mapContainer.flyTo(lat, lon, zoom, {
+        duration: flyDuration,
+        easing: easeInAndOut, // Smooth easing for element navigation
+      });
 
       // Call onComplete after animation duration
       if (onComplete) {
@@ -148,10 +152,11 @@ export function useAnimation(
     const totalDuration = (12 - config.zoomSpeed) * 1000; // Convert to milliseconds
 
     // Start view is already set in startAnimationSequence
-    // Just smoothly fly to the captured end view
+    // Just smoothly fly to the captured end view with inAndOut easing for smoother animation
     if (mapContainer.flyTo) {
       mapContainer.flyTo(config.endView.lat, config.endView.lon, config.endView.zoom, {
         duration: totalDuration, // flyTo expects milliseconds
+        easing: easeInAndOut, // Smooth easing: start slow, speed up, slow down at end
       });
     }
 

@@ -96,13 +96,13 @@ export function useMap(containerId: string, uiStore?: any) {
         target: containerId,
         layers: [
           new TileLayer({
-            preload: 2, // Preload tiles 2 zoom levels ahead for smoother animations
+            preload: 3, // Preload tiles 3 zoom levels ahead for smoother animations
             source: new XYZ({
               url: getMapTilesUrl(),
               crossOrigin: 'anonymous',
               maxZoom: 18,
               transition: 0, // Disable tile fade-in to prevent mixing tiles from different zoom levels
-              cacheSize: 256, // Increased cache size to keep more tiles in memory (default is 128)
+              cacheSize: 512, // Increased cache size to keep more tiles in memory (default is 128)
               interpolate: true, // Enable smooth image interpolation during scaling
             }),
           }),
@@ -290,7 +290,7 @@ export function useMap(containerId: string, uiStore?: any) {
     lat: number,
     lon: number,
     zoom?: number,
-    options?: { duration?: number }
+    options?: { duration?: number; easing?: (t: number) => number }
   ): void => {
     if (map.value) {
       const view = map.value.getView();
@@ -310,6 +310,7 @@ export function useMap(containerId: string, uiStore?: any) {
         center: targetCoordinate,
         zoom: targetZoom,
         duration,
+        easing: options?.easing, // Apply custom easing function if provided
       });
     }
   };
