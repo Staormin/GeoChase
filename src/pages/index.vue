@@ -1,15 +1,16 @@
 <template>
-  <!-- Top bar (only shown when not in navigation/free hand mode) -->
-  <TopBar />
+  <!-- Top bar (only shown when not in navigation/free hand mode or view capture mode) -->
+  <TopBar v-if="!uiStore.viewCaptureState.isCapturing" />
 
   <!-- Navigation bar (shown during navigation/free hand modes) -->
-  <NavigationBar />
+  <NavigationBar v-if="!uiStore.viewCaptureState.isCapturing" />
 
   <!-- Fullscreen map -->
   <div id="map" :class="{ 'freehand-drawing': uiStore.freeHandDrawing.isDrawing }" />
 
   <!-- Sidebar -->
   <v-navigation-drawer
+    v-if="!uiStore.viewCaptureState.isCapturing"
     v-model="sidebarOpen"
     location="left"
     style="top: 64px; height: calc(100vh - 64px)"
@@ -23,7 +24,7 @@
   </v-navigation-drawer>
 
   <!-- Sidebar toggle button -->
-  <SidebarToggleButton v-model="sidebarOpen" />
+  <SidebarToggleButton v-if="!uiStore.viewCaptureState.isCapturing" v-model="sidebarOpen" />
 
   <!-- Modals -->
   <ModalsContainer />
@@ -37,6 +38,9 @@
 
   <!-- Precision mode indicator -->
   <PrecisionModeIndicator :precision-lens="precisionLens" />
+
+  <!-- View capture helper -->
+  <ViewCaptureHelper />
 </template>
 
 <script lang="ts" setup>
@@ -52,19 +56,22 @@ import ModalsContainer from '@/components/ui/ModalsContainer.vue';
 import PrecisionModeIndicator from '@/components/ui/PrecisionModeIndicator.vue';
 import SidebarToggleButton from '@/components/ui/SidebarToggleButton.vue';
 import ToastNotifications from '@/components/ui/ToastNotifications.vue';
+import ViewCaptureHelper from '@/components/ui/ViewCaptureHelper.vue';
 import { useAnimation } from '@/composables/useAnimation';
 import { useAppSetup } from '@/composables/useAppSetup';
 import { useAutoSave } from '@/composables/useAutoSave';
 import { useDrawing } from '@/composables/useDrawing';
 import { useMap } from '@/composables/useMap';
 import { usePrecisionLens } from '@/composables/usePrecisionLens';
+import { useViewDataSync } from '@/composables/useViewDataSync';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
 
-const mapContainer = useMap('map');
+const mapContainer = useMap('map', uiStore);
 const drawing = useDrawing(mapContainer);
 const precisionLens = usePrecisionLens(mapContainer);
+const viewDataSync = useViewDataSync(mapContainer);
 
 // Create a ref for note tooltips (will be initialized after map is ready)
 const noteTooltipsRef = ref<ReturnType<typeof useNoteTooltips> | null>(null);
@@ -75,12 +82,69 @@ provide('drawing', drawing);
 provide('noteTooltips', noteTooltipsRef);
 
 const sidebarOpen = ref(true);
+const topBarOpen = ref(true);
+
+// Sync local sidebarOpen with uiStore
 watch(
   () => uiStore.sidebarOpen,
   (newValue) => {
     sidebarOpen.value = newValue;
   }
 );
+
+// Sync local topBarOpen with uiStore
+watch(
+  () => uiStore.topBarOpen,
+  (newValue) => {
+    topBarOpen.value = newValue;
+  }
+);
+
+// Watch local sidebarOpen and refit map when it changes
+watch(sidebarOpen, async (newValue, oldValue) => {
+  console.log('Sidebar state changed - Old:', oldValue, 'New:', newValue);
+
+  // Sync to uiStore
+  uiStore.sidebarOpen = newValue;
+
+  // Refit map when sidebar opens/closes (after DOM updates)
+  if (oldValue !== undefined && mapContainer.isMapInitialized.value) {
+    // Wait for Vue to update the DOM
+    await nextTick();
+
+    // Force map to update its size calculation
+    if (mapContainer.map.value) {
+      mapContainer.map.value.updateSize();
+    }
+
+    // Refit immediately for snappy response
+    console.log('Refitting map - Previous sidebar state:', oldValue, 'New state:', newValue);
+    mapContainer.refitMap(oldValue, newValue, undefined, undefined);
+  }
+});
+
+// Watch local topBarOpen and refit map when it changes
+watch(topBarOpen, async (newValue, oldValue) => {
+  console.log('Top bar state changed - Old:', oldValue, 'New:', newValue);
+
+  // Sync to uiStore
+  uiStore.topBarOpen = newValue;
+
+  // Refit map when top bar opens/closes (after DOM updates)
+  if (oldValue !== undefined && mapContainer.isMapInitialized.value) {
+    // Wait for Vue to update the DOM
+    await nextTick();
+
+    // Force map to update its size calculation
+    if (mapContainer.map.value) {
+      mapContainer.map.value.updateSize();
+    }
+
+    // Refit immediately for snappy response
+    console.log('Refitting map - Previous top bar state:', oldValue, 'New state:', newValue);
+    mapContainer.refitMap(undefined, undefined, oldValue, newValue);
+  }
+});
 
 // Free hand drawing cursor tooltip
 const cursorTooltip = ref<{
@@ -104,7 +168,13 @@ useAutoSave();
 useAnimation(mapContainer, drawing, sidebarOpen);
 
 // Initialize map on mount
-onMounted(useAppSetup(mapContainer, drawing, noteTooltipsRef, cursorTooltip));
+onMounted(async () => {
+  await useAppSetup(mapContainer, drawing, noteTooltipsRef, cursorTooltip)();
+
+  // Setup view data sync watchers after map is initialized
+  // The initial view has already been restored during map initialization
+  viewDataSync.setupWatchers();
+});
 </script>
 
 <style scoped>
@@ -148,13 +218,8 @@ body,
   z-index: 0;
 }
 
-:global(.leaflet-container) {
+:global(.ol-viewport) {
   background: rgb(var(--v-theme-background));
-}
-
-:global(.leaflet-grab),
-:global(.leaflet-grab:active) {
-  cursor: default !important;
 }
 
 /* Cursor change for free hand drawing */

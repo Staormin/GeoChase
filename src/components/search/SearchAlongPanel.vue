@@ -64,7 +64,7 @@
 </template>
 
 <script lang="ts" setup>
-import type L from 'leaflet';
+import type VectorLayer from 'ol/layer/Vector';
 import type { AddressSearchResult } from '@/services/geoportail';
 import * as turf from '@turf/turf';
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
@@ -101,7 +101,7 @@ const liveAltitudeRange = ref<[number, number]>([0, 0]); // Live value shown whi
 const cachedFilteredResults = ref<AddressSearchResult[]>([]);
 const cachedUnfilteredResults = ref<AddressSearchResult[]>([]); // Results before sorting
 
-let searchZoneLayer: L.FeatureGroup | null = null;
+let searchZoneLayer: VectorLayer<any> | null = null;
 let filterTimeoutId: number | null = null;
 let sortTimeoutId: number | null = null;
 
@@ -190,7 +190,7 @@ const pathPoints = computed(() => {
       );
     } else if (segment.endpoint) {
       // Generate points along the line segment using linear interpolation
-      // This ensures the buffer zone aligns with the displayed straight line in Leaflet
+      // This ensures the buffer zone aligns with the displayed straight line in OpenLayers
       // Works for coordinate, azimuth, and intersection modes
       return generateLinePointsLinear(
         segment.center.lat,

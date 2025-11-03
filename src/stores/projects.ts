@@ -2,7 +2,7 @@
  * Projects store - Manages project save/load operations
  */
 
-import type { ProjectData, ProjectLayerData } from '@/services/storage';
+import type { ProjectData, ProjectLayerData, ViewData } from '@/services/storage';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import * as storage from '@/services/storage';
@@ -11,6 +11,10 @@ export const useProjectsStore = defineStore('projects', () => {
   // State
   const projects = ref<ProjectData[]>([]);
   const activeProjectId = ref<string | null>(null);
+
+  // Debounce timer for view data saving
+  let viewDataSaveTimer: ReturnType<typeof setTimeout> | null = null;
+  const VIEW_DATA_SAVE_DELAY = 250; // 250ms delay (1/4 second)
 
   // Computed
   const projectCount = computed(() => projects.value.length);
@@ -135,6 +139,72 @@ export const useProjectsStore = defineStore('projects', () => {
     }
   }
 
+  /**
+   * Update view data for the active project with debouncing
+   * This prevents excessive writes to localStorage
+   */
+  function updateViewData(viewData: ViewData): void {
+    // Capture the current active project ID to avoid race conditions
+    const projectIdAtCallTime = activeProjectId.value;
+    if (!projectIdAtCallTime) {
+      return;
+    }
+
+    const currentProject = activeProject.value;
+    if (!currentProject) {
+      return;
+    }
+
+    // Update the in-memory project immediately
+    const index = projects.value.indexOf(currentProject);
+    if (index !== -1) {
+      projects.value[index] = {
+        ...currentProject,
+        viewData,
+        updatedAt: Date.now(),
+      };
+    }
+
+    // Debounce the localStorage write
+    if (viewDataSaveTimer) {
+      clearTimeout(viewDataSaveTimer);
+    }
+
+    viewDataSaveTimer = setTimeout(() => {
+      // Verify the project ID hasn't changed during the debounce period
+      if (activeProjectId.value !== projectIdAtCallTime) {
+        viewDataSaveTimer = null;
+        return;
+      }
+
+      if (index !== -1 && currentProject) {
+        // Save to localStorage
+        const allProjects = storage.getAllProjects();
+        const storageIndex = allProjects.findIndex((p) => p.id === projectIdAtCallTime);
+        if (storageIndex !== -1 && allProjects[storageIndex]) {
+          const project = allProjects[storageIndex];
+          allProjects[storageIndex] = {
+            id: project.id,
+            name: project.name,
+            data: project.data,
+            viewData,
+            createdAt: project.createdAt,
+            updatedAt: Date.now(),
+          };
+          storage.saveProjectsToStorage(allProjects);
+        }
+      }
+      viewDataSaveTimer = null;
+    }, VIEW_DATA_SAVE_DELAY);
+  }
+
+  /**
+   * Get view data for the active project
+   */
+  function getViewData(): ViewData | null {
+    return activeProject.value?.viewData || null;
+  }
+
   // Initialize on store creation
   loadProjects();
   loadActiveProject();
@@ -163,5 +233,7 @@ export const useProjectsStore = defineStore('projects', () => {
     exportProjectAsJSON,
     importProject,
     renameProject,
+    updateViewData,
+    getViewData,
   };
 });

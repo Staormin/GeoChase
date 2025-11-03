@@ -58,6 +58,28 @@ export interface AnimationState {
   countdown: number;
 }
 
+export interface ViewCapture {
+  lat: number;
+  lon: number;
+  zoom: number;
+  screenshot?: string; // Base64 encoded image data URL
+}
+
+export interface AnimationConfig {
+  type: 'smoothZoomOut' | 'startToFinish';
+  startingPoint: string; // element ID
+  zoomSpeed: number; // 1-10
+  transitionSpeed: number; // 1-10
+  hideLabelsAndNotes: boolean;
+  startView?: ViewCapture; // Custom start view
+  endView?: ViewCapture; // Custom end view
+}
+
+export interface ViewCaptureState {
+  isCapturing: boolean;
+  captureType: 'start' | 'end' | null;
+}
+
 export const useUIStore = defineStore('ui', () => {
   // State
   const openModals = ref<Set<string>>(new Set());
@@ -65,6 +87,7 @@ export const useUIStore = defineStore('ui', () => {
   const toasts = ref<Toast[]>([]);
   const isLoading = ref(false);
   const selectedProjectIndex = ref<number | null>(null);
+  const topBarOpen = ref(true);
   const sidebarOpen = ref(true);
   const leftSidebarOpen = ref(false);
   const coordinatesFormData = ref<{ name: string; coordinates: string } | null>(null);
@@ -98,6 +121,17 @@ export const useUIStore = defineStore('ui', () => {
     isPlaying: false,
     currentElementIndex: -1,
     countdown: 0,
+  });
+  const animationConfig = ref<AnimationConfig>({
+    type: 'smoothZoomOut',
+    startingPoint: '',
+    zoomSpeed: 5,
+    transitionSpeed: 5,
+    hideLabelsAndNotes: false,
+  });
+  const viewCaptureState = ref<ViewCaptureState>({
+    isCapturing: false,
+    captureType: null,
   });
 
   // Computed
@@ -164,6 +198,14 @@ export const useUIStore = defineStore('ui', () => {
 
   function setSelectedProjectIndex(index: number | null): void {
     selectedProjectIndex.value = index;
+  }
+
+  function toggleTopBar(): void {
+    topBarOpen.value = !topBarOpen.value;
+  }
+
+  function setTopBarOpen(open: boolean): void {
+    topBarOpen.value = open;
   }
 
   function toggleSidebar(): void {
@@ -351,6 +393,38 @@ export const useUIStore = defineStore('ui', () => {
     animationState.value.currentElementIndex = index;
   }
 
+  function setAnimationConfig(config: AnimationConfig): void {
+    animationConfig.value = config;
+  }
+
+  function startViewCapture(captureType: 'start' | 'end'): void {
+    viewCaptureState.value = {
+      isCapturing: true,
+      captureType,
+    };
+  }
+
+  function stopViewCapture(): void {
+    viewCaptureState.value = {
+      isCapturing: false,
+      captureType: null,
+    };
+  }
+
+  function captureView(view: ViewCapture): void {
+    if (!viewCaptureState.value.isCapturing || !viewCaptureState.value.captureType) {
+      return;
+    }
+
+    if (viewCaptureState.value.captureType === 'start') {
+      animationConfig.value.startView = view;
+    } else {
+      animationConfig.value.endView = view;
+    }
+
+    stopViewCapture();
+  }
+
   return {
     // State
     openModals,
@@ -358,6 +432,7 @@ export const useUIStore = defineStore('ui', () => {
     toasts,
     isLoading,
     selectedProjectIndex,
+    topBarOpen,
     sidebarOpen,
     leftSidebarOpen,
     coordinatesFormData,
@@ -376,6 +451,8 @@ export const useUIStore = defineStore('ui', () => {
     bearingsPanel,
     notePreFillElement,
     animationState,
+    animationConfig,
+    viewCaptureState,
 
     // Computed
     isModalOpen,
@@ -393,6 +470,8 @@ export const useUIStore = defineStore('ui', () => {
     clearAllToasts,
     setLoading,
     setSelectedProjectIndex,
+    toggleTopBar,
+    setTopBarOpen,
     toggleSidebar,
     setSidebarOpen,
     toggleLeftSidebar,
@@ -428,5 +507,9 @@ export const useUIStore = defineStore('ui', () => {
     stopAnimation,
     setAnimationCountdown,
     setAnimationIndex,
+    setAnimationConfig,
+    startViewCapture,
+    stopViewCapture,
+    captureView,
   };
 });

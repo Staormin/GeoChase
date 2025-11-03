@@ -3,9 +3,11 @@
  */
 
 import type { CircleElement } from '@/services/storage';
-import L from 'leaflet';
+import { Feature } from 'ol';
+import { LineString } from 'ol/geom';
+import { circular as circularPolygon } from 'ol/geom/Polygon';
+import { Stroke, Style } from 'ol/style';
 import { v4 as uuidv4 } from 'uuid';
-import { generateCircle } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 
 const DEFAULT_COLOR = '#000000';
@@ -23,33 +25,50 @@ export function useCircleDrawing(mapRef: any) {
     radiusKm: number,
     color?: string
   ) => {
-    if (!mapRef.map?.value || !mapRef.circlesGroup?.value) {
+    if (!mapRef.map?.value || !mapRef.circlesSource?.value) {
       return;
     }
 
-    const points = generateCircle(centerLat, centerLon, radiusKm, 360);
-    const latLngs = points.map((p) => [p.lat, p.lon] as [number, number]);
+    // Use OpenLayers native geodesic circle generation
+    // Note: circular() expects center in lon/lat (EPSG:4326), not Web Mercator
+    const radiusMeters = radiusKm * 1000; // Convert km to meters
+    const circlePolygon = circularPolygon([centerLon, centerLat], radiusMeters, 64);
 
-    const polyline = L.polyline(latLngs, {
-      color: color || DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `circle-layer circle-${circleId}`,
-    }).addTo(mapRef.circlesGroup.value);
+    // Transform from EPSG:4326 to EPSG:3857 (Web Mercator) for the map
+    circlePolygon.transform('EPSG:4326', 'EPSG:3857');
 
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('circle', circleId, newLeafletId);
+    // Get the coordinates from the polygon's linear ring
+    const coordinates = circlePolygon.getLinearRing(0)!.getCoordinates();
 
-    // Update the circle element's leafletId in the store
+    const geometry = new LineString(coordinates);
+    const feature = new Feature({
+      geometry,
+      id: circleId,
+      type: 'circle',
+    });
+
+    feature.setId(circleId);
+    feature.setStyle(
+      new Style({
+        stroke: new Stroke({
+          color: color || DEFAULT_COLOR,
+          width: 3,
+        }),
+      })
+    );
+
+    mapRef.circlesSource.value.addFeature(feature);
+
+    // Update the circle element's feature reference in the store
     const circle = layersStore.circles.find((c) => c.id === circleId);
     if (circle) {
-      circle.leafletId = newLeafletId;
+      circle.mapElementId = circleId; // Using same ID for OpenLayers feature
     }
   };
 
   // Circle drawing
   const drawCircle = (centerLat: number, centerLon: number, radiusKm: number, name?: string) => {
-    if (!mapRef.map?.value || !mapRef.circlesGroup?.value) {
+    if (!mapRef.map?.value || !mapRef.circlesSource?.value) {
       return null;
     }
 
@@ -62,32 +81,55 @@ export function useCircleDrawing(mapRef: any) {
       color: DEFAULT_COLOR,
     };
 
-    // Generate circle points
-    const points = generateCircle(centerLat, centerLon, radiusKm, 360);
-    const latLngs = points.map((p) => [p.lat, p.lon] as [number, number]);
+    // Use OpenLayers native geodesic circle generation
+    // Note: circular() expects center in lon/lat (EPSG:4326), not Web Mercator
+    const radiusMeters = radiusKm * 1000; // Convert km to meters
+    const circlePolygon = circularPolygon([centerLon, centerLat], radiusMeters, 64);
 
-    // Create Leaflet polyline and add to circles group
-    const polyline = L.polyline(latLngs, {
-      color: circleElement.color,
-      weight: 3,
-      opacity: 1,
-      className: `circle-layer circle-${circleId}`,
-    }).addTo(mapRef.circlesGroup.value);
+    // Transform from EPSG:4326 to EPSG:3857 (Web Mercator) for the map
+    circlePolygon.transform('EPSG:4326', 'EPSG:3857');
 
-    // Store Leaflet ID
-    circleElement.leafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('circle', circleId, circleElement.leafletId);
+    // Get the coordinates from the polygon's linear ring
+    const coordinates = circlePolygon.getLinearRing(0)!.getCoordinates();
+
+    // Create OpenLayers feature
+    const geometry = new LineString(coordinates);
+    const feature = new Feature({
+      geometry,
+      id: circleId,
+      type: 'circle',
+    });
+
+    feature.setId(circleId);
+    feature.setStyle(
+      new Style({
+        stroke: new Stroke({
+          color: circleElement.color,
+          width: 3,
+        }),
+      })
+    );
+
+    // Store feature ID
+    circleElement.mapElementId = circleId;
+    layersStore.storeMapElementId('circle', circleId, circleId);
 
     // Add to store
     layersStore.addCircle(circleElement);
 
-    // Fly to circle bounds with animation
-    if (mapRef.flyToBounds) {
-      const bounds: [[number, number], [number, number]] = [
-        [centerLat - radiusKm / 111, centerLon - radiusKm / 111],
-        [centerLat + radiusKm / 111, centerLon + radiusKm / 111],
-      ];
-      mapRef.flyToBounds(bounds);
+    // Add feature to map AFTER adding to store
+    mapRef.circlesSource.value.addFeature(feature);
+
+    // Fly to circle bounds with animation AFTER drawing
+    // Use requestAnimationFrame to ensure the feature is rendered before flying
+    if (mapRef.flyToBoundsWithPanels) {
+      requestAnimationFrame(() => {
+        const bounds: [[number, number], [number, number]] = [
+          [centerLat - radiusKm / 111, centerLon - radiusKm / 111],
+          [centerLat + radiusKm / 111, centerLon + radiusKm / 111],
+        ];
+        mapRef.flyToBoundsWithPanels(bounds);
+      });
     }
 
     return circleElement;
@@ -113,31 +155,13 @@ export function useCircleDrawing(mapRef: any) {
     });
 
     // Remove old circle from map
-    const circle = layersStore.circles.find((c) => c.id === circleId);
-    if (circle && circle.leafletId) {
-      const elements = document.querySelectorAll(`.circle-${circleId}`);
-      for (const el of elements) {
-        const svgElement = el.closest('svg');
-        if (svgElement) {
-          svgElement.remove();
-        }
-      }
+    const feature = mapRef.circlesSource.value?.getFeatureById(circleId);
+    if (feature) {
+      mapRef.circlesSource.value.removeFeature(feature);
     }
 
     // Redraw circle
-    const points = generateCircle(centerLat, centerLon, radiusKm, 360);
-    const latLngs = points.map((p) => [p.lat, p.lon] as [number, number]);
-
-    const polyline = L.polyline(latLngs, {
-      color: DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `circle-layer circle-${circleId}`,
-    }).addTo(mapRef.circlesGroup.value);
-
-    // Update Leaflet ID in store
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('circle', circleId, newLeafletId);
+    redrawCircleOnMap(circleId, centerLat, centerLon, radiusKm, DEFAULT_COLOR);
   };
 
   return {

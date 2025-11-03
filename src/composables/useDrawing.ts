@@ -2,7 +2,6 @@
  * Composable for drawing shapes on the map (orchestrator)
  */
 
-import L from 'leaflet';
 import { useLayersStore } from '@/stores/layers';
 import { useCircleDrawing } from './useCircleDrawing';
 import { useLineDrawing } from './useLineDrawing';
@@ -18,106 +17,160 @@ export function useDrawing(mapRef: any) {
   const pointDrawing = usePointDrawing(mapRef);
   const polygonDrawing = usePolygonDrawing(mapRef);
 
+  // Helper to get source for element type
+  const getSourceForElementType = (elementType: string) => {
+    switch (elementType) {
+      case 'circle': {
+        return mapRef.circlesSource?.value;
+      }
+      case 'lineSegment': {
+        return mapRef.linesSource?.value;
+      }
+      case 'point': {
+        return mapRef.pointsSource?.value;
+      }
+      case 'polygon': {
+        return mapRef.polygonsSource?.value;
+      }
+      default: {
+        return null;
+      }
+    }
+  };
+
+  // Helper to remove element and associated overlays from map
+  const removeElementFromMap = (elementType: string, elementId: string, source: any) => {
+    const feature = source.getFeatureById(elementId);
+    if (!feature) return;
+
+    source.removeFeature(feature);
+
+    // For points, also remove the label overlay
+    if (elementType === 'point' && mapRef.map?.value) {
+      const labelOverlay = mapRef.map.value
+        .getOverlays()
+        .getArray()
+        .find((o: any) => o.get('id') === `label-${elementId}`);
+      if (labelOverlay) {
+        mapRef.map.value.removeOverlay(labelOverlay);
+      }
+    }
+  };
+
+  // Helper to redraw element on map
+  const redrawElementOnMap = async (
+    elementType: string,
+    elementId: string,
+    animate: boolean
+  ): Promise<void> => {
+    switch (elementType) {
+      case 'circle': {
+        const circle = layersStore.circles.find((c) => c.id === elementId);
+        if (circle && circle.id) {
+          circleDrawing.redrawCircleOnMap(
+            circle.id,
+            circle.center.lat,
+            circle.center.lon,
+            circle.radius,
+            circle.color
+          );
+        }
+        break;
+      }
+      case 'lineSegment': {
+        const segment = layersStore.lineSegments.find((s) => s.id === elementId);
+        if (segment && segment.id) {
+          await redrawLineSegment(segment, elementId, animate);
+        }
+        break;
+      }
+      case 'point': {
+        const point = layersStore.points.find((p) => p.id === elementId);
+        if (point && point.id) {
+          pointDrawing.redrawPointOnMap(point.id, point.coordinates.lat, point.coordinates.lon, point.color);
+        }
+        break;
+      }
+      case 'polygon': {
+        const polygon = layersStore.polygons.find((p) => p.id === elementId);
+        if (polygon && polygon.id) {
+          polygonDrawing.redrawPolygonOnMap(polygon.id, polygon.points, polygon.color);
+        }
+        break;
+      }
+    }
+  };
+
+  // Helper to redraw line segment with optional animation
+  const redrawLineSegment = async (segment: any, elementId: string, animate: boolean) => {
+    // Handle parallel lines (horizontal lines at constant latitude)
+    if (segment.mode === 'parallel' && segment.longitude !== undefined) {
+      lineDrawing.redrawParallelOnMap(segment.id, segment.longitude, segment.color);
+      return;
+    }
+
+    // Handle regular line segments (coordinate, azimuth, intersection modes)
+    if (segment.endpoint) {
+      if (animate) {
+        await lineDrawing.animateLineSegmentOnMap(
+          segment.id,
+          segment.center.lat,
+          segment.center.lon,
+          segment.endpoint.lat,
+          segment.endpoint.lon,
+          segment.mode as 'coordinate' | 'azimuth' | 'intersection',
+          segment.intersectionPoint?.lat,
+          segment.intersectionPoint?.lon,
+          segment.color
+        );
+      } else {
+        lineDrawing.redrawLineSegmentOnMap(
+          segment.id,
+          segment.center.lat,
+          segment.center.lon,
+          segment.endpoint.lat,
+          segment.endpoint.lon,
+          segment.mode as 'coordinate' | 'azimuth' | 'intersection',
+          segment.intersectionPoint?.lat,
+          segment.intersectionPoint?.lon,
+          segment.color
+        );
+      }
+    }
+  };
+
   // Update element visibility
-  const updateElementVisibility = (
+  const updateElementVisibility = async (
     elementType: string,
     elementId: string | undefined,
-    visible: boolean
+    visible: boolean,
+    animate = false
   ) => {
     if (!mapRef.map?.value || !elementId) {
       return;
     }
 
-    const leafletId = layersStore.getLeafletId(elementType, elementId);
-    if (!leafletId) {
+    const source = getSourceForElementType(elementType);
+    if (!source) {
       return;
     }
 
-    let found = false;
+    const feature = source.getFeatureById(elementId);
+    const found = !!feature;
 
-    // First, try to find and toggle the layer if it's currently on the map
-    mapRef.map.value.eachLayer((layer: any) => {
-      if (L.stamp(layer) === leafletId) {
-        found = true;
-        if (visible) {
-          // Layer is already visible, nothing to do
-          return;
-        } else {
-          // Remove layer from map
-          mapRef.map.value.removeLayer(layer);
-        }
-      }
-    });
-
-    // If we need to show the element but it wasn't found on the map, we need to redraw it
-    if (visible && !found) {
-      // Redraw the element based on its type (without adding to store)
-      switch (elementType) {
-        case 'circle': {
-          const circle = layersStore.circles.find((c) => c.id === elementId);
-          if (circle && circle.id) {
-            circleDrawing.redrawCircleOnMap(
-              circle.id,
-              circle.center.lat,
-              circle.center.lon,
-              circle.radius
-            );
-          }
-
-          break;
-        }
-        case 'lineSegment': {
-          const segment = layersStore.lineSegments.find((s) => s.id === elementId);
-          if (segment && segment.id && segment.mode === 'parallel') {
-            // For parallel lines, redraw them using drawParallel
-            lineDrawing.drawParallel(
-              segment.longitude === undefined ? 0 : segment.longitude,
-              segment.name
-            );
-          } else if (segment && segment.id && segment.endpoint) {
-            lineDrawing.redrawLineSegmentOnMap(
-              segment.id,
-              segment.center.lat,
-              segment.center.lon,
-              segment.endpoint.lat,
-              segment.endpoint.lon,
-              segment.mode as 'coordinate' | 'azimuth' | 'intersection',
-              segment.intersectionPoint?.lat,
-              segment.intersectionPoint?.lon
-            );
-          }
-
-          break;
-        }
-        case 'point': {
-          const point = layersStore.points.find((p) => p.id === elementId);
-          if (point && point.id) {
-            pointDrawing.redrawPointOnMap(point.id, point.coordinates.lat, point.coordinates.lon);
-          }
-
-          break;
-        }
-        case 'polygon': {
-          const polygon = layersStore.polygons.find((p) => p.id === elementId);
-          if (polygon && polygon.id) {
-            polygonDrawing.redrawPolygonOnMap(polygon.id, polygon.points, polygon.color);
-          }
-
-          break;
-        }
-        // No default
-      }
+    if (found && !visible) {
+      removeElementFromMap(elementType, elementId, source);
+    } else if (visible && !found) {
+      await redrawElementOnMap(elementType, elementId, animate);
     }
 
     // For intersection markers, also toggle their visibility
     if (elementType === 'lineSegment') {
-      const className = `intersection-${elementId}`;
-      const elements = document.querySelectorAll(`.${className}`);
-      for (const el of elements) {
-        const svgElement = el.closest('svg');
-        if (svgElement) {
-          svgElement.style.display = visible ? '' : 'none';
-        }
+      const intersectionFeature = mapRef.linesSource?.value?.getFeatureById(
+        `intersection-${elementId}`
+      );
+      if (intersectionFeature && !visible) {
+        mapRef.linesSource.value.removeFeature(intersectionFeature);
       }
     }
   };
@@ -147,33 +200,23 @@ export function useDrawing(mapRef: any) {
     }
 
     for (const polygonId of polygonsToRemove) {
-      const polygon = layersStore.polygons.find((p) => p.id === polygonId);
-      if (polygon && mapRef.map?.value) {
-        if (polygon.leafletId !== undefined) {
-          mapRef.map.value.eachLayer((layer: any) => {
-            if (L.stamp(layer) === polygon.leafletId) {
-              mapRef.map.value.removeLayer(layer);
-            }
-          });
+      // Remove the feature from the polygons source
+      if (mapRef.polygonsSource?.value) {
+        const feature = mapRef.polygonsSource.value.getFeatureById(polygonId);
+        if (feature) {
+          mapRef.polygonsSource.value.removeFeature(feature);
         }
-        mapRef.map.value.eachLayer((layer: any) => {
-          const className = layer.options?.className;
-          if (className && className.includes(`polygon-${polygonId}`)) {
-            mapRef.map.value.removeLayer(layer);
-          }
-        });
       }
     }
   };
 
-  // Helper to remove layer by leafletId
-  const removeLayerById = (leafletId: number) => {
-    if (!mapRef.map?.value) return;
-    mapRef.map.value.eachLayer((layer: any) => {
-      if (L.stamp(layer) === leafletId) {
-        mapRef.map.value.removeLayer(layer);
-      }
-    });
+  // Helper to remove feature by ID from source
+  const removeFeatureById = (source: any, featureId: string) => {
+    if (!source) return;
+    const feature = source.getFeatureById(featureId);
+    if (feature) {
+      source.removeFeature(feature);
+    }
   };
 
   // Delete element from map
@@ -182,54 +225,39 @@ export function useDrawing(mapRef: any) {
       return;
     }
 
-    // Remove from map using Leaflet's layer management
+    // Remove from map using OpenLayers feature management
     switch (elementType) {
       case 'circle': {
-        const circle = layersStore.circles.find((c) => c.id === elementId);
-        if (circle?.leafletId !== undefined) {
-          removeLayerById(circle.leafletId);
-        }
+        removeFeatureById(mapRef.circlesSource?.value, elementId);
         break;
       }
       case 'lineSegment': {
-        const segment = layersStore.lineSegments.find((s) => s.id === elementId);
-        if (segment?.leafletId !== undefined) {
-          removeLayerById(segment.leafletId);
-        }
+        removeFeatureById(mapRef.linesSource?.value, elementId);
 
         // Also remove intersection marker if present
-        mapRef.map.value.eachLayer((layer: any) => {
-          const className = layer.options?.className;
-          if (className?.includes(`intersection-${elementId}`)) {
-            mapRef.map.value.removeLayer(layer);
-          }
-        });
+        removeFeatureById(mapRef.linesSource?.value, `intersection-${elementId}`);
         break;
       }
       case 'point': {
-        const point = layersStore.points.find((p) => p.id === elementId);
-        if (point?.leafletId !== undefined) {
-          removeLayerById(point.leafletId);
+        removeFeatureById(mapRef.pointsSource?.value, elementId);
+
+        // Also remove the label overlay
+        const labelOverlay = mapRef.map.value
+          .getOverlays()
+          .getArray()
+          .find((o: any) => o.get('id') === `label-${elementId}`);
+        if (labelOverlay) {
+          mapRef.map.value.removeOverlay(labelOverlay);
         }
 
+        const point = layersStore.points.find((p) => p.id === elementId);
         if (point?.coordinates) {
           removeAffectedPolygons(point.coordinates);
         }
         break;
       }
       case 'polygon': {
-        const polygon = layersStore.polygons.find((p) => p.id === elementId);
-        if (polygon?.leafletId !== undefined) {
-          removeLayerById(polygon.leafletId);
-        }
-
-        // Fallback: also try removing by className
-        mapRef.map.value.eachLayer((layer: any) => {
-          const className = layer.options?.className;
-          if (className?.includes(`polygon-${elementId}`)) {
-            mapRef.map.value.removeLayer(layer);
-          }
-        });
+        removeFeatureById(mapRef.polygonsSource?.value, elementId);
         break;
       }
       // No default
@@ -270,21 +298,37 @@ export function useDrawing(mapRef: any) {
   // Clear all elements
   const clearAllElements = () => {
     layersStore.clearLayers();
-    // Clear all FeatureGroups
-    mapRef.circlesGroup?.value?.clearLayers();
-    mapRef.linesGroup?.value?.clearLayers();
-    mapRef.pointsGroup?.value?.clearLayers();
-    mapRef.polygonsGroup?.value?.clearLayers();
+    // Clear all VectorSources
+    mapRef.circlesSource?.value?.clear();
+    mapRef.linesSource?.value?.clear();
+    mapRef.pointsSource?.value?.clear();
+    mapRef.polygonsSource?.value?.clear();
+
+    // Clear all overlays (point labels)
+    if (mapRef.map?.value) {
+      const overlays = mapRef.map.value.getOverlays().getArray().slice();
+      for (const overlay of overlays) {
+        mapRef.map.value.removeOverlay(overlay);
+      }
+    }
   };
 
   // Redraw all elements on map (useful after loading project)
   // eslint-disable-next-line complexity
   const redrawAllElements = () => {
-    // Clear only map layers using FeatureGroups, not the store (store is already populated)
-    mapRef.circlesGroup?.value?.clearLayers();
-    mapRef.linesGroup?.value?.clearLayers();
-    mapRef.pointsGroup?.value?.clearLayers();
-    mapRef.polygonsGroup?.value?.clearLayers();
+    // Clear only map layers using VectorSources, not the store (store is already populated)
+    mapRef.circlesSource?.value?.clear();
+    mapRef.linesSource?.value?.clear();
+    mapRef.pointsSource?.value?.clear();
+    mapRef.polygonsSource?.value?.clear();
+
+    // Clear all overlays (point labels)
+    if (mapRef.map?.value) {
+      const overlays = mapRef.map.value.getOverlays().getArray().slice();
+      for (const overlay of overlays) {
+        mapRef.map.value.removeOverlay(overlay);
+      }
+    }
 
     const circles = layersStore.circles;
     const lineSegments = layersStore.lineSegments;
@@ -347,9 +391,11 @@ export function useDrawing(mapRef: any) {
     }
 
     // Fly to all elements if any exist with animation
+    // Skip if skipAutoFly flag is set (when restoring saved view data)
     if (
       (circles.length > 0 || lineSegments.length > 0 || points.length > 0 || polygons.length > 0) &&
-      mapRef.flyToBounds
+      mapRef.flyToBoundsWithPanels &&
+      !(mapRef as any).skipAutoFly
     ) {
       // Calculate bounds that include all elements
       let minLat = 90,
@@ -391,7 +437,7 @@ export function useDrawing(mapRef: any) {
       }
 
       if (minLat <= maxLat && minLon <= maxLon) {
-        mapRef.flyToBounds([
+        mapRef.flyToBoundsWithPanels([
           [minLat, minLon],
           [maxLat, maxLon],
         ]);

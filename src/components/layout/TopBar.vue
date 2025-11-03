@@ -8,7 +8,7 @@
   >
     <!-- Top navigation drawer -->
     <v-navigation-drawer
-      v-model="topBarOpen"
+      v-model="uiStore.topBarOpen"
       color="surface"
       elevation="4"
       location="top"
@@ -242,21 +242,21 @@
     <div
       class="position-fixed w-100 d-flex justify-center pt-2"
       :style="{
-        top: topBarOpen ? '64px' : '0',
+        top: uiStore.topBarOpen ? '64px' : '0',
         zIndex: 1050,
         pointerEvents: 'none',
         transition: 'top 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
       }"
     >
       <v-btn
-        :aria-label="topBarOpen ? 'Collapse top bar' : 'Expand top bar'"
+        :aria-label="uiStore.topBarOpen ? 'Collapse top bar' : 'Expand top bar'"
         color="surface-bright"
         elevation="4"
-        :icon="topBarOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+        :icon="uiStore.topBarOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'"
         size="small"
         style="pointer-events: auto"
         variant="elevated"
-        @click="topBarOpen = !topBarOpen"
+        @click="uiStore.toggleTopBar()"
       />
     </div>
   </div>
@@ -276,8 +276,6 @@ const layersStore = useLayersStore();
 const coordinatesStore = useCoordinatesStore();
 const projectsStore = useProjectsStore();
 
-const topBarOpen = ref(true);
-
 function handleNewProject() {
   uiStore.openModal('newProjectModal');
 }
@@ -295,7 +293,7 @@ function handleAnimationToggle() {
   if (uiStore.animationState.isPlaying) {
     uiStore.stopAnimation();
   } else {
-    uiStore.startAnimation();
+    uiStore.openModal('animationModal');
   }
 }
 
@@ -367,7 +365,7 @@ async function handleImportJSON() {
             center: circle.center,
             radius: circle.radius,
             color: circle.color,
-            leafletId: circle.leafletId,
+            mapElementId: circle.mapElementId,
           });
         }
       }
@@ -386,7 +384,7 @@ async function handleImportJSON() {
             intersectionDistance: line.intersectionDistance,
             longitude: line.longitude,
             color: line.color,
-            leafletId: line.leafletId,
+            mapElementId: line.mapElementId,
           });
         }
       }
@@ -399,7 +397,7 @@ async function handleImportJSON() {
             coordinates: point.coordinates,
             elevation: point.elevation,
             color: point.color,
-            leafletId: point.leafletId,
+            mapElementId: point.mapElementId,
           });
         }
       }

@@ -16,7 +16,9 @@
       <v-card-actions>
         <v-spacer />
         <v-btn @click="$emit('close')">{{ cancelText }}</v-btn>
-        <v-btn color="primary" @click="$emit('submit')">{{ submitText }}</v-btn>
+        <v-btn color="primary" :disabled="submitDisabled" @click="$emit('submit')">{{
+          submitText
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -31,12 +33,14 @@ const props = withDefaults(
     cancelText?: string;
     submitText?: string;
     submitOnEnter?: boolean;
+    submitDisabled?: boolean;
   }>(),
   {
     maxWidth: '600px',
     cancelText: 'Cancel',
     submitText: 'Submit',
     submitOnEnter: false,
+    submitDisabled: false,
   }
 );
 

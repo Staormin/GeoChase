@@ -200,9 +200,10 @@
 </template>
 
 <script lang="ts" setup>
+import { getDistance } from 'ol/sphere';
 import { computed, inject, ref, watch } from 'vue';
 import { getReverseGeocodeAddress } from '@/services/address';
-import { calculateDistance, destinationPoint, endpointFromIntersection } from '@/services/geometry';
+import { destinationPoint, endpointFromIntersection } from '@/services/geometry';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -441,13 +442,9 @@ async function submitForm() {
         }
         [intersectLat, intersectLon] = intersectCoord;
 
-        // Validate distance is >= distance to intersection point
-        const distToIntersection = calculateDistance(
-          startLat,
-          startLon,
-          intersectLat,
-          intersectLon
-        );
+        // Validate distance is >= distance to intersection point (getDistance returns meters, convert to km)
+        const distToIntersection =
+          getDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
         if (form.value.distance < distToIntersection - 1e-6) {
           uiStore.addToast(
             `Distance must be at least ${distToIntersection.toFixed(2)} km (distance to intersection)`,

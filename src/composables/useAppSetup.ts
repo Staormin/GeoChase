@@ -6,6 +6,7 @@ import { useFreeHandDrawing } from '@/composables/useFreeHandDrawing';
 import { useKeyboardNavigation } from '@/composables/useKeyboardNavigation';
 import { useMapEventHandlers } from '@/composables/useMapEventHandlers';
 import { useMapInitialization } from '@/composables/useMapInitialization';
+import { useViewCapture } from '@/composables/useViewCapture';
 
 interface CursorTooltipData {
   visible: boolean;
@@ -28,6 +29,7 @@ export function useAppSetup(
   const freeHandDrawing = useFreeHandDrawing(mapContainer, drawing, cursorTooltip);
   const keyboardNavigation = useKeyboardNavigation(mapContainer, freeHandDrawing.handleEscape);
   const mapEventHandlers = useMapEventHandlers(mapContainer);
+  const viewCapture = useViewCapture(mapContainer);
 
   return async () => {
     // Initialize map and load project
@@ -35,12 +37,14 @@ export function useAppSetup(
 
     // Setup all event handlers
     const unsubscribeRightClick = mapEventHandlers.setup();
+    const unsubscribeViewCapture = viewCapture.setup();
     freeHandDrawing.setup();
     keyboardNavigation.setup();
 
     // Cleanup on unmount
     return () => {
       unsubscribeRightClick();
+      unsubscribeViewCapture();
       freeHandDrawing.cleanup();
       keyboardNavigation.cleanup();
       mapContainer.destroyMap();

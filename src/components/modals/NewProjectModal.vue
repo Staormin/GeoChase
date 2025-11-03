@@ -89,7 +89,7 @@ function submitForm() {
     layersStore.clearLayers();
     coordinatesStore.clearCoordinates();
 
-    // Clear Leaflet map layers
+    // Clear OpenLayers map layers
     if (mapContainer) {
       mapContainer.clearLayers();
     }

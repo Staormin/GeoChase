@@ -20,8 +20,8 @@ export const useLayersStore = defineStore('layers', () => {
   const polygons = ref<PolygonElement[]>([]);
   const notes = ref<NoteElement[]>([]);
 
-  // Map of Leaflet layer IDs for removal
-  const leafletIdMap = ref<Map<string, number>>(new Map());
+  // Map of OpenLayers feature IDs for feature management
+  const mapElementIdMap = ref<Map<string, string>>(new Map());
 
   // Computed
   const isEmpty = computed(
@@ -108,8 +108,8 @@ export const useLayersStore = defineStore('layers', () => {
     const index = circles.value.findIndex((c) => c.id === id);
     if (index !== -1 && circles.value[index]) {
       const circle = circles.value[index];
-      if (circle && circle.leafletId !== undefined) {
-        leafletIdMap.value.delete(`circle_${id}`);
+      if (circle && circle.mapElementId !== undefined) {
+        mapElementIdMap.value.delete(`circle_${id}`);
       }
       circles.value.splice(index, 1);
     }
@@ -137,8 +137,8 @@ export const useLayersStore = defineStore('layers', () => {
     const index = lineSegments.value.findIndex((s) => s.id === id);
     if (index !== -1 && lineSegments.value[index]) {
       const segment = lineSegments.value[index];
-      if (segment && segment.leafletId !== undefined) {
-        leafletIdMap.value.delete(`lineSegment_${id}`);
+      if (segment && segment.mapElementId !== undefined) {
+        mapElementIdMap.value.delete(`lineSegment_${id}`);
       }
       lineSegments.value.splice(index, 1);
     }
@@ -163,8 +163,8 @@ export const useLayersStore = defineStore('layers', () => {
     const index = points.value.findIndex((p) => p.id === id);
     if (index !== -1 && points.value[index]) {
       const point = points.value[index];
-      if (point && point.leafletId !== undefined) {
-        leafletIdMap.value.delete(`point_${id}`);
+      if (point && point.mapElementId !== undefined) {
+        mapElementIdMap.value.delete(`point_${id}`);
       }
 
       // Get the point's coordinates before deletion
@@ -224,8 +224,8 @@ export const useLayersStore = defineStore('layers', () => {
     const index = polygons.value.findIndex((p) => p.id === id);
     if (index !== -1 && polygons.value[index]) {
       const polygon = polygons.value[index];
-      if (polygon && polygon.leafletId !== undefined) {
-        leafletIdMap.value.delete(`polygon_${id}`);
+      if (polygon && polygon.mapElementId !== undefined) {
+        mapElementIdMap.value.delete(`polygon_${id}`);
       }
       polygons.value.splice(index, 1);
     }
@@ -343,18 +343,18 @@ export const useLayersStore = defineStore('layers', () => {
     }
   }
 
-  function storeLeafletId(
+  function storeMapElementId(
     elementType: string,
     elementId: string | undefined,
-    leafletId: number
+    mapElementId: string
   ): void {
     const key = `${elementType}_${elementId}`;
-    leafletIdMap.value.set(key, leafletId);
+    mapElementIdMap.value.set(key, mapElementId);
   }
 
-  function getLeafletId(elementType: string, elementId: string | undefined): number | undefined {
+  function getMapElementId(elementType: string, elementId: string | undefined): string | undefined {
     const key = `${elementType}_${elementId}`;
-    return leafletIdMap.value.get(key);
+    return mapElementIdMap.value.get(key);
   }
 
   function clearLayers(): void {
@@ -363,7 +363,7 @@ export const useLayersStore = defineStore('layers', () => {
     points.value = [];
     polygons.value = [];
     notes.value = [];
-    leafletIdMap.value.clear();
+    mapElementIdMap.value.clear();
   }
 
   /**
@@ -569,7 +569,7 @@ export const useLayersStore = defineStore('layers', () => {
     points,
     polygons,
     notes,
-    leafletIdMap,
+    mapElementIdMap,
 
     // Computed
     isEmpty,
@@ -601,8 +601,8 @@ export const useLayersStore = defineStore('layers', () => {
     addNote,
     updateNote,
     deleteNote,
-    storeLeafletId,
-    getLeafletId,
+    storeMapElementId,
+    getMapElementId,
     clearLayers,
     loadLayers,
     exportLayers,

@@ -3,7 +3,10 @@
  */
 
 import type { LineSegmentElement } from '@/services/storage';
-import L from 'leaflet';
+import { Feature } from 'ol';
+import { LineString, Point } from 'ol/geom';
+import { fromLonLat } from 'ol/proj';
+import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 import { v4 as uuidv4 } from 'uuid';
 import { useLayersStore } from '@/stores/layers';
 
@@ -13,6 +16,123 @@ export function useLineDrawing(mapRef: any) {
   const layersStore = useLayersStore();
 
   const generateId = () => uuidv4();
+
+  // Helper function to animate a line segment drawing from start to end
+  const animateLineSegmentOnMap = (
+    lineId: string,
+    startLat: number,
+    startLon: number,
+    endLat: number,
+    endLon: number,
+    mode: 'coordinate' | 'azimuth' | 'intersection' = 'coordinate',
+    intersectLat?: number,
+    intersectLon?: number,
+    color?: string,
+    duration = 800 // Animation duration in ms
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      if (!mapRef.map?.value || !mapRef.linesSource?.value) {
+        resolve();
+        return;
+      }
+
+      const startTime = performance.now();
+
+      // Create the feature ONCE and update its geometry during animation
+      const initialCoordinates = [fromLonLat([startLon, startLat]), fromLonLat([startLon, startLat])];
+      const geometry = new LineString(initialCoordinates);
+      const animatingFeature = new Feature({
+        geometry,
+        id: lineId,
+        type: 'lineSegment',
+      });
+
+      animatingFeature.setId(lineId);
+      animatingFeature.setStyle(
+        new Style({
+          stroke: new Stroke({
+            color: color || DEFAULT_COLOR,
+            width: 3,
+          }),
+        })
+      );
+
+      // Add the feature once at the start
+      mapRef.linesSource.value.addFeature(animatingFeature);
+
+      const animate = (currentTime: number) => {
+        if (!mapRef.linesSource?.value) {
+          resolve();
+          return;
+        }
+
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Interpolate current end point
+        const currentEndLat = startLat + (endLat - startLat) * progress;
+        const currentEndLon = startLon + (endLon - startLon) * progress;
+
+        // Update the geometry of the existing feature instead of removing/adding
+        const newCoordinates = [
+          fromLonLat([startLon, startLat]),
+          fromLonLat([currentEndLon, currentEndLat]),
+        ];
+
+        geometry.setCoordinates(newCoordinates);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          // CRITICAL: Notify OpenLayers that the source has changed to trigger re-render
+          if (mapRef.linesSource?.value) {
+            mapRef.linesSource.value.changed();
+          }
+
+          // Animation complete - store final feature
+          const segment = layersStore.lineSegments.find((s) => s.id === lineId);
+          if (segment) {
+            segment.mapElementId = lineId;
+          }
+
+          // For intersection mode, show the intersection point marker
+          if (
+            mode === 'intersection' &&
+            intersectLat &&
+            intersectLon &&
+            mapRef.linesSource?.value
+          ) {
+            const markerGeometry = new Point(fromLonLat([intersectLon, intersectLat]));
+            const markerFeature = new Feature({
+              geometry: markerGeometry,
+              id: `intersection-${lineId}`,
+              type: 'intersectionMarker',
+            });
+
+            markerFeature.setId(`intersection-${lineId}`);
+            markerFeature.setStyle(
+              new Style({
+                image: new CircleStyle({
+                  radius: 8,
+                  fill: new Fill({ color: '#FFD700' }),
+                  stroke: new Stroke({
+                    color: '#FFA500',
+                    width: 2,
+                  }),
+                }),
+              })
+            );
+
+            mapRef.linesSource.value.addFeature(markerFeature);
+          }
+
+          resolve();
+        }
+      };
+
+      requestAnimationFrame(animate);
+    });
+  };
 
   // Helper function to redraw a line segment on the map without adding to store
   const redrawLineSegmentOnMap = (
@@ -26,70 +146,95 @@ export function useLineDrawing(mapRef: any) {
     intersectLon?: number,
     color?: string
   ) => {
-    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
+    if (!mapRef.map?.value || !mapRef.linesSource?.value) {
       return;
     }
 
-    const latLngs = [
-      [startLat, startLon] as [number, number],
-      [endLat, endLon] as [number, number],
-    ];
+    const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
 
-    const polyline = L.polyline(latLngs, {
-      color: color || DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
+    const geometry = new LineString(coordinates);
+    const feature = new Feature({
+      geometry,
+      id: lineId,
+      type: 'lineSegment',
+    });
 
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, newLeafletId);
+    feature.setId(lineId);
+    feature.setStyle(
+      new Style({
+        stroke: new Stroke({
+          color: color || DEFAULT_COLOR,
+          width: 3,
+        }),
+      })
+    );
 
-    // Update the line segment element's leafletId in the store
+    mapRef.linesSource.value.addFeature(feature);
+
+    // Update the line segment element's feature reference in the store
     const segment = layersStore.lineSegments.find((s) => s.id === lineId);
     if (segment) {
-      segment.leafletId = newLeafletId;
+      segment.mapElementId = lineId;
     }
 
     // For intersection mode, show the intersection point marker
     if (mode === 'intersection' && intersectLat && intersectLon) {
-      L.circleMarker([intersectLat, intersectLon], {
-        radius: 8,
-        fillColor: '#FFD700',
-        color: '#FFA500',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.9,
-        className: `intersection-marker intersection-${lineId}`,
-      }).addTo(mapRef.linesGroup.value);
+      const markerGeometry = new Point(fromLonLat([intersectLon, intersectLat]));
+      const markerFeature = new Feature({
+        geometry: markerGeometry,
+        id: `intersection-${lineId}`,
+        type: 'intersectionMarker',
+      });
+
+      markerFeature.setId(`intersection-${lineId}`);
+      markerFeature.setStyle(
+        new Style({
+          image: new CircleStyle({
+            radius: 8,
+            fill: new Fill({ color: '#FFD700' }),
+            stroke: new Stroke({
+              color: '#FFA500',
+              width: 2,
+            }),
+          }),
+        })
+      );
+
+      mapRef.linesSource.value.addFeature(markerFeature);
     }
   };
 
   // Helper function to redraw a parallel line on the map without adding to store
   const redrawParallelOnMap = (lineId: string, latitude: number, color?: string) => {
-    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
+    if (!mapRef.map?.value || !mapRef.linesSource?.value) {
       return;
     }
 
-    const latLngs: [number, number][] = [
-      [latitude, -180],
-      [latitude, 180],
-    ];
+    const coordinates = [fromLonLat([-180, latitude]), fromLonLat([180, latitude])];
 
-    const polyline = L.polyline(latLngs, {
-      color: color || DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
+    const geometry = new LineString(coordinates);
+    const feature = new Feature({
+      geometry,
+      id: lineId,
+      type: 'parallel',
+    });
 
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, newLeafletId);
+    feature.setId(lineId);
+    feature.setStyle(
+      new Style({
+        stroke: new Stroke({
+          color: color || DEFAULT_COLOR,
+          width: 3,
+        }),
+      })
+    );
 
-    // Update the line segment element's leafletId in the store
+    mapRef.linesSource.value.addFeature(feature);
+
+    // Update the line segment element's feature reference in the store
     const segment = layersStore.lineSegments.find((s) => s.id === lineId);
     if (segment) {
-      segment.leafletId = newLeafletId;
+      segment.mapElementId = lineId;
     }
   };
 
@@ -107,7 +252,7 @@ export function useLineDrawing(mapRef: any) {
     intersectLon?: number,
     intersectDistance?: number
   ): LineSegmentElement | null => {
-    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
+    if (!mapRef.map?.value || !mapRef.linesSource?.value) {
       return null;
     }
 
@@ -126,51 +271,77 @@ export function useLineDrawing(mapRef: any) {
       color: DEFAULT_COLOR,
     } as LineSegmentElement;
 
-    // Draw line as simple 2-point straight line (matches POC and GPX output)
-    const latLngs = [
-      [startLat, startLon] as [number, number],
-      [endLat, endLon] as [number, number],
-    ];
+    // Draw line as simple 2-point straight line
+    const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
 
-    // Create Leaflet polyline and add to lines group
-    const polyline = L.polyline(latLngs, {
-      color: lineElement.color,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
+    // Create OpenLayers feature
+    const geometry = new LineString(coordinates);
+    const feature = new Feature({
+      geometry,
+      id: lineId,
+      type: 'lineSegment',
+    });
 
-    // Store Leaflet ID
-    lineElement.leafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, lineElement.leafletId);
+    feature.setId(lineId);
+    feature.setStyle(
+      new Style({
+        stroke: new Stroke({
+          color: lineElement.color,
+          width: 3,
+        }),
+      })
+    );
 
-    // For intersection mode, show the intersection point marker
-    if (mode === 'intersection' && intersectLat && intersectLon) {
-      L.circleMarker([intersectLat, intersectLon], {
-        radius: 8,
-        fillColor: '#FFD700', // Gold
-        color: '#FFA500', // Orange
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.9,
-        className: `intersection-marker intersection-${lineId}`,
-      }).addTo(mapRef.linesGroup.value);
-    }
+    // Store feature ID
+    lineElement.mapElementId = lineId;
+    layersStore.storeMapElementId('lineSegment', lineId, lineId);
 
     // Add to store
     layersStore.addLineSegment(lineElement);
 
-    // Fly to line segment bounds with animation
-    if (mapRef.flyToBounds) {
-      const minLat = Math.min(startLat, endLat);
-      const maxLat = Math.max(startLat, endLat);
-      const minLon = Math.min(startLon, endLon);
-      const maxLon = Math.max(startLon, endLon);
-      const bounds: [[number, number], [number, number]] = [
-        [minLat, minLon],
-        [maxLat, maxLon],
-      ];
-      mapRef.flyToBounds(bounds);
+    // Add feature to map AFTER adding to store
+    mapRef.linesSource.value.addFeature(feature);
+
+    // For intersection mode, show the intersection point marker
+    if (mode === 'intersection' && intersectLat && intersectLon) {
+      const markerGeometry = new Point(fromLonLat([intersectLon, intersectLat]));
+      const markerFeature = new Feature({
+        geometry: markerGeometry,
+        id: `intersection-${lineId}`,
+        type: 'intersectionMarker',
+      });
+
+      markerFeature.setId(`intersection-${lineId}`);
+      markerFeature.setStyle(
+        new Style({
+          image: new CircleStyle({
+            radius: 8,
+            fill: new Fill({ color: '#FFD700' }), // Gold
+            stroke: new Stroke({
+              color: '#FFA500', // Orange
+              width: 2,
+            }),
+          }),
+        })
+      );
+
+      mapRef.linesSource.value.addFeature(markerFeature);
+    }
+
+    // Fly to line segment bounds with animation AFTER drawing
+    // Use requestAnimationFrame to ensure the feature is rendered before flying
+    if (mapRef.flyToBoundsWithPanels) {
+      requestAnimationFrame(() => {
+        const minLat = Math.min(startLat, endLat);
+        const maxLat = Math.max(startLat, endLat);
+        const minLon = Math.min(startLon, endLon);
+        const maxLon = Math.max(startLon, endLon);
+        const bounds: [[number, number], [number, number]] = [
+          [minLat, minLon],
+          [maxLat, maxLon],
+        ];
+        mapRef.flyToBoundsWithPanels(bounds);
+      });
     }
 
     return lineElement;
@@ -208,60 +379,70 @@ export function useLineDrawing(mapRef: any) {
       intersectionDistance: intersectDistance,
     });
 
-    // Remove old line from map using className
-    const lineClass = `line-${lineId}`;
-    const lineElements = document.querySelectorAll(`.${lineClass}`);
-    for (const el of lineElements) {
-      const svgElement = el.closest('svg');
-      if (svgElement) {
-        svgElement.remove();
-      }
+    // Remove old line from map
+    const feature = mapRef.linesSource.value?.getFeatureById(lineId);
+    if (feature) {
+      mapRef.linesSource.value.removeFeature(feature);
     }
 
     // Also remove intersection marker if present
-    const className = `intersection-${lineId}`;
-    const intersectionElements = document.querySelectorAll(`.${className}`);
-    for (const el of intersectionElements) {
-      const svgElement = el.closest('svg');
-      if (svgElement) {
-        svgElement.remove();
-      }
+    const intersectionMarker = mapRef.linesSource.value?.getFeatureById(`intersection-${lineId}`);
+    if (intersectionMarker) {
+      mapRef.linesSource.value.removeFeature(intersectionMarker);
     }
 
     // Redraw line segment
-    const latLngs = [
-      [startLat, startLon] as [number, number],
-      [endLat, endLon] as [number, number],
-    ];
+    const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
 
-    const polyline = L.polyline(latLngs, {
-      color: DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
+    const geometry = new LineString(coordinates);
+    const newFeature = new Feature({
+      geometry,
+      id: lineId,
+      type: 'lineSegment',
+    });
 
-    // Update Leaflet ID in store
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, newLeafletId);
+    newFeature.setId(lineId);
+    newFeature.setStyle(
+      new Style({
+        stroke: new Stroke({
+          color: DEFAULT_COLOR,
+          width: 3,
+        }),
+      })
+    );
+
+    mapRef.linesSource.value.addFeature(newFeature);
 
     // For intersection mode, show the intersection point marker
     if (mode === 'intersection' && intersectLat && intersectLon) {
-      L.circleMarker([intersectLat, intersectLon], {
-        radius: 8,
-        fillColor: '#FFD700',
-        color: '#FFA500',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.9,
-        className: `intersection-marker intersection-${lineId}`,
-      }).addTo(mapRef.linesGroup.value);
+      const markerGeometry = new Point(fromLonLat([intersectLon, intersectLat]));
+      const markerFeature = new Feature({
+        geometry: markerGeometry,
+        id: `intersection-${lineId}`,
+        type: 'intersectionMarker',
+      });
+
+      markerFeature.setId(`intersection-${lineId}`);
+      markerFeature.setStyle(
+        new Style({
+          image: new CircleStyle({
+            radius: 8,
+            fill: new Fill({ color: '#FFD700' }),
+            stroke: new Stroke({
+              color: '#FFA500',
+              width: 2,
+            }),
+          }),
+        })
+      );
+
+      mapRef.linesSource.value.addFeature(markerFeature);
     }
   };
 
   // Parallel drawing
   const drawParallel = (latitude: number, name?: string): LineSegmentElement | null => {
-    if (!mapRef.map?.value || !mapRef.linesGroup?.value) {
+    if (!mapRef.map?.value || !mapRef.linesSource?.value) {
       return null;
     }
 
@@ -276,32 +457,45 @@ export function useLineDrawing(mapRef: any) {
     } as LineSegmentElement;
 
     // Draw parallel (horizontal line) from west to east at constant latitude
-    const latLngs: [number, number][] = [
-      [latitude, -180],
-      [latitude, 180],
-    ];
+    const coordinates = [fromLonLat([-180, latitude]), fromLonLat([180, latitude])];
 
-    const polyline = L.polyline(latLngs, {
-      color: lineElement.color,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
+    const geometry = new LineString(coordinates);
+    const feature = new Feature({
+      geometry,
+      id: lineId,
+      type: 'parallel',
+    });
 
-    // Store Leaflet ID
-    lineElement.leafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, lineElement.leafletId);
+    feature.setId(lineId);
+    feature.setStyle(
+      new Style({
+        stroke: new Stroke({
+          color: lineElement.color,
+          width: 3,
+        }),
+      })
+    );
+
+    // Store feature ID
+    lineElement.mapElementId = lineId;
+    layersStore.storeMapElementId('lineSegment', lineId, lineId);
 
     // Add to store
     layersStore.addLineSegment(lineElement);
 
-    // Fly to parallel bounds with animation
-    if (mapRef.flyToBounds) {
-      const bounds: [[number, number], [number, number]] = [
-        [latitude - 1, -180],
-        [latitude + 1, 180],
-      ];
-      mapRef.flyToBounds(bounds);
+    // Add feature to map AFTER adding to store
+    mapRef.linesSource.value.addFeature(feature);
+
+    // Fly to parallel bounds with animation AFTER drawing
+    // Use requestAnimationFrame to ensure the feature is rendered before flying
+    if (mapRef.flyToBoundsWithPanels) {
+      requestAnimationFrame(() => {
+        const bounds: [[number, number], [number, number]] = [
+          [latitude - 1, -180],
+          [latitude + 1, 180],
+        ];
+        mapRef.flyToBoundsWithPanels(bounds);
+      });
     }
 
     return lineElement;
@@ -322,31 +516,32 @@ export function useLineDrawing(mapRef: any) {
     });
 
     // Remove old parallel from map
-    const line = layersStore.lineSegments.find((l) => l.id === lineId);
-    if (line && line.leafletId) {
-      mapRef.map.value.eachLayer((layer: any) => {
-        if (L.stamp(layer) === line.leafletId) {
-          mapRef.map.value.removeLayer(layer);
-        }
-      });
+    const feature = mapRef.linesSource.value?.getFeatureById(lineId);
+    if (feature) {
+      mapRef.linesSource.value.removeFeature(feature);
     }
 
     // Redraw parallel
-    const latLngs: [number, number][] = [
-      [latitude, -180],
-      [latitude, 180],
-    ];
+    const coordinates = [fromLonLat([-180, latitude]), fromLonLat([180, latitude])];
 
-    const polyline = L.polyline(latLngs, {
-      color: DEFAULT_COLOR,
-      weight: 3,
-      opacity: 1,
-      className: `line-layer line-${lineId}`,
-    }).addTo(mapRef.linesGroup.value);
+    const geometry = new LineString(coordinates);
+    const newFeature = new Feature({
+      geometry,
+      id: lineId,
+      type: 'parallel',
+    });
 
-    // Update Leaflet ID in store
-    const newLeafletId = L.stamp(polyline);
-    layersStore.storeLeafletId('lineSegment', lineId, newLeafletId);
+    newFeature.setId(lineId);
+    newFeature.setStyle(
+      new Style({
+        stroke: new Stroke({
+          color: DEFAULT_COLOR,
+          width: 3,
+        }),
+      })
+    );
+
+    mapRef.linesSource.value.addFeature(newFeature);
   };
 
   return {
@@ -356,5 +551,6 @@ export function useLineDrawing(mapRef: any) {
     updateParallel,
     redrawLineSegmentOnMap,
     redrawParallelOnMap,
+    animateLineSegmentOnMap,
   };
 }

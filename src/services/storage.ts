@@ -12,10 +12,21 @@ export interface SavedCoordinate {
   timestamp?: number;
 }
 
+export interface ViewData {
+  topPanelOpen: boolean;
+  sidePanelOpen: boolean;
+  mapView?: {
+    lat: number;
+    lon: number;
+    zoom: number;
+  };
+}
+
 export interface ProjectData {
   id?: string;
   name: string;
   data: ProjectLayerData;
+  viewData?: ViewData;
   createdAt?: number;
   updatedAt?: number;
 }
@@ -35,7 +46,7 @@ export interface CircleElement {
   center: { lat: number; lon: number };
   radius: number;
   color?: string;
-  leafletId?: number;
+  mapElementId?: string; // OpenLayers feature ID
   noteId?: string; // ID of the linked note (one-to-one)
   createdAt?: number;
 }
@@ -52,7 +63,7 @@ export interface LineSegmentElement {
   intersectionDistance?: number;
   longitude?: number;
   color?: string;
-  leafletId?: number;
+  mapElementId?: string; // OpenLayers feature ID
   noteId?: string; // ID of the linked note (one-to-one)
   createdAt?: number;
 }
@@ -63,7 +74,7 @@ export interface PointElement {
   coordinates: { lat: number; lon: number };
   elevation?: number;
   color?: string;
-  leafletId?: number;
+  mapElementId?: string; // OpenLayers feature ID
   noteId?: string; // ID of the linked note (one-to-one)
   createdAt?: number;
 }
@@ -73,7 +84,7 @@ export interface PolygonElement {
   name: string;
   points: { lat: number; lon: number }[]; // Array of at least 3 points
   color?: string;
-  leafletId?: number;
+  mapElementId?: string; // OpenLayers feature ID
   noteId?: string; // ID of the linked note (one-to-one)
   createdAt?: number;
 }
@@ -156,6 +167,7 @@ export function updateProject(index: number, name: string, data: ProjectLayerDat
       id: projects[index].id,
       name,
       data,
+      viewData: projects[index].viewData, // Preserve viewData
       createdAt: projects[index].createdAt,
       updatedAt: Date.now(),
     };

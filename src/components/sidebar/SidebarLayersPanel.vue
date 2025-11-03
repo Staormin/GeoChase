@@ -39,12 +39,24 @@
     <div v-else class="layers-list">
       <!-- Circles -->
       <div v-if="filteredCircles.length > 0">
-        <div class="layers-section-header" @click="circlesExpanded = !circlesExpanded">
-          <span class="layers-section-title"
+        <div class="layers-section-header">
+          <span class="layers-section-title" @click="circlesExpanded = !circlesExpanded"
             >Circles ({{ filteredCircles.length
             }}{{ searchQuery ? ` of ${layersStore.circleCount}` : '' }})</span
           >
-          <span class="collapse-icon">{{ circlesExpanded ? '▼' : '▶' }}</span>
+          <div class="layers-section-actions">
+            <v-btn
+              color="primary"
+              :icon="allCirclesVisible ? 'mdi-eye-off' : 'mdi-eye'"
+              size="x-small"
+              :title="allCirclesVisible ? 'Hide all circles' : 'Show all circles'"
+              variant="text"
+              @click.stop="toggleAllElementsOfType('circle')"
+            />
+            <span class="collapse-icon" @click="circlesExpanded = !circlesExpanded">{{
+              circlesExpanded ? '▼' : '▶'
+            }}</span>
+          </div>
         </div>
         <div v-show="circlesExpanded" class="layer-items">
           <div
@@ -74,12 +86,24 @@
 
       <!-- Line segments -->
       <div v-if="filteredLines.length > 0">
-        <div class="layers-section-header" @click="linesExpanded = !linesExpanded">
-          <span class="layers-section-title"
+        <div class="layers-section-header">
+          <span class="layers-section-title" @click="linesExpanded = !linesExpanded"
             >Lines ({{ filteredLines.length
             }}{{ searchQuery ? ` of ${layersStore.lineSegmentCount}` : '' }})</span
           >
-          <span class="collapse-icon">{{ linesExpanded ? '▼' : '▶' }}</span>
+          <div class="layers-section-actions">
+            <v-btn
+              color="primary"
+              :icon="allLinesVisible ? 'mdi-eye-off' : 'mdi-eye'"
+              size="x-small"
+              :title="allLinesVisible ? 'Hide all lines' : 'Show all lines'"
+              variant="text"
+              @click.stop="toggleAllElementsOfType('lineSegment')"
+            />
+            <span class="collapse-icon" @click="linesExpanded = !linesExpanded">{{
+              linesExpanded ? '▼' : '▶'
+            }}</span>
+          </div>
         </div>
         <div v-show="linesExpanded" class="layer-items">
           <div
@@ -109,12 +133,24 @@
 
       <!-- Points -->
       <div v-if="filteredPoints.length > 0">
-        <div class="layers-section-header" @click="pointsExpanded = !pointsExpanded">
-          <span class="layers-section-title"
+        <div class="layers-section-header">
+          <span class="layers-section-title" @click="pointsExpanded = !pointsExpanded"
             >Points ({{ filteredPoints.length
             }}{{ searchQuery ? ` of ${layersStore.pointCount}` : '' }})</span
           >
-          <span class="collapse-icon">{{ pointsExpanded ? '▼' : '▶' }}</span>
+          <div class="layers-section-actions">
+            <v-btn
+              color="primary"
+              :icon="allPointsVisible ? 'mdi-eye-off' : 'mdi-eye'"
+              size="x-small"
+              :title="allPointsVisible ? 'Hide all points' : 'Show all points'"
+              variant="text"
+              @click.stop="toggleAllElementsOfType('point')"
+            />
+            <span class="collapse-icon" @click="pointsExpanded = !pointsExpanded">{{
+              pointsExpanded ? '▼' : '▶'
+            }}</span>
+          </div>
         </div>
         <div v-show="pointsExpanded" class="layer-items">
           <div
@@ -153,12 +189,24 @@
 
       <!-- Polygons -->
       <div v-if="filteredPolygons.length > 0">
-        <div class="layers-section-header" @click="polygonsExpanded = !polygonsExpanded">
-          <span class="layers-section-title"
+        <div class="layers-section-header">
+          <span class="layers-section-title" @click="polygonsExpanded = !polygonsExpanded"
             >Polygons ({{ filteredPolygons.length
             }}{{ searchQuery ? ` of ${layersStore.polygonCount}` : '' }})</span
           >
-          <span class="collapse-icon">{{ polygonsExpanded ? '▼' : '▶' }}</span>
+          <div class="layers-section-actions">
+            <v-btn
+              color="primary"
+              :icon="allPolygonsVisible ? 'mdi-eye-off' : 'mdi-eye'"
+              size="x-small"
+              :title="allPolygonsVisible ? 'Hide all polygons' : 'Show all polygons'"
+              variant="text"
+              @click.stop="toggleAllElementsOfType('polygon')"
+            />
+            <span class="collapse-icon" @click="polygonsExpanded = !polygonsExpanded">{{
+              polygonsExpanded ? '▼' : '▶'
+            }}</span>
+          </div>
         </div>
         <div v-show="polygonsExpanded" class="layer-items">
           <div
@@ -246,9 +294,10 @@ import type {
   PointElement,
   PolygonElement,
 } from '@/services/storage';
+import { getDistance } from 'ol/sphere';
 import { computed, inject, ref } from 'vue';
 import LayerContextMenu from '@/components/layers/LayerContextMenu.vue';
-import { calculateBearing, calculateDistance, destinationPoint } from '@/services/geometry';
+import { calculateBearing, destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -304,6 +353,23 @@ const pointsExpanded = ref(true);
 const polygonsExpanded = ref(true);
 const notesExpanded = ref(true);
 
+// Check if all elements of a type are visible
+const allCirclesVisible = computed(() => {
+  return layersStore.circles.every((c) => c.id && uiStore.isElementVisible('circle', c.id));
+});
+
+const allLinesVisible = computed(() => {
+  return layersStore.lineSegments.every((l) => l.id && uiStore.isElementVisible('lineSegment', l.id));
+});
+
+const allPointsVisible = computed(() => {
+  return layersStore.points.every((p) => p.id && uiStore.isElementVisible('point', p.id));
+});
+
+const allPolygonsVisible = computed(() => {
+  return layersStore.polygons.every((p) => p.id && uiStore.isElementVisible('polygon', p.id));
+});
+
 function getLineInfo(line: LineSegmentElement) {
   // Special handling for parallel mode
   if (line.mode === 'parallel') {
@@ -320,12 +386,9 @@ function getLineInfo(line: LineSegmentElement) {
     endpoint = destinationPoint(line.center.lat, line.center.lon, line.distance, line.azimuth);
   }
 
-  const segmentLength = calculateDistance(
-    line.center.lat,
-    line.center.lon,
-    endpoint.lat,
-    endpoint.lon
-  );
+  // getDistance returns meters, convert to km
+  const segmentLength =
+    getDistance([line.center.lon, line.center.lat], [endpoint.lon, endpoint.lat]) / 1000;
   const azimuth = calculateBearing(line.center.lat, line.center.lon, endpoint.lat, endpoint.lon);
   const inverseAzimuth = (azimuth + 180) % 360;
   const modeLabel =
@@ -394,13 +457,12 @@ function handleGoTo(
         lat = (segment.center.lat + segment.endpoint.lat) / 2;
         lon = (segment.center.lon + segment.endpoint.lon) / 2;
 
-        // Calculate zoom based on line length: more zoomed in formula
-        const length = calculateDistance(
-          segment.center.lat,
-          segment.center.lon,
-          segment.endpoint.lat,
-          segment.endpoint.lon
-        );
+        // Calculate zoom based on line length: more zoomed in formula (getDistance returns meters, convert to km)
+        const length =
+          getDistance(
+            [segment.center.lon, segment.center.lat],
+            [segment.endpoint.lon, segment.endpoint.lat]
+          ) / 1000;
         zoom = Math.max(6, Math.min(18, 15 - Math.log2(length / 1.5)));
       } else {
         // Fallback to segment start
@@ -427,8 +489,8 @@ function handleGoTo(
       const minLon = Math.min(...lons);
       const maxLon = Math.max(...lons);
 
-      // Calculate diagonal distance of bounding box
-      const diagonal = calculateDistance(minLat, minLon, maxLat, maxLon);
+      // Calculate diagonal distance of bounding box (getDistance returns meters, convert to km)
+      const diagonal = getDistance([minLon, minLat], [maxLon, maxLat]) / 1000;
       zoom = Math.max(6, Math.min(18, 15 - Math.log2(diagonal / 1.5)));
 
       break;
@@ -506,12 +568,12 @@ function handleDrop(event: DragEvent, targetPoint: PointElement) {
   }
 
   const startPoint = draggedPoint.value;
-  const distance = calculateDistance(
-    startPoint.coordinates.lat,
-    startPoint.coordinates.lon,
-    targetPoint.coordinates.lat,
-    targetPoint.coordinates.lon
-  );
+  // getDistance returns meters, convert to km
+  const distance =
+    getDistance(
+      [startPoint.coordinates.lon, startPoint.coordinates.lat],
+      [targetPoint.coordinates.lon, targetPoint.coordinates.lat]
+    ) / 1000;
   const azimuth = calculateBearing(
     startPoint.coordinates.lat,
     startPoint.coordinates.lon,
@@ -597,6 +659,50 @@ function handleDeleteNote(note: NoteElement) {
     uiStore.addToast('Note deleted successfully!', 'success');
   }
 }
+
+function toggleAllElementsOfType(elementType: 'circle' | 'lineSegment' | 'point' | 'polygon') {
+  let elements: any[];
+  let typeName: string;
+  let allVisible: boolean;
+
+  switch (elementType) {
+    case 'circle':
+      elements = layersStore.circles;
+      typeName = 'circles';
+      allVisible = allCirclesVisible.value;
+      break;
+    case 'lineSegment':
+      elements = layersStore.lineSegments;
+      typeName = 'lines';
+      allVisible = allLinesVisible.value;
+      break;
+    case 'point':
+      elements = layersStore.points;
+      typeName = 'points';
+      allVisible = allPointsVisible.value;
+      break;
+    case 'polygon':
+      elements = layersStore.polygons;
+      typeName = 'polygons';
+      allVisible = allPolygonsVisible.value;
+      break;
+  }
+
+  // Toggle visibility: if all are visible, hide all; otherwise show all
+  const newVisibility = !allVisible;
+
+  for (const element of elements) {
+    if (element.id) {
+      uiStore.setElementVisibility(elementType, element.id, newVisibility);
+      if (drawing) {
+        drawing.updateElementVisibility(elementType, element.id, newVisibility);
+      }
+    }
+  }
+
+  const action = newVisibility ? 'shown' : 'hidden';
+  uiStore.addToast(`All ${typeName} ${action}`, 'info');
+}
 </script>
 
 <style scoped>
@@ -651,7 +757,6 @@ function handleDeleteNote(note: NoteElement) {
   align-items: center;
   justify-content: space-between;
   padding: 8px 4px 4px 4px;
-  cursor: pointer;
   user-select: none;
   transition: background 0.2s ease;
   border-radius: 4px;
@@ -667,12 +772,22 @@ function handleDeleteNote(note: NoteElement) {
   font-weight: 500;
   color: rgba(var(--v-theme-on-surface), 0.9);
   margin: 0;
+  cursor: pointer;
+  flex: 1;
+}
+
+.layers-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .collapse-icon {
   font-size: 10px;
   color: rgba(var(--v-theme-on-surface), 0.6);
   transition: transform 0.2s ease;
+  cursor: pointer;
+  padding: 4px;
 }
 
 .layer-items {

@@ -94,8 +94,9 @@
 
 <script lang="ts" setup>
 import type { PointElement } from '@/services/storage';
+import { getDistance } from 'ol/sphere';
 import { computed, inject, ref } from 'vue';
-import { calculateBearing, calculateDistance, calculateInverseBearing } from '@/services/geometry';
+import { calculateBearing, calculateInverseBearing } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -137,12 +138,12 @@ const bearingsData = computed<BearingData[]>(() => {
   if (!sourcePoint.value) return [];
 
   return otherPoints.value.map((point) => {
-    const distance = calculateDistance(
-      sourcePoint.value!.coordinates.lat,
-      sourcePoint.value!.coordinates.lon,
-      point.coordinates.lat,
-      point.coordinates.lon
-    );
+    // getDistance returns meters, convert to km
+    const distance =
+      getDistance(
+        [sourcePoint.value!.coordinates.lon, sourcePoint.value!.coordinates.lat],
+        [point.coordinates.lon, point.coordinates.lat]
+      ) / 1000;
 
     const azimuth = calculateBearing(
       sourcePoint.value!.coordinates.lat,

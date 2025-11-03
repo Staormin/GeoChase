@@ -1,6 +1,7 @@
 import type { CircleElement, LineSegmentElement } from '@/services/storage';
+import { getDistance } from 'ol/sphere';
 import { computed, ref } from 'vue';
-import { calculateDistance, destinationPoint, toRadians } from '@/services/geometry';
+import { destinationPoint, toRadians } from '@/services/geometry';
 
 export interface NavigationState {
   active: boolean;
@@ -54,11 +55,12 @@ export function useNavigation() {
       return 0;
     }
 
-    return calculateDistance(
-      segment.center.lat,
-      segment.center.lon,
-      segmentEndpoint.lat,
-      segmentEndpoint.lon
+    // getDistance returns meters, convert to km
+    return (
+      getDistance(
+        [segment.center.lon, segment.center.lat],
+        [segmentEndpoint.lon, segmentEndpoint.lat]
+      ) / 1000
     );
   }
 

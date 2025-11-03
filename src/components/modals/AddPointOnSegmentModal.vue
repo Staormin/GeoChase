@@ -55,13 +55,10 @@
 </template>
 
 <script lang="ts" setup>
+import { fromLonLat, toLonLat } from 'ol/proj';
+import { getDistance } from 'ol/sphere';
 import { computed, inject, ref } from 'vue';
-import {
-  calculateDistance,
-  destinationPoint,
-  mercatorProject,
-  mercatorUnproject,
-} from '@/services/geometry';
+import { destinationPoint } from '@/services/geometry';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -121,13 +118,9 @@ function calculateMidpoint() {
   const endpoint = getSegmentEndpoint(segment);
   if (!endpoint) return;
 
-  // Calculate total haversine distance
-  const totalDistance = calculateDistance(
-    segment.center.lat,
-    segment.center.lon,
-    endpoint.lat,
-    endpoint.lon
-  );
+  // Calculate total haversine distance (getDistance returns meters, convert to km)
+  const totalDistance =
+    getDistance([segment.center.lon, segment.center.lat], [endpoint.lon, endpoint.lat]) / 1000;
 
   // The midpoint distance is half of total haversine distance
   // This will be placed using binary search in submitForm to ensure consistency
@@ -153,13 +146,9 @@ function submitForm() {
     return;
   }
 
-  // Use Haversine distance for validation and display consistency
-  const segmentLength = calculateDistance(
-    segment.center.lat,
-    segment.center.lon,
-    endpoint.lat,
-    endpoint.lon
-  );
+  // Use Haversine distance for validation and display consistency (getDistance returns meters, convert to km)
+  const segmentLength =
+    getDistance([segment.center.lon, segment.center.lat], [endpoint.lon, endpoint.lat]) / 1000;
 
   if (form.value.distance > segmentLength) {
     const msg = `Distance exceeds segment length (${segmentLength.toFixed(2)} km)`;
@@ -174,10 +163,14 @@ function submitForm() {
 
   // Find point on the Web Mercator line that corresponds to the target Haversine distance
   // Use binary search in Web Mercator space to find the exact point
-  const startProj = mercatorProject(segment.center.lat, segment.center.lon);
-  const endProj = mercatorProject(endpoint.lat, endpoint.lon);
-  const dx = endProj.x - startProj.x;
-  const dy = endProj.y - startProj.y;
+  const startProj = fromLonLat([segment.center.lon, segment.center.lat]);
+  const startProjX = startProj[0]!;
+  const startProjY = startProj[1]!;
+  const endProj = fromLonLat([endpoint.lon, endpoint.lat]);
+  const endProjX = endProj[0]!;
+  const endProjY = endProj[1]!;
+  const dx = endProjX - startProjX;
+  const dy = endProjY - startProjY;
 
   let pointOnSegment;
 
@@ -190,16 +183,15 @@ function submitForm() {
     const maxIterations = 30;
 
     while (iterations < maxIterations) {
-      const testProjX = startProj.x + targetFraction * dx;
-      const testProjY = startProj.y + targetFraction * dy;
-      const testPoint = mercatorUnproject(testProjX, testProjY);
+      const testProjX = startProjX + targetFraction * dx;
+      const testProjY = startProjY + targetFraction * dy;
+      const testCoords = toLonLat([testProjX, testProjY]);
+      const testPoint = { lat: testCoords[1]!, lon: testCoords[0]! };
 
-      const testDistance = calculateDistance(
-        segment.center.lat,
-        segment.center.lon,
-        testPoint.lat,
-        testPoint.lon
-      );
+      // getDistance returns meters, convert to km
+      const testDistance =
+        getDistance([segment.center.lon, segment.center.lat], [testPoint.lon, testPoint.lat]) /
+        1000;
       const tolerance = 0.0001; // 0.1 meter tolerance
 
       if (Math.abs(testDistance - form.value.distance) < tolerance) {
@@ -217,9 +209,10 @@ function submitForm() {
 
     // If we didn't converge, use the last calculated point
     if (!pointOnSegment) {
-      const projX = startProj.x + targetFraction * dx;
-      const projY = startProj.y + targetFraction * dy;
-      pointOnSegment = mercatorUnproject(projX, projY);
+      const projX = startProjX + targetFraction * dx;
+      const projY = startProjY + targetFraction * dy;
+      const coords = toLonLat([projX, projY]);
+      pointOnSegment = { lat: coords[1]!, lon: coords[0]! };
     }
   } else {
     // Binary search from endpoint
@@ -230,16 +223,14 @@ function submitForm() {
     const maxIterations = 30;
 
     while (iterations < maxIterations) {
-      const testProjX = endProj.x - targetFraction * dx;
-      const testProjY = endProj.y - targetFraction * dy;
-      const testPoint = mercatorUnproject(testProjX, testProjY);
+      const testProjX = endProjX - targetFraction * dx;
+      const testProjY = endProjY - targetFraction * dy;
+      const testCoords = toLonLat([testProjX, testProjY]);
+      const testPoint = { lat: testCoords[1]!, lon: testCoords[0]! };
 
-      const testDistance = calculateDistance(
-        endpoint.lat,
-        endpoint.lon,
-        testPoint.lat,
-        testPoint.lon
-      );
+      // getDistance returns meters, convert to km
+      const testDistance =
+        getDistance([endpoint.lon, endpoint.lat], [testPoint.lon, testPoint.lat]) / 1000;
       const tolerance = 0.0001; // 0.1 meter tolerance
 
       if (Math.abs(testDistance - form.value.distance) < tolerance) {
@@ -257,9 +248,10 @@ function submitForm() {
 
     // If we didn't converge, use the last calculated point
     if (!pointOnSegment) {
-      const projX = endProj.x - targetFraction * dx;
-      const projY = endProj.y - targetFraction * dy;
-      pointOnSegment = mercatorUnproject(projX, projY);
+      const projX = endProjX - targetFraction * dx;
+      const projY = endProjY - targetFraction * dy;
+      const coords = toLonLat([projX, projY]);
+      pointOnSegment = { lat: coords[1]!, lon: coords[0]! };
     }
   }
 

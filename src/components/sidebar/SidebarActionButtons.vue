@@ -147,7 +147,7 @@ async function importFromJSON() {
             center: circle.center,
             radius: circle.radius,
             color: circle.color,
-            leafletId: circle.leafletId,
+            mapElementId: circle.mapElementId,
           });
         }
       }
@@ -167,7 +167,7 @@ async function importFromJSON() {
             intersectionDistance: line.intersectionDistance,
             longitude: line.longitude,
             color: line.color,
-            leafletId: line.leafletId,
+            mapElementId: line.mapElementId,
           });
         }
       }
@@ -181,7 +181,7 @@ async function importFromJSON() {
             coordinates: point.coordinates,
             elevation: point.elevation,
             color: point.color,
-            leafletId: point.leafletId,
+            mapElementId: point.mapElementId,
           });
         }
       }

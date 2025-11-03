@@ -1,10 +1,13 @@
 /**
  * Composable for displaying note tooltips on the map
- * Uses Leaflet's bindTooltip API to attach permanent tooltips to existing layers
+ * Uses OpenLayers Overlay API to attach permanent tooltips to existing features
  */
 
+import type { Feature } from 'ol';
+import type { Geometry } from 'ol/geom';
 import type { NoteElement } from '@/services/storage';
-import L from 'leaflet';
+import { getCenter } from 'ol/extent';
+import Overlay from 'ol/Overlay';
 import { watch } from 'vue';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -15,8 +18,8 @@ export function useNoteTooltips(mapRef: any) {
   const layersStore = useLayersStore();
   const uiStore = useUIStore();
 
-  // Track which notes have tooltips bound
-  const boundNotes = new Set<string>();
+  // Track which notes have overlays created: Map<noteId, Overlay>
+  const noteOverlays = new Map<string, Overlay>();
 
   function escapeHtml(text: string): string {
     const div = document.createElement('div');
@@ -30,44 +33,63 @@ export function useNoteTooltips(mapRef: any) {
   }
 
   /**
-   * Get the Leaflet layer for a given element
+   * Get the OpenLayers feature for a given element
    */
-  function getElementLayer(note: NoteElement): L.Layer | null {
-    if (!note.linkedElementType || !note.linkedElementId || !mapRef.map?.value) {
+  function getElementFeature(note: NoteElement): Feature<Geometry> | null {
+    if (!note.linkedElementType || !note.linkedElementId) {
       return null;
     }
 
-    const leafletId = layersStore.getLeafletId(note.linkedElementType, note.linkedElementId);
-    if (!leafletId) return null;
-
-    let foundLayer: L.Layer | null = null;
-    mapRef.map.value.eachLayer((layer: any) => {
-      if (L.stamp(layer) === leafletId) {
-        foundLayer = layer;
+    // Get the appropriate vector source based on element type
+    let source;
+    switch (note.linkedElementType) {
+      case 'circle': {
+        source = mapRef.circlesSource?.value;
+        break;
       }
-    });
+      case 'lineSegment': {
+        source = mapRef.linesSource?.value;
+        break;
+      }
+      case 'point': {
+        source = mapRef.pointsSource?.value;
+        break;
+      }
+      case 'polygon': {
+        source = mapRef.polygonsSource?.value;
+        break;
+      }
+      default: {
+        return null;
+      }
+    }
 
-    return foundLayer;
+    if (!source) return null;
+
+    // Use OpenLayers native getFeatureById() - features are created with setId(elementId)
+    return source.getFeatureById(note.linkedElementId) || null;
   }
 
   /**
-   * Bind a permanent tooltip to a layer for the given note
+   * Create and attach an overlay tooltip for the given note
    */
   function bindNoteTooltip(note: NoteElement) {
     if (!mapRef.map?.value || !note.id) return;
 
-    const layer = getElementLayer(note);
-    if (!layer || !('bindTooltip' in layer)) return;
+    const feature = getElementFeature(note);
+    if (!feature) return;
 
     // Don't bind if already bound
-    if (boundNotes.has(note.id)) return;
+    if (noteOverlays.has(note.id)) return;
 
     // Escape text (no truncation for full display)
     const safeTitle = escapeHtml(note.title);
     const safeContent = note.content ? escapeHtml(note.content) : '';
 
-    // Create tooltip HTML
-    const tooltipContent = `
+    // Create overlay container element
+    const overlayElement = document.createElement('div');
+    overlayElement.className = 'note-tooltip';
+    overlayElement.innerHTML = `
       <div class="note-tooltip-card" data-note-id="${note.id}">
         <div class="note-tooltip-icon">📝</div>
         <div class="note-tooltip-content">
@@ -77,72 +99,54 @@ export function useNoteTooltips(mapRef: any) {
       </div>
     `;
 
-    // Bind permanent tooltip to the layer
-    (layer as any).bindTooltip(tooltipContent, {
-      permanent: true,
-      direction: 'right',
-      className: 'note-tooltip',
-      offset: [15, 0],
-      interactive: true,
-    });
-
-    boundNotes.add(note.id);
-
-    // Add click handler after tooltip is rendered
-    setTimeout(() => {
-      const tooltip = (layer as any).getTooltip();
-      if (tooltip) {
-        const tooltipElement = tooltip.getElement();
-        if (tooltipElement) {
-          const cardElement = tooltipElement.querySelector('.note-tooltip-card');
-          if (cardElement) {
-            cardElement.addEventListener('click', () => {
-              handleNoteClick(note.id!);
-            });
-          }
-        }
-      }
-    }, 0);
-  }
-
-  /**
-   * Unbind tooltip from a layer for the given note
-   */
-  function unbindNoteTooltip(noteId: string) {
-    if (!mapRef.map?.value) {
-      boundNotes.delete(noteId);
-      return;
-    }
-
-    // First, try to find the note to get its element info
-    const note = layersStore.notes.find((n) => n.id === noteId);
-
-    if (note) {
-      // Note still exists - use it to find the layer
-      const layer = getElementLayer(note);
-      if (layer && 'unbindTooltip' in layer) {
-        (layer as any).unbindTooltip();
-      }
-    } else {
-      // Note was deleted - search all map layers for tooltips containing this noteId
-      mapRef.map.value.eachLayer((layer: any) => {
-        if ('getTooltip' in layer) {
-          const tooltip = layer.getTooltip();
-          if (tooltip) {
-            const tooltipElement = tooltip.getElement();
-            if (tooltipElement) {
-              const cardElement = tooltipElement.querySelector(`[data-note-id="${noteId}"]`);
-              if (cardElement) {
-                // This layer has the tooltip for the deleted note
-                layer.unbindTooltip();
-              }
-            }
-          }
-        }
+    // Add click handler
+    const cardElement = overlayElement.querySelector('.note-tooltip-card');
+    if (cardElement) {
+      cardElement.addEventListener('click', () => {
+        handleNoteClick(note.id!);
       });
     }
 
-    boundNotes.delete(noteId);
+    // Calculate position from feature geometry
+    const geometry = feature.getGeometry();
+    if (!geometry) return;
+
+    const extent = geometry.getExtent();
+    const center = getCenter(extent);
+
+    // Create OpenLayers Overlay
+    const overlay = new Overlay({
+      element: overlayElement,
+      position: center,
+      positioning: 'center-left',
+      offset: [15, 0],
+      stopEvent: false,
+    });
+
+    // Add overlay to map
+    mapRef.map.value.addOverlay(overlay);
+    noteOverlays.set(note.id, overlay);
+  }
+
+  /**
+   * Remove overlay tooltip for the given note
+   */
+  function unbindNoteTooltip(noteId: string) {
+    const overlay = noteOverlays.get(noteId);
+    if (!overlay) return;
+
+    // Remove overlay from map
+    if (mapRef.map?.value) {
+      mapRef.map.value.removeOverlay(overlay);
+    }
+
+    // Dispose of overlay element
+    const element = overlay.getElement();
+    if (element) {
+      element.remove();
+    }
+
+    noteOverlays.delete(noteId);
   }
 
   /**
@@ -151,7 +155,10 @@ export function useNoteTooltips(mapRef: any) {
   function updateNoteTooltips() {
     if (!mapRef.map?.value) return;
 
-    const currentZoom = mapRef.map.value.getZoom();
+    const view = mapRef.map.value.getView();
+    const currentZoom = view.getZoom();
+    if (currentZoom === undefined) return;
+
     const linkedNotes = layersStore.notes.filter(
       (note) => note.linkedElementType && note.linkedElementId
     );
@@ -159,20 +166,20 @@ export function useNoteTooltips(mapRef: any) {
     if (currentZoom >= MIN_ZOOM_FOR_NOTES) {
       // Show tooltips for notes at this zoom level
       for (const note of linkedNotes) {
-        if (note.id && !boundNotes.has(note.id)) {
+        if (note.id && !noteOverlays.has(note.id)) {
           bindNoteTooltip(note);
         }
       }
 
       // Remove tooltips for notes that no longer exist
-      for (const noteId of boundNotes) {
+      for (const noteId of noteOverlays.keys()) {
         if (!linkedNotes.some((n) => n.id === noteId)) {
           unbindNoteTooltip(noteId);
         }
       }
     } else {
       // Hide all tooltips when zoomed out
-      for (const noteId of Array.from(boundNotes)) {
+      for (const noteId of Array.from(noteOverlays.keys())) {
         unbindNoteTooltip(noteId);
       }
     }
@@ -192,10 +199,13 @@ export function useNoteTooltips(mapRef: any) {
     // Unbind and rebind to update content
     unbindNoteTooltip(noteId);
 
-    const currentZoom = mapRef.map?.value?.getZoom();
+    if (mapRef.map?.value) {
+      const view = mapRef.map.value.getView();
+      const currentZoom = view.getZoom();
 
-    if (mapRef.map?.value && currentZoom && currentZoom >= MIN_ZOOM_FOR_NOTES) {
-      bindNoteTooltip(note);
+      if (currentZoom !== undefined && currentZoom >= MIN_ZOOM_FOR_NOTES) {
+        bindNoteTooltip(note);
+      }
     }
   }
 
@@ -203,15 +213,16 @@ export function useNoteTooltips(mapRef: any) {
    * Clear all tooltips
    */
   function clearAllTooltips() {
-    for (const noteId of Array.from(boundNotes)) {
+    for (const noteId of Array.from(noteOverlays.keys())) {
       unbindNoteTooltip(noteId);
     }
-    boundNotes.clear();
+    noteOverlays.clear();
   }
 
   // Watch for zoom changes to show/hide tooltips based on zoom level
   if (mapRef.map?.value) {
-    mapRef.map.value.on('zoomend', () => {
+    const view = mapRef.map.value.getView();
+    view.on('change:resolution', () => {
       updateNoteTooltips();
     });
   }

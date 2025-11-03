@@ -21,6 +21,17 @@ export async function useMapInitialization(
   const coordinatesStore = useCoordinatesStore();
 
   try {
+    // Set initial view data from saved project before initializing map
+    const activeProject = projectsStore.activeProject;
+    if (activeProject?.viewData?.mapView) {
+      mapContainer.setInitialViewData(activeProject.viewData.mapView);
+      // Also restore panel states before map initialization
+      if (uiStore) {
+        uiStore.topBarOpen = activeProject.viewData.topPanelOpen;
+        uiStore.sidebarOpen = activeProject.viewData.sidePanelOpen;
+      }
+    }
+
     await mapContainer.initMap();
 
     // Initialize note tooltips after map is ready
@@ -47,7 +58,16 @@ export async function useMapInitialization(
           coordinatesStore.loadCoordinates(activeProject.data.savedCoordinates || []);
 
           // Redraw all elements on the map
+          // Skip auto-fly if we have saved view data (will be restored later)
+          const hasViewData = activeProject.viewData?.mapView !== undefined;
+          if (hasViewData) {
+            // Store a flag to skip auto-fly in redrawAllElements
+            (mapContainer as any).skipAutoFly = true;
+          }
           drawing.redrawAllElements();
+          if (hasViewData) {
+            (mapContainer as any).skipAutoFly = false;
+          }
 
           console.log(`Project "${activeProject.name}" loaded successfully`);
         } catch (error) {

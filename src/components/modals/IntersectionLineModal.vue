@@ -44,12 +44,13 @@
 </template>
 
 <script lang="ts" setup>
+import { getDistance } from 'ol/sphere';
 import { computed, inject, reactive, watch } from 'vue';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
 import { useCoordinateItems } from '@/composables/useCoordinateItems';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
-import { calculateDistance, endpointFromIntersection } from '@/services/geometry';
+import { endpointFromIntersection } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -108,8 +109,8 @@ async function submitForm() {
   const intersectLat = intersectCoords[0]!;
   const intersectLon = intersectCoords[1]!;
 
-  // Validate distance is >= distance to intersection point
-  const distToIntersection = calculateDistance(startLat, startLon, intersectLat, intersectLon);
+  // Validate distance is >= distance to intersection point (getDistance returns meters, convert to km)
+  const distToIntersection = getDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
   if (form.distance < distToIntersection - 1e-6) {
     uiStore.addToast(
       `Distance must be at least ${distToIntersection.toFixed(2)} km (distance to intersection)`,

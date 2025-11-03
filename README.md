@@ -75,7 +75,7 @@ See in-app tutorial (help icon) for detailed instructions.
 ## Technology Stack
 
 - **Frontend**: Vue 3, Vuetify 3, TypeScript
-- **Mapping**: Leaflet 1.9.4, Geoportail tiles
+- **Mapping**: OpenLayers 10.6.1, Geoportail tiles
 - **APIs**: Geoportail, Overpass API, Open-Elevation, Nominatim
 - **State**: Pinia 3, localStorage
 - **Build**: Vite 7, ESLint, Prettier

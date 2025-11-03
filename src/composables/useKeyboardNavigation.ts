@@ -15,6 +15,14 @@ export function useKeyboardNavigation(
   const navigation = useNavigation();
 
   const handleKeydown = (event: KeyboardEvent) => {
+    // View capture escape handling
+    if (uiStore.viewCaptureState.isCapturing && event.key === 'Escape') {
+      event.preventDefault();
+      uiStore.stopViewCapture();
+      uiStore.openModal('animationModal'); // Re-open the modal
+      return;
+    }
+
     // Free hand drawing escape handling
     if (uiStore.freeHandDrawing.isDrawing && event.key === 'Escape' && onFreeHandEscape) {
       event.preventDefault();
@@ -33,7 +41,8 @@ export function useKeyboardNavigation(
 
     const elementType = navigatingElement.type;
     const elementId = navigatingElement.id;
-    const zoomLevel = map.getZoom();
+    const view = map.getView();
+    const zoomLevel = view.getZoom() || 10;
 
     switch (event.key) {
       case 'ArrowRight': {
@@ -44,14 +53,18 @@ export function useKeyboardNavigation(
           if (circle) {
             navigation.navigateCircleForward(circle, zoomLevel);
             const coords = navigation.getCircleNavigationCoords(circle);
-            map.flyTo([coords.lat, coords.lon], zoomLevel, { duration: 0.5 });
+            if (mapContainer.flyTo) {
+              mapContainer.flyTo(coords.lat, coords.lon, zoomLevel, { duration: 500 });
+            }
           }
         } else if (elementType === 'lineSegment') {
           const segment = layersStore.lineSegments.find((s) => s.id === elementId);
           if (segment) {
             navigation.navigateSegmentForward(segment, zoomLevel);
             const coords = navigation.getSegmentNavigationCoords(segment);
-            map.flyTo([coords.lat, coords.lon], zoomLevel, { duration: 0.5 });
+            if (mapContainer.flyTo) {
+              mapContainer.flyTo(coords.lat, coords.lon, zoomLevel, { duration: 500 });
+            }
           }
         }
 
@@ -65,14 +78,18 @@ export function useKeyboardNavigation(
           if (circle) {
             navigation.navigateCircleBackward(circle, zoomLevel);
             const coords = navigation.getCircleNavigationCoords(circle);
-            map.flyTo([coords.lat, coords.lon], zoomLevel, { duration: 0.5 });
+            if (mapContainer.flyTo) {
+              mapContainer.flyTo(coords.lat, coords.lon, zoomLevel, { duration: 500 });
+            }
           }
         } else if (elementType === 'lineSegment') {
           const segment = layersStore.lineSegments.find((s) => s.id === elementId);
           if (segment) {
             navigation.navigateSegmentBackward(segment, zoomLevel);
             const coords = navigation.getSegmentNavigationCoords(segment);
-            map.flyTo([coords.lat, coords.lon], zoomLevel, { duration: 0.5 });
+            if (mapContainer.flyTo) {
+              mapContainer.flyTo(coords.lat, coords.lon, zoomLevel, { duration: 500 });
+            }
           }
         }
 

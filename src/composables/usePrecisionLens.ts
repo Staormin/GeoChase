@@ -3,7 +3,10 @@
  * Shows a magnified view of the map area under the cursor when activated
  */
 
-import L from 'leaflet';
+import TileLayer from 'ol/layer/Tile';
+import Map from 'ol/Map';
+import XYZ from 'ol/source/XYZ';
+import View from 'ol/View';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 interface PrecisionLensOptions {
@@ -17,7 +20,7 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
 
   const isActive = ref(false);
   const lensElement = ref<HTMLElement | null>(null);
-  const lensMap = ref<L.Map | null>(null);
+  const lensMap = ref<Map | null>(null);
   const currentMousePos = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 
   /**
@@ -87,35 +90,46 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
 
     lensElement.value = lens;
 
-    // Initialize mini map
-    // eslint-disable-next-line unicorn/no-array-callback-reference, unicorn/no-array-method-this-argument
-    const miniMap = L.map(mapContainer, {
-      zoomControl: false,
-      attributionControl: false,
-      dragging: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      boxZoom: false,
-      keyboard: false,
-      touchZoom: false,
-    });
-
-    // Copy tile layer from main map
+    // Initialize mini OpenLayers map
     const mainMap = mapRef.map.value;
-    mainMap.eachLayer((layer: any) => {
-      if (layer instanceof L.TileLayer) {
-        const tileUrl = (layer as any)._url;
-        L.tileLayer(tileUrl, {
-          ...layer.options,
-        }).addTo(miniMap);
+    const mainView = mainMap.getView();
+
+    // Get the tile layer from the main map
+    const mainLayers = mainMap.getLayers();
+    let tileUrl = '';
+    for (const layer of mainLayers.getArray()) {
+      if (layer instanceof TileLayer) {
+        const source = layer.getSource();
+        if (source instanceof XYZ) {
+          tileUrl = source.getUrls()?.[0] || '';
+        }
       }
+    }
+
+    // Create mini map with same tile layer
+    const miniMap = new Map({
+      target: mapContainer,
+      layers: [
+        new TileLayer({
+          source: new XYZ({
+            url: tileUrl,
+          }),
+        }),
+      ],
+      view: new View({
+        center: mainView.getCenter(),
+        zoom: mainView.getZoom(),
+        projection: mainView.getProjection(),
+      }),
+      controls: [],
+      interactions: [],
     });
 
     lensMap.value = miniMap;
 
-    // Invalidate size after DOM is ready to ensure proper rendering
+    // Update size after DOM is ready to ensure proper rendering
     setTimeout(() => {
-      miniMap.invalidateSize();
+      miniMap.updateSize();
     }, 0);
   }
 
@@ -137,16 +151,24 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
     lensElement.value.style.top = `${y}px`;
     lensElement.value.style.display = 'block';
 
-    // Get lat/lng at cursor position on main map
+    // Get coordinate at cursor position on main map
     const mainMap = mapRef.map.value;
-    const mapContainer = mainMap.getContainer();
+    const mapContainer = mainMap.getTargetElement();
     const rect = mapContainer.getBoundingClientRect();
-    const point = L.point(mouseEvent.clientX - rect.left, mouseEvent.clientY - rect.top);
-    const latlng = mainMap.containerPointToLatLng(point);
+    const pixel = [mouseEvent.clientX - rect.left, mouseEvent.clientY - rect.top];
+    const coordinate = mainMap.getCoordinateFromPixel(pixel);
+
+    if (!coordinate) return;
 
     // Update mini map view with same zoom level
-    const currentZoom = mainMap.getZoom();
-    lensMap.value.setView(latlng, currentZoom, { animate: false });
+    const mainView = mainMap.getView();
+    const currentZoom = mainView.getZoom();
+
+    const miniView = lensMap.value.getView();
+    miniView.setCenter(coordinate);
+    if (currentZoom !== undefined) {
+      miniView.setZoom(currentZoom);
+    }
   }
 
   /**
@@ -160,7 +182,7 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
 
     // Add mouse move listener
     if (mapRef.map?.value) {
-      const mapContainer = mapRef.map.value.getContainer();
+      const mapContainer = mapRef.map.value.getTargetElement();
       mapContainer.addEventListener('mousemove', updateLens);
     }
   }
@@ -180,7 +202,7 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
 
     // Remove mouse move listener
     if (mapRef.map?.value) {
-      const mapContainer = mapRef.map.value.getContainer();
+      const mapContainer = mapRef.map.value.getTargetElement();
       mapContainer.removeEventListener('mousemove', updateLens);
     }
   }
@@ -236,7 +258,8 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
     deactivate();
 
     if (lensMap.value) {
-      lensMap.value.remove();
+      lensMap.value.setTarget(undefined);
+      lensMap.value.dispose();
       lensMap.value = null;
     }
 
