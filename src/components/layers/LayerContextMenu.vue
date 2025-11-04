@@ -188,9 +188,13 @@ const drawing = inject('drawing') as any;
 const isVisible = computed(() => uiStore.isElementVisible(props.elementType, props.elementId));
 
 const hasCoordinateAtLocation = computed(() => {
-  if (props.elementType !== 'point') return false;
+  if (props.elementType !== 'point') {
+    return false;
+  }
   const point = layersStore.points.find((p) => p.id === props.elementId);
-  if (!point) return false;
+  if (!point) {
+    return false;
+  }
   return coordinatesStore.savedCoordinates.some(
     (c) => c.lat === point.coordinates.lat && c.lon === point.coordinates.lon
   );
@@ -232,7 +236,9 @@ function handleToggleVisibility() {
 
 function handleNavigate() {
   const element = getElement();
-  if (!element) return;
+  if (!element) {
+    return;
+  }
 
   const elementType = props.elementType as 'circle' | 'lineSegment' | 'point';
   if (elementType === 'circle' || elementType === 'lineSegment') {
@@ -242,7 +248,9 @@ function handleNavigate() {
 }
 
 function handleAddPointOnSegment() {
-  if (props.elementType !== 'lineSegment') return;
+  if (props.elementType !== 'lineSegment') {
+    return;
+  }
 
   // Get reference to the AddPointOnSegmentModal and call its openModal function
   // We need to emit an event or use a different approach since we can't directly reference the modal
@@ -253,7 +261,9 @@ function handleAddPointOnSegment() {
 }
 
 function handleAddAsCoordinate() {
-  if (props.elementType !== 'point') return;
+  if (props.elementType !== 'point') {
+    return;
+  }
 
   const point = layersStore.points.find((p) => p.id === props.elementId);
   if (!point) {
@@ -268,14 +278,18 @@ function handleAddAsCoordinate() {
 
 function handleEdit() {
   const element = getElement();
-  if (!element) return;
+  if (!element) {
+    return;
+  }
 
   emit('edit', element);
   isOpen.value = false;
 }
 
 function handleAddCenterAsPoint() {
-  if (props.elementType !== 'polygon') return;
+  if (props.elementType !== 'polygon') {
+    return;
+  }
 
   const polygon = layersStore.polygons.find((p) => p.id === props.elementId);
   if (!polygon) {
@@ -318,7 +332,9 @@ function handleDelete() {
 }
 
 function handleCreateCircle() {
-  if (props.elementType !== 'point') return;
+  if (props.elementType !== 'point') {
+    return;
+  }
 
   const point = layersStore.points.find((p) => p.id === props.elementId);
   if (!point) {
@@ -334,7 +350,9 @@ function handleCreateCircle() {
 }
 
 function handleCreateLineAsStart() {
-  if (props.elementType !== 'point') return;
+  if (props.elementType !== 'point') {
+    return;
+  }
 
   const point = layersStore.points.find((p) => p.id === props.elementId);
   if (!point) {
@@ -350,7 +368,9 @@ function handleCreateLineAsStart() {
 }
 
 function handleCreateLineAsEnd() {
-  if (props.elementType !== 'point') return;
+  if (props.elementType !== 'point') {
+    return;
+  }
 
   const point = layersStore.points.find((p) => p.id === props.elementId);
   if (!point) {
@@ -367,7 +387,9 @@ function handleCreateLineAsEnd() {
 
 function handleLocationNear() {
   const elementType = props.elementType as 'lineSegment' | 'point';
-  if (!['lineSegment', 'point'].includes(elementType)) return;
+  if (!['lineSegment', 'point'].includes(elementType)) {
+    return;
+  }
 
   const element = getElement();
   if (!element) {
@@ -380,7 +402,9 @@ function handleLocationNear() {
 }
 
 function handleBearings() {
-  if (props.elementType !== 'point') return;
+  if (props.elementType !== 'point') {
+    return;
+  }
 
   const element = getElement();
   if (!element) {

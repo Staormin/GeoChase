@@ -38,7 +38,7 @@ const countdown = computed(() => uiStore.animationState.countdown);
 }
 
 .countdown-number {
-  color: white;
+  color: #ffffff;
   font-size: 200px;
   font-weight: bold;
   line-height: 1;

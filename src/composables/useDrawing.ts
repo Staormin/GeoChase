@@ -41,7 +41,9 @@ export function useDrawing(mapRef: any) {
   // Helper to remove element and associated overlays from map
   const removeElementFromMap = (elementType: string, elementId: string, source: any) => {
     const feature = source.getFeatureById(elementId);
-    if (!feature) return;
+    if (!feature) {
+      return;
+    }
 
     source.removeFeature(feature);
 
@@ -217,7 +219,9 @@ export function useDrawing(mapRef: any) {
 
   // Helper to remove feature by ID from source
   const removeFeatureById = (source: any, featureId: string) => {
-    if (!source) return;
+    if (!source) {
+      return;
+    }
     const feature = source.getFeatureById(featureId);
     if (feature) {
       source.removeFeature(feature);

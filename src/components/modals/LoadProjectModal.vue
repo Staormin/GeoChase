@@ -78,7 +78,9 @@ const noteTooltipsRef = inject('noteTooltips') as any;
 const isOpen = computed({
   get: () => uiStore.isModalOpen('loadProjectModal'),
   set: (value) => {
-    if (!value) closeModal();
+    if (!value) {
+      closeModal();
+    }
   },
 });
 

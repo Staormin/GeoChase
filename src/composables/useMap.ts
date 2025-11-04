@@ -123,7 +123,9 @@ export function useMap(containerId: string, uiStore?: any) {
 
       // Handle zoom-based visibility for point labels (matches MIN_ZOOM_FOR_NOTES = 12)
       const updatePointLabelVisibility = () => {
-        if (!map.value) return;
+        if (!map.value) {
+          return;
+        }
         const zoom = map.value.getView().getZoom() || 0;
         const labels = document.querySelectorAll('.point-label');
         for (const label of labels) {
@@ -237,7 +239,9 @@ export function useMap(containerId: string, uiStore?: any) {
       return null;
     }
     const center = map.value.getView().getCenter();
-    if (!center) return null;
+    if (!center) {
+      return null;
+    }
     const lonLat = toLonLat(center);
     if (!lonLat || lonLat.length !== 2 || lonLat[0] === undefined || lonLat[1] === undefined) {
       return null;
@@ -254,7 +258,9 @@ export function useMap(containerId: string, uiStore?: any) {
       return null;
     }
     const pixel = map.value.getPixelFromCoordinate(fromLonLat([lon, lat]));
-    if (!pixel || pixel[0] === undefined || pixel[1] === undefined) return null;
+    if (!pixel || pixel[0] === undefined || pixel[1] === undefined) {
+      return null;
+    }
     return { x: pixel[0], y: pixel[1] };
   };
 
@@ -263,11 +269,15 @@ export function useMap(containerId: string, uiStore?: any) {
       return null;
     }
     const coordinate = map.value.getCoordinateFromPixel([x, y]);
-    if (!coordinate) return null;
+    if (!coordinate) {
+      return null;
+    }
     const lonLat = toLonLat(coordinate);
     const lon = lonLat[0];
     const lat = lonLat[1];
-    if (lon === undefined || lat === undefined) return null;
+    if (lon === undefined || lat === undefined) {
+      return null;
+    }
     return { lat, lon };
   };
 
@@ -340,7 +350,9 @@ export function useMap(containerId: string, uiStore?: any) {
     bounds: [[number, number], [number, number]],
     options?: { duration?: number; accountForPanels?: boolean }
   ): void => {
-    if (!map.value) return;
+    if (!map.value) {
+      return;
+    }
 
     const [[minLat, minLon], [maxLat, maxLon]] = bounds;
     const extent = [...fromLonLat([minLon, minLat]), ...fromLonLat([maxLon, maxLat])];

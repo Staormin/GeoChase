@@ -129,8 +129,12 @@ const altitudeMinMax = computed(() => {
   let min = elevations[0]!;
   let max = elevations[0]!;
   for (const elev of elevations) {
-    if (elev < min) min = elev;
-    if (elev > max) max = elev;
+    if (elev < min) {
+      min = elev;
+    }
+    if (elev > max) {
+      max = elev;
+    }
   }
 
   return { min, max };
@@ -164,16 +168,22 @@ const availableExcludeTypes = computed(() => {
 // Get the path points for the current element
 const pathPoints = computed(() => {
   const { elementType, elementId } = uiStore.searchAlongPanel;
-  if (!elementType || !elementId) return [];
+  if (!elementType || !elementId) {
+    return [];
+  }
 
   if (elementType === 'point') {
     const point = layersStore.points.find((p) => p.id === elementId);
-    if (!point) return [];
+    if (!point) {
+      return [];
+    }
     // For points, just return the center point
     return [point.coordinates];
   } else if (elementType === 'lineSegment') {
     const segment = layersStore.lineSegments.find((s) => s.id === elementId);
-    if (!segment) return [];
+    if (!segment) {
+      return [];
+    }
 
     // Handle different segment modes
     if (segment.mode === 'parallel') {
@@ -210,7 +220,9 @@ const pathPoints = computed(() => {
 
 // Create the buffer polygon for the search zone
 const bufferPolygon = computed(() => {
-  if (pathPoints.value.length === 0) return null;
+  if (pathPoints.value.length === 0) {
+    return null;
+  }
 
   try {
     const { elementType } = uiStore.searchAlongPanel;
@@ -219,7 +231,9 @@ const bufferPolygon = computed(() => {
     if (elementType === 'point') {
       // For points, create a point geometry
       const point = pathPoints.value[0];
-      if (!point) return null;
+      if (!point) {
+        return null;
+      }
       geometry = turf.point([point.lon, point.lat]);
     } else {
       // For line segments, create a LineString geometry (GeoJSON uses [lon, lat])
@@ -337,11 +351,17 @@ function performFiltering() {
           } else {
             for (let i = 0; i < paths.length - 1; i++) {
               const dist = distancePointToSegment(result.coordinates, paths[i]!, paths[i + 1]!);
-              if (dist < minDist) minDist = dist;
-              if (minDist <= maxDist) break; // Early exit if within range
+              if (dist < minDist) {
+                minDist = dist;
+              }
+              if (minDist <= maxDist) {
+                break;
+              } // Early exit if within range
             }
           }
-          if (minDist > maxDist) return false;
+          if (minDist > maxDist) {
+            return false;
+          }
         }
 
         // Altitude filter
@@ -646,8 +666,12 @@ async function handleSearch() {
         let minElev = elevations[0]!;
         let maxElev = elevations[0]!;
         for (const elev of elevations) {
-          if (elev < minElev) minElev = elev;
-          if (elev > maxElev) maxElev = elev;
+          if (elev < minElev) {
+            minElev = elev;
+          }
+          if (elev > maxElev) {
+            maxElev = elev;
+          }
         }
         altitudeRange.value = [minElev, maxElev];
       }
@@ -690,7 +714,9 @@ function handleResultClick(result: AddressSearchResult) {
 
 // Helper function for distance calculation (used in sorting)
 function getResultDistance(result: AddressSearchResult): number {
-  if (pathPoints.value.length === 0) return 0;
+  if (pathPoints.value.length === 0) {
+    return 0;
+  }
   return haversineDistance(result.coordinates, pathPoints.value[0]!);
 }
 

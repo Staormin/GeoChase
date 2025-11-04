@@ -127,7 +127,9 @@ watch(
 const isOpen = computed({
   get: () => uiStore.isModalOpen('coordinatesModal'),
   set: (value) => {
-    if (!value) closeModal();
+    if (!value) {
+      closeModal();
+    }
   },
 });
 
@@ -184,7 +186,9 @@ async function getCoordinateName(lat: number, lon: number): Promise<string> {
 
 async function saveCoordinate() {
   const coords = validateAndParseCoordinates();
-  if (!coords) return;
+  if (!coords) {
+    return;
+  }
 
   const name = await getCoordinateName(coords.lat, coords.lon);
   coordinatesStore.addCoordinate(name, coords.lat, coords.lon);
@@ -194,7 +198,9 @@ async function saveCoordinate() {
 
 async function saveAndAddAsPoint() {
   const coords = validateAndParseCoordinates();
-  if (!coords) return;
+  if (!coords) {
+    return;
+  }
 
   const name = await getCoordinateName(coords.lat, coords.lon);
 
@@ -226,7 +232,9 @@ function editCoordinate(id: string) {
 
 async function updateCoordinate() {
   const coords = validateAndParseCoordinates();
-  if (!coords || !editingCoordinateId.value) return;
+  if (!coords || !editingCoordinateId.value) {
+    return;
+  }
 
   let name = form.value.name.trim();
   if (!name) {

@@ -82,7 +82,9 @@ const form = ref({
 const isOpen = computed({
   get: () => uiStore.isModalOpen('addPointOnSegmentModal'),
   set: (value) => {
-    if (!value) closeModal();
+    if (!value) {
+      closeModal();
+    }
   },
 });
 
@@ -110,13 +112,19 @@ function getSegmentEndpoint(segment: any) {
 }
 
 function calculateMidpoint() {
-  if (!selectedSegmentId.value) return;
+  if (!selectedSegmentId.value) {
+    return;
+  }
 
   const segment = layersStore.lineSegments.find((s) => s.id === selectedSegmentId.value);
-  if (!segment) return;
+  if (!segment) {
+    return;
+  }
 
   const endpoint = getSegmentEndpoint(segment);
-  if (!endpoint) return;
+  if (!endpoint) {
+    return;
+  }
 
   // Calculate total haversine distance (getDistance returns meters, convert to km)
   const totalDistance =
@@ -132,7 +140,9 @@ function calculateMidpoint() {
 }
 
 function submitForm() {
-  if (!selectedSegmentId.value) return;
+  if (!selectedSegmentId.value) {
+    return;
+  }
 
   const segment = layersStore.lineSegments.find((s) => s.id === selectedSegmentId.value);
   if (!segment) {
@@ -259,12 +269,14 @@ function submitForm() {
 
   // Create a simpler coordinate name (without the full line segment details)
   let coordinateName = name;
-  if (!form.value.name.trim()) {
+  if (form.value.name.trim()) {
+    if (name.includes(' - Midpoint')) {
+      // For midpoint, extract just the essential part
+      coordinateName = `Midpoint ${layersStore.pointCount + 1}`;
+    }
+  } else {
     // If auto-generated, use a simple format
     coordinateName = `Point ${layersStore.pointCount + 1}`;
-  } else if (name.includes(' - Midpoint')) {
-    // For midpoint, extract just the essential part
-    coordinateName = `Midpoint ${layersStore.pointCount + 1}`;
   }
 
   // Save the coordinate first

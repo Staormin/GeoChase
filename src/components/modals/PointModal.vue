@@ -86,7 +86,9 @@ const form = ref({
 const isOpen = computed({
   get: () => uiStore.isModalOpen('pointModal'),
   set: (value) => {
-    if (!value) closeModal();
+    if (!value) {
+      closeModal();
+    }
   },
 });
 

@@ -177,7 +177,9 @@ defineEmits<{
 }>();
 
 function getResultDistance(result: AddressSearchResult): number {
-  if (props.pathPoints.length === 0) return 0;
+  if (props.pathPoints.length === 0) {
+    return 0;
+  }
   return haversineDistance(result.coordinates, props.pathPoints[0]!);
 }
 </script>

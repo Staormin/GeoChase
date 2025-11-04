@@ -128,7 +128,9 @@ async function importFromJSON() {
   input.accept = 'application/json';
   input.addEventListener('change', async (e: Event) => {
     const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     try {
       const content = await file.text();

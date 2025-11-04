@@ -18,7 +18,9 @@ const MIN_ZOOM_FOR_NOTES = 12; // Show notes only at zoom level 12 or higher
 function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   return ((...args: Parameters<T>) => {
-    if (timeout) clearTimeout(timeout);
+    if (timeout) {
+      clearTimeout(timeout);
+    }
     timeout = setTimeout(() => func(...args), wait);
   }) as T;
 }
@@ -73,7 +75,9 @@ export function useNoteTooltips(mapRef: any) {
       }
     }
 
-    if (!source) return null;
+    if (!source) {
+      return null;
+    }
 
     // Use OpenLayers native getFeatureById() - features are created with setId(elementId)
     return source.getFeatureById(note.linkedElementId) || null;
@@ -83,13 +87,19 @@ export function useNoteTooltips(mapRef: any) {
    * Create and attach an overlay tooltip for the given note
    */
   function bindNoteTooltip(note: NoteElement) {
-    if (!mapRef.map?.value || !note.id) return;
+    if (!mapRef.map?.value || !note.id) {
+      return;
+    }
 
     const feature = getElementFeature(note);
-    if (!feature) return;
+    if (!feature) {
+      return;
+    }
 
     // Don't bind if already bound
-    if (noteOverlays.has(note.id)) return;
+    if (noteOverlays.has(note.id)) {
+      return;
+    }
 
     // Escape text (no truncation for full display)
     const safeTitle = escapeHtml(note.title);
@@ -118,7 +128,9 @@ export function useNoteTooltips(mapRef: any) {
 
     // Calculate position from feature geometry
     const geometry = feature.getGeometry();
-    if (!geometry) return;
+    if (!geometry) {
+      return;
+    }
 
     const extent = geometry.getExtent();
     const center = getCenter(extent);
@@ -142,7 +154,9 @@ export function useNoteTooltips(mapRef: any) {
    */
   function unbindNoteTooltip(noteId: string) {
     const overlay = noteOverlays.get(noteId);
-    if (!overlay) return;
+    if (!overlay) {
+      return;
+    }
 
     // Remove overlay from map
     if (mapRef.map?.value) {
@@ -162,11 +176,15 @@ export function useNoteTooltips(mapRef: any) {
    * Update all note tooltips based on current zoom level
    */
   function updateNoteTooltips() {
-    if (!mapRef.map?.value) return;
+    if (!mapRef.map?.value) {
+      return;
+    }
 
     const view = mapRef.map.value.getView();
     const currentZoom = view.getZoom();
-    if (currentZoom === undefined) return;
+    if (currentZoom === undefined) {
+      return;
+    }
 
     const linkedNotes = layersStore.notes.filter(
       (note) => note.linkedElementType && note.linkedElementId

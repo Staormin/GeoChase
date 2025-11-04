@@ -177,7 +177,9 @@ export function useFreeHandDrawing(
     }
 
     const map = mapContainer.map?.value;
-    if (!map) return;
+    if (!map) {
+      return;
+    }
 
     // Get coordinates from OpenLayers event
     const coordinate = event.coordinate;
@@ -238,10 +240,14 @@ export function useFreeHandDrawing(
   };
 
   const handleMapClick = async (event: MapBrowserEvent<any>) => {
-    if (!uiStore.freeHandDrawing.isDrawing) return;
+    if (!uiStore.freeHandDrawing.isDrawing) {
+      return;
+    }
 
     const map = mapContainer.map?.value;
-    if (!map) return;
+    if (!map) {
+      return;
+    }
 
     // Get coordinates from OpenLayers event
     const coordinate = event.coordinate;

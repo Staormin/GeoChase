@@ -45,7 +45,9 @@ const projectName = ref('');
 const isOpen = computed({
   get: () => uiStore.isModalOpen('saveProjectModal'),
   set: (value) => {
-    if (!value) closeModal();
+    if (!value) {
+      closeModal();
+    }
   },
 });
 

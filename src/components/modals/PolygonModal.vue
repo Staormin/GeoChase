@@ -85,7 +85,9 @@ const selectedPoints = ref<string[]>([]);
 const isOpen = computed({
   get: () => uiStore.isModalOpen('polygonModal'),
   set: (value) => {
-    if (!value) closeModal();
+    if (!value) {
+      closeModal();
+    }
   },
 });
 

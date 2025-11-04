@@ -90,7 +90,9 @@ const coordinateItems = computed(() => {
 const isOpen = computed({
   get: () => uiStore.isModalOpen('circleModal'),
   set: (value) => {
-    if (!value) closeModal();
+    if (!value) {
+      closeModal();
+    }
   },
 });
 

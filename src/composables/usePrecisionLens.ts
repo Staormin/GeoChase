@@ -27,7 +27,9 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
    * Create the lens DOM element and mini map
    */
   function createLens() {
-    if (lensElement.value || !mapRef.map?.value) return;
+    if (lensElement.value || !mapRef.map?.value) {
+      return;
+    }
 
     // Create lens container
     const lens = document.createElement('div');
@@ -98,11 +100,9 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
     const mainLayers = mainMap.getLayers();
     let tileUrl = '';
     for (const layer of mainLayers.getArray()) {
-      if (layer instanceof TileLayer) {
-        const source = layer.getSource();
-        if (source instanceof XYZ) {
-          tileUrl = source.getUrls()?.[0] || '';
-        }
+      const source = layer.getSource();
+      if (source instanceof XYZ) {
+        tileUrl = source.getUrls()?.[0] || '';
       }
     }
 
@@ -158,7 +158,9 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
     const pixel = [mouseEvent.clientX - rect.left, mouseEvent.clientY - rect.top];
     const coordinate = mainMap.getCoordinateFromPixel(pixel);
 
-    if (!coordinate) return;
+    if (!coordinate) {
+      return;
+    }
 
     // Update mini map view with same zoom level
     const mainView = mainMap.getView();
@@ -175,7 +177,9 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
    * Activate precision mode
    */
   function activate() {
-    if (isActive.value) return;
+    if (isActive.value) {
+      return;
+    }
 
     createLens();
     isActive.value = true;
@@ -191,7 +195,9 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
    * Deactivate precision mode
    */
   function deactivate() {
-    if (!isActive.value) return;
+    if (!isActive.value) {
+      return;
+    }
 
     isActive.value = false;
 

@@ -203,7 +203,9 @@ const allElements = computed(() => {
   ].toSorted((a, b) => {
     const timeA = a.createdAt || 0;
     const timeB = b.createdAt || 0;
-    if (timeA !== timeB) return timeA - timeB;
+    if (timeA !== timeB) {
+      return timeA - timeB;
+    }
     return a.id.localeCompare(b.id);
   });
 });
@@ -211,20 +213,28 @@ const allElements = computed(() => {
 const totalElements = computed(() => allElements.value.length);
 
 const canStartAnimation = computed(() => {
-  if (totalElements.value === 0) return false;
-  if (
+  if (totalElements.value === 0) {
+    return false;
+  }
+  return !(
     form.value.type === 'smoothZoomOut' && // For smoothZoomOut, require both start and end views to be set
     (!form.value.startView || !form.value.endView)
-  )
-    return false;
-  return true;
+  );
 });
 
 function getSpeedLabel(speed: number) {
-  if (speed <= 2) return 'Very Slow';
-  if (speed <= 4) return 'Slow';
-  if (speed <= 6) return 'Medium';
-  if (speed <= 8) return 'Fast';
+  if (speed <= 2) {
+    return 'Very Slow';
+  }
+  if (speed <= 4) {
+    return 'Slow';
+  }
+  if (speed <= 6) {
+    return 'Medium';
+  }
+  if (speed <= 8) {
+    return 'Fast';
+  }
   return 'Very Fast';
 }
 
@@ -245,7 +255,9 @@ function closeModal() {
 }
 
 function startAnimation() {
-  if (!canStartAnimation.value) return;
+  if (!canStartAnimation.value) {
+    return;
+  }
 
   // Store animation config in UI store for useAnimation to consume
   uiStore.setAnimationConfig(form.value);
@@ -275,7 +287,7 @@ function startAnimation() {
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   color: rgb(var(--v-theme-on-surface-variant));
   margin-bottom: 8px;
 }

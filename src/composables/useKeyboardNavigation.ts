@@ -31,13 +31,19 @@ export function useKeyboardNavigation(
     }
 
     // Navigation mode keyboard handling
-    if (!uiStore.navigatingElement) return;
+    if (!uiStore.navigatingElement) {
+      return;
+    }
 
     const { navigatingElement } = uiStore;
-    if (!navigatingElement) return;
+    if (!navigatingElement) {
+      return;
+    }
 
     const map = mapContainer.map?.value;
-    if (!map) return;
+    if (!map) {
+      return;
+    }
 
     const elementType = navigatingElement.type;
     const elementId = navigatingElement.id;

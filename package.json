@@ -12,7 +12,11 @@
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@fontsource/roboto": "5.2.7",
@@ -26,13 +30,18 @@
     "vuetify": "^3.10.1"
   },
   "devDependencies": {
+    "@testing-library/vue": "^8.1.0",
     "@tsconfig/node22": "^22.0.0",
     "@types/node": "^22.9.0",
     "@vitejs/plugin-vue": "^6.0.1",
+    "@vitest/coverage-v8": "^4.0.6",
+    "@vitest/ui": "^4.0.6",
+    "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.8.1",
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-config-vuetify": "^4.2.0",
+    "happy-dom": "^20.0.10",
     "npm-run-all2": "^8.0.4",
     "prettier": "^3.6.2",
     "sass-embedded": "^1.92.1",
@@ -44,6 +53,7 @@
     "vite": "^7.1.5",
     "vite-plugin-vue-layouts-next": "^1.0.0",
     "vite-plugin-vuetify": "^2.1.2",
+    "vitest": "^4.0.6",
     "vue-tsc": "^3.0.7"
   }
 }

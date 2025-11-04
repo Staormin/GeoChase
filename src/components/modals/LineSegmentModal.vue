@@ -242,7 +242,9 @@ const parallelCoordinateItems = computed(() => {
 const isOpen = computed({
   get: () => uiStore.isModalOpen('lineSegmentModal'),
   set: (value) => {
-    if (!value) closeModal();
+    if (!value) {
+      closeModal();
+    }
   },
 });
 

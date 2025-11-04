@@ -182,9 +182,9 @@ export function generateCompleteGPX(
 
   let gpx = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="GPX Circle Generator"
-     xmlns="http://www.topografix.com/GPX/1/1"
+     xmlns="https://www.topografix.com/GPX/1/1"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+     xsi:schemaLocation="https://www.topografix.com/GPX/1/1 https://www.topografix.com/GPX/1/1/gpx.xsd">
   <metadata>
     <name>Circle Tracks and Line Segments</name>
     <desc>Circular tracks with ${centersDesc} and ${radiiDesc}${descSuffix}</desc>

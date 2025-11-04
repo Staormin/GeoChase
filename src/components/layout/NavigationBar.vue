@@ -79,7 +79,7 @@ function handleExitFreeHand(): void {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: white;
+  color: #ffffff;
   font-size: 14px;
   font-weight: 500;
 }
@@ -107,7 +107,7 @@ function handleExitFreeHand(): void {
 .navigation-exit-btn {
   background: rgba(255, 255, 255, 0.15);
   border: none;
-  color: white;
+  color: #ffffff;
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;

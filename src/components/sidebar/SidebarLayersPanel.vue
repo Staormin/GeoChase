@@ -317,31 +317,41 @@ let autoScrollInterval: ReturnType<typeof setInterval> | null = null;
 
 // Filtered lists based on search query (using sorted arrays)
 const filteredCircles = computed(() => {
-  if (!searchQuery.value) return layersStore.sortedCircles;
+  if (!searchQuery.value) {
+    return layersStore.sortedCircles;
+  }
   const query = searchQuery.value.toLowerCase();
   return layersStore.sortedCircles.filter((c) => c.name.toLowerCase().includes(query));
 });
 
 const filteredLines = computed(() => {
-  if (!searchQuery.value) return layersStore.sortedLineSegments;
+  if (!searchQuery.value) {
+    return layersStore.sortedLineSegments;
+  }
   const query = searchQuery.value.toLowerCase();
   return layersStore.sortedLineSegments.filter((l) => l.name.toLowerCase().includes(query));
 });
 
 const filteredPoints = computed(() => {
-  if (!searchQuery.value) return layersStore.sortedPoints;
+  if (!searchQuery.value) {
+    return layersStore.sortedPoints;
+  }
   const query = searchQuery.value.toLowerCase();
   return layersStore.sortedPoints.filter((p) => p.name.toLowerCase().includes(query));
 });
 
 const filteredPolygons = computed(() => {
-  if (!searchQuery.value) return layersStore.sortedPolygons;
+  if (!searchQuery.value) {
+    return layersStore.sortedPolygons;
+  }
   const query = searchQuery.value.toLowerCase();
   return layersStore.sortedPolygons.filter((p) => p.name.toLowerCase().includes(query));
 });
 
 const filteredNotes = computed(() => {
-  if (!searchQuery.value) return layersStore.sortedNotes;
+  if (!searchQuery.value) {
+    return layersStore.sortedNotes;
+  }
   const query = searchQuery.value.toLowerCase();
   return layersStore.sortedNotes.filter(
     (n) => n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)
@@ -554,7 +564,9 @@ function handleAutoScroll(event: DragEvent) {
   const target = event.target as HTMLElement;
   const scrollContainer = target.closest('.layers-list') as HTMLElement;
 
-  if (!scrollContainer) return;
+  if (!scrollContainer) {
+    return;
+  }
 
   // Get scroll container bounds
   const rect = scrollContainer.getBoundingClientRect();

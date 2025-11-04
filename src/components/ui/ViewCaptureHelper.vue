@@ -46,7 +46,7 @@ const uiStore = useUIStore();
 }
 
 .helper-content > .v-icon {
-  color: rgb(59, 130, 246);
+  color: #3b82f6;
   background: rgba(59, 130, 246, 0.1);
   padding: 12px;
   border-radius: 12px;
@@ -61,19 +61,19 @@ const uiStore = useUIStore();
 .helper-title {
   font-size: 18px;
   font-weight: 700;
-  color: rgb(241, 245, 249);
+  color: #f1f5f9;
   letter-spacing: -0.02em;
 }
 
 .helper-instructions {
   font-size: 14px;
-  color: rgb(148, 163, 184);
+  color: #94a3b8;
   line-height: 1.5;
 }
 
 .helper-cancel {
   font-size: 13px;
-  color: rgb(148, 163, 184);
+  color: #94a3b8;
   margin-top: 4px;
 }
 
@@ -86,7 +86,7 @@ kbd {
   font-family: ui-monospace, monospace;
   font-size: 12px;
   font-weight: 600;
-  color: rgb(241, 245, 249);
+  color: #f1f5f9;
 }
 
 @keyframes slide-in {

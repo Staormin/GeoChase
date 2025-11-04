@@ -432,7 +432,9 @@ export function useAnimation(
   // Helper to hide/show labels and notes
   function setLabelsAndNotesVisibility(visible: boolean) {
     const config = uiStore.animationConfig;
-    if (!config.hideLabelsAndNotes) return; // Only hide if option is enabled
+    if (!config.hideLabelsAndNotes) {
+      return;
+    } // Only hide if option is enabled
 
     // Hide/show point labels (OpenLayers overlays)
     const pointLabels = document.querySelectorAll('.point-label');

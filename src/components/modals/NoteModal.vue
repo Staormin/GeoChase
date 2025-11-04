@@ -93,7 +93,9 @@ const form = ref({
 const isOpen = computed({
   get: () => uiStore.isModalOpen('noteModal'),
   set: (value) => {
-    if (!value) closeModal();
+    if (!value) {
+      closeModal();
+    }
   },
 });
 
@@ -108,7 +110,9 @@ const linkOptions = [
 ];
 
 const availableElements = computed(() => {
-  if (!form.value.linkedElementType) return [];
+  if (!form.value.linkedElementType) {
+    return [];
+  }
 
   switch (form.value.linkedElementType) {
     case 'circle': {
@@ -204,7 +208,9 @@ function submitForm() {
 }
 
 function handleDelete() {
-  if (!uiStore.editingElement?.id) return;
+  if (!uiStore.editingElement?.id) {
+    return;
+  }
 
   if (confirm('Are you sure you want to delete this note?')) {
     const noteId = uiStore.editingElement.id;

@@ -113,17 +113,23 @@ const sortDirection = ref<SortDirection>('asc');
 const isOpen = computed({
   get: () => uiStore.bearingsPanel.isOpen,
   set: (value) => {
-    if (!value) closeModal();
+    if (!value) {
+      closeModal();
+    }
   },
 });
 
 const sourcePoint = computed(() => {
-  if (!uiStore.bearingsPanel.sourcePointId) return null;
+  if (!uiStore.bearingsPanel.sourcePointId) {
+    return null;
+  }
   return layersStore.points.find((p) => p.id === uiStore.bearingsPanel.sourcePointId);
 });
 
 const otherPoints = computed(() => {
-  if (!uiStore.bearingsPanel.sourcePointId) return [];
+  if (!uiStore.bearingsPanel.sourcePointId) {
+    return [];
+  }
   return layersStore.points.filter((p) => p.id !== uiStore.bearingsPanel.sourcePointId);
 });
 
@@ -135,7 +141,9 @@ interface BearingData {
 }
 
 const bearingsData = computed<BearingData[]>(() => {
-  if (!sourcePoint.value) return [];
+  if (!sourcePoint.value) {
+    return [];
+  }
 
   return otherPoints.value.map((point) => {
     // getDistance returns meters, convert to km
