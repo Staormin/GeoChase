@@ -187,7 +187,7 @@ describe('usePolygonDrawing', () => {
       const result = polygonDrawing.drawPolygon(insufficientPoints);
 
       expect(result).toBeNull();
-      expect(consoleWarnSpy).toHaveBeenCalledWith('Polygon must have at least 3 points');
+      // Validation warning (console logging removed)
       expect(mockAddFeature).not.toHaveBeenCalled();
     });
 

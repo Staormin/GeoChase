@@ -187,7 +187,7 @@ describe('useMapInitialization', () => {
       });
       expect(loadCoordinatesSpy).toHaveBeenCalledWith(projectData.savedCoordinates);
       expect(mockDrawing.redrawAllElements).toHaveBeenCalled();
-      expect(consoleLogSpy).toHaveBeenCalledWith('Project "Test Project" loaded successfully');
+      // Project loaded successfully (console logging removed)
     });
 
     it('should skip auto-fly when project has view data', async () => {
@@ -280,7 +280,7 @@ describe('useMapInitialization', () => {
 
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading project:', expect.any(Error));
+      // Error handling (console logging removed)
       expect(addToastSpy).toHaveBeenCalledWith(
         'Failed to load project "Test Project". Some elements may not display correctly.',
         'error',
@@ -311,10 +311,7 @@ describe('useMapInitialization', () => {
 
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Fatal error during app initialization:',
-        expect.any(Error)
-      );
+      // Fatal error handling (console logging removed)
       expect(addToastSpy).toHaveBeenCalledWith(
         'Failed to initialize the application. Please refresh the page.',
         'error',
@@ -353,10 +350,7 @@ describe('useMapInitialization', () => {
 
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Fatal error during app initialization:',
-        expect.any(Error)
-      );
+      // Fatal error handling (console logging removed)
       expect(addToastSpy).toHaveBeenCalledWith(
         'Failed to initialize the application. Please refresh the page.',
         'error',

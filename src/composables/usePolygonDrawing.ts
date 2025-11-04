@@ -44,7 +44,6 @@ export function usePolygonDrawing(mapRef: any) {
     }
 
     if (points.length < 3) {
-      console.warn('Polygon must have at least 3 points');
       return null;
     }
 

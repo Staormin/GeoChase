@@ -113,8 +113,7 @@ function loadProject(projectId: string) {
 
       uiStore.addToast(`Project "${project.name}" loaded successfully!`, 'success');
       closeModal();
-    } catch (error) {
-      console.error('Error loading project:', error);
+    } catch {
       uiStore.addToast(
         `Failed to load project "${project.name}". Some data may be corrupted.`,
         'error',

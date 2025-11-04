@@ -271,9 +271,7 @@ export const useLayersStore = defineStore('layers', () => {
       if (element) {
         // Check if element already has a note (enforce one-to-one)
         if (element.noteId && element.noteId !== note.id) {
-          console.warn(
-            `Element ${note.linkedElementId} already has a note. Replacing with new note.`
-          );
+          // Element already has a note, replacing with new note
         }
         element.noteId = note.id;
       }
@@ -313,9 +311,7 @@ export const useLayersStore = defineStore('layers', () => {
           const newElement = getElement(newElementType, newElementId);
           if (newElement) {
             if (newElement.noteId && newElement.noteId !== updatedNote.id) {
-              console.warn(
-                `Element ${newElementId} already has a note. Replacing with updated note.`
-              );
+              // Element already has a note, replacing with updated note
             }
             newElement.noteId = updatedNote.id;
           }
@@ -464,43 +460,23 @@ export const useLayersStore = defineStore('layers', () => {
 
     // Validate and filter data before loading
     const validCircles = (data.circles || []).filter((circle) => {
-      const isValid = validateCircle(circle);
-      if (!isValid) {
-        console.warn('Invalid circle data detected and skipped:', circle);
-      }
-      return isValid;
+      return validateCircle(circle);
     });
 
     const validLineSegments = (data.lineSegments || []).filter((segment) => {
-      const isValid = validateLineSegment(segment);
-      if (!isValid) {
-        console.warn('Invalid line segment data detected and skipped:', segment);
-      }
-      return isValid;
+      return validateLineSegment(segment);
     });
 
     const validPoints = (data.points || []).filter((point) => {
-      const isValid = validatePoint(point);
-      if (!isValid) {
-        console.warn('Invalid point data detected and skipped:', point);
-      }
-      return isValid;
+      return validatePoint(point);
     });
 
     const validPolygons = (data.polygons || []).filter((polygon) => {
-      const isValid = validatePolygon(polygon);
-      if (!isValid) {
-        console.warn('Invalid polygon data detected and skipped:', polygon);
-      }
-      return isValid;
+      return validatePolygon(polygon);
     });
 
     const validNotes = (data.notes || []).filter((note) => {
-      const isValid = validateNote(note);
-      if (!isValid) {
-        console.warn('Invalid note data detected and skipped:', note);
-      }
-      return isValid;
+      return validateNote(note);
     });
 
     // Assign timestamps to elements that don't have them (for old projects)

@@ -68,10 +68,7 @@ export async function useMapInitialization(
           if (hasViewData) {
             (mapContainer as any).skipAutoFly = false;
           }
-
-          console.log(`Project "${activeProject.name}" loaded successfully`);
-        } catch (error) {
-          console.error('Error loading project:', error);
+        } catch {
           uiStore.addToast(
             `Failed to load project "${activeProject.name}". Some elements may not display correctly.`,
             'error',
@@ -85,8 +82,7 @@ export async function useMapInitialization(
         }
       }
     }
-  } catch (error) {
-    console.error('Fatal error during app initialization:', error);
+  } catch {
     uiStore.addToast(
       'Failed to initialize the application. Please refresh the page.',
       'error',

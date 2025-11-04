@@ -245,8 +245,7 @@ const bufferPolygon = computed(() => {
     return turf.buffer(geometry, searchDistance.value, {
       units: 'kilometers',
     });
-  } catch (error) {
-    console.error('Error creating buffer polygon:', error);
+  } catch {
     return null;
   }
 });
@@ -685,8 +684,7 @@ async function handleSearch() {
     } else {
       uiStore.addToast(`Found ${locations.length} location(s)`, 'success');
     }
-  } catch (error) {
-    console.error('Error searching locations:', error);
+  } catch {
     uiStore.addToast('Error searching locations', 'error');
   } finally {
     isSearching.value = false;

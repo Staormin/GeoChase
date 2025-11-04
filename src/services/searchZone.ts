@@ -35,13 +35,11 @@ export function createSearchZoneLayer(
 
   try {
     if (!mapInstance) {
-      console.error('[SearchZone] Map instance not found');
       return searchZoneLayer;
     }
 
     // Validate we have at least one point
     if (!pathPoints || pathPoints.length === 0) {
-      console.error('[SearchZone] No path points provided');
       return searchZoneLayer;
     }
 
@@ -138,8 +136,7 @@ export function createSearchZoneLayer(
     mapInstance.addLayer(searchZoneLayer);
 
     return searchZoneLayer;
-  } catch (error) {
-    console.error('[SearchZone] Error creating search zone:', error);
+  } catch {
     return searchZoneLayer;
   }
 }
@@ -158,12 +155,11 @@ export function removeSearchZoneLayer(
 
   try {
     if (!mapInstance) {
-      console.error('[SearchZone] Map instance not found');
       return;
     }
 
     mapInstance.removeLayer(searchZoneLayer);
-  } catch (error) {
-    console.error('[SearchZone] Error removing search zone:', error);
+  } catch {
+    // Silently ignore layer removal errors
   }
 }

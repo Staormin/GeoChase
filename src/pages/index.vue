@@ -102,8 +102,6 @@ watch(
 
 // Watch local sidebarOpen and refit map when it changes
 watch(sidebarOpen, async (newValue, oldValue) => {
-  console.log('Sidebar state changed - Old:', oldValue, 'New:', newValue);
-
   // Sync to uiStore
   uiStore.sidebarOpen = newValue;
 
@@ -118,15 +116,12 @@ watch(sidebarOpen, async (newValue, oldValue) => {
     }
 
     // Refit immediately for snappy response
-    console.log('Refitting map - Previous sidebar state:', oldValue, 'New state:', newValue);
     mapContainer.refitMap(oldValue, newValue, undefined, undefined);
   }
 });
 
 // Watch local topBarOpen and refit map when it changes
 watch(topBarOpen, async (newValue, oldValue) => {
-  console.log('Top bar state changed - Old:', oldValue, 'New:', newValue);
-
   // Sync to uiStore
   uiStore.topBarOpen = newValue;
 
@@ -141,7 +136,6 @@ watch(topBarOpen, async (newValue, oldValue) => {
     }
 
     // Refit immediately for snappy response
-    console.log('Refitting map - Previous top bar state:', oldValue, 'New state:', newValue);
     mapContainer.refitMap(undefined, undefined, oldValue, newValue);
   }
 });

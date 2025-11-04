@@ -149,7 +149,6 @@ describe('useViewCapture', () => {
 
     it('should continue without screenshot on error', async () => {
       const captureViewSpy = vi.spyOn(uiStore, 'captureView');
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       // Make screenshot capture fail
       mockMapContainer.captureScreenshot = vi.fn(() =>
@@ -162,17 +161,13 @@ describe('useViewCapture', () => {
       // Simulate map click
       await mockMapClickHandler();
 
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to capture screenshot:', expect.any(Error));
-
-      // Should still capture view without screenshot
+      // Should still capture view without screenshot (gracefully handling error)
       expect(captureViewSpy).toHaveBeenCalledWith({
         lat: 48.8566,
         lon: 2.3522,
         zoom: 15,
         screenshot: undefined,
       });
-
-      consoleSpy.mockRestore();
     });
   });
 

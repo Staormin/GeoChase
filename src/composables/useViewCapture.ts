@@ -44,8 +44,7 @@ export function useViewCapture(mapContainer: ReturnType<typeof useMap>) {
       let screenshot: string | undefined;
       try {
         screenshot = await mapContainer.captureScreenshot();
-      } catch (error) {
-        console.error('Failed to capture screenshot:', error);
+      } catch {
         // Continue without screenshot
       }
 

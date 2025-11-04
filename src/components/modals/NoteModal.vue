@@ -176,17 +176,14 @@ function submitForm() {
   };
 
   if (isEditing.value) {
-    console.log('[NoteModal] Updating note:', noteData);
     layersStore.updateNote(noteData.id, noteData);
     uiStore.addToast('Note updated successfully!', 'success');
     uiStore.stopEditing();
 
     // Refresh the tooltip on the map after Vue updates
     const noteTooltips = noteTooltipsRef?.value;
-    console.log('[NoteModal] noteTooltips exists?', !!noteTooltips, 'noteData.id:', noteData.id);
     if (noteTooltips && noteData.id) {
       nextTick(() => {
-        console.log('[NoteModal] Calling refreshNoteTooltip after nextTick');
         noteTooltips.refreshNoteTooltip(noteData.id);
       });
     }

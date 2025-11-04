@@ -108,8 +108,7 @@ export function getAllProjects(): ProjectData[] {
   try {
     const projects = localStorage.getItem(PROJECTS_STORAGE_KEY);
     return projects ? JSON.parse(projects) : [];
-  } catch (error) {
-    console.error('Error loading projects from storage:', error);
+  } catch {
     return [];
   }
 }
@@ -120,8 +119,8 @@ export function getAllProjects(): ProjectData[] {
 export function saveProjectsToStorage(projects: ProjectData[]): void {
   try {
     localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
-  } catch (error) {
-    console.error('Error saving projects to storage:', error);
+  } catch {
+    // Silently ignore localStorage errors
   }
 }
 
@@ -221,8 +220,7 @@ export function importProjectFromJSON(jsonString: string): ProjectData | null {
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     };
-  } catch (error) {
-    console.error('Error importing project:', error);
+  } catch {
     return null;
   }
 }

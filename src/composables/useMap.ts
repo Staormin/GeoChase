@@ -150,8 +150,8 @@ export function useMap(containerId: string, uiStore?: any) {
           }
         });
       });
-    } catch (error) {
-      console.error('Error initializing map:', error);
+    } catch {
+      // Error initializing map - silently fail
     }
   };
 
@@ -394,31 +394,17 @@ export function useMap(containerId: string, uiStore?: any) {
     previousTopBarState?: boolean,
     newTopBarState?: boolean
   ): void => {
-    console.log(
-      'refitMap called - sidebar:',
-      previousSidebarState,
-      '->',
-      newSidebarState,
-      'topBar:',
-      previousTopBarState,
-      '->',
-      newTopBarState
-    );
-
     if (!map.value) {
-      console.log('refitMap early return - no map');
       return;
     }
 
     const view = map.value.getView();
     const mapSize = map.value.getSize();
     if (!mapSize) {
-      console.log('refitMap early return - no mapSize');
       return;
     }
 
     if (mapSize.length !== 2 || mapSize[0] === undefined || mapSize[1] === undefined) {
-      console.log('refitMap early return - invalid mapSize');
       return;
     }
 
@@ -431,17 +417,13 @@ export function useMap(containerId: string, uiStore?: any) {
       currentCenter[0] === undefined ||
       currentCenter[1] === undefined
     ) {
-      console.log('refitMap early return - no currentCenter');
       return;
     }
 
     const resolution = view.getResolution();
     if (!resolution) {
-      console.log('refitMap early return - no resolution');
       return;
     }
-
-    console.log('Map size:', mapWidth, 'x', mapHeight, 'Resolution:', resolution);
 
     // Calculate the shift needed for sidebar (horizontal)
     const sidebarWidth = 640;
@@ -453,27 +435,11 @@ export function useMap(containerId: string, uiStore?: any) {
         const previousVisibleCenter = sidebarWidth + (mapWidth - sidebarWidth) / 2;
         const newVisibleCenter = mapWidth / 2;
         offsetPixelsX = previousVisibleCenter - newVisibleCenter;
-        console.log(
-          'Sidebar closing - Previous center:',
-          previousVisibleCenter,
-          'New center:',
-          newVisibleCenter,
-          'Offset:',
-          offsetPixelsX
-        );
       } else if (!previousSidebarState && newSidebarState) {
         // Sidebar was closed, now open - shift LEFT to keep content visible
         const previousVisibleCenter = mapWidth / 2;
         const newVisibleCenter = sidebarWidth + (mapWidth - sidebarWidth) / 2;
         offsetPixelsX = previousVisibleCenter - newVisibleCenter;
-        console.log(
-          'Sidebar opening - Previous center:',
-          previousVisibleCenter,
-          'New center:',
-          newVisibleCenter,
-          'Offset:',
-          offsetPixelsX
-        );
       }
     }
 
@@ -487,27 +453,11 @@ export function useMap(containerId: string, uiStore?: any) {
         const previousVisibleCenter = topBarHeight + (mapHeight - topBarHeight) / 2;
         const newVisibleCenter = mapHeight / 2;
         offsetPixelsY = newVisibleCenter - previousVisibleCenter;
-        console.log(
-          'Top bar closing - Previous center:',
-          previousVisibleCenter,
-          'New center:',
-          newVisibleCenter,
-          'Offset:',
-          offsetPixelsY
-        );
       } else if (!previousTopBarState && newTopBarState) {
         // Top bar was closed, now open - shift DOWN to keep content visible
         const previousVisibleCenter = mapHeight / 2;
         const newVisibleCenter = topBarHeight + (mapHeight - topBarHeight) / 2;
         offsetPixelsY = newVisibleCenter - previousVisibleCenter;
-        console.log(
-          'Top bar opening - Previous center:',
-          previousVisibleCenter,
-          'New center:',
-          newVisibleCenter,
-          'Offset:',
-          offsetPixelsY
-        );
       }
     }
 
@@ -515,13 +465,8 @@ export function useMap(containerId: string, uiStore?: any) {
     const offsetX = offsetPixelsX * resolution;
     const offsetY = offsetPixelsY * resolution;
 
-    console.log('Pixel offset X:', offsetPixelsX, 'Map offset X:', offsetX);
-    console.log('Pixel offset Y:', offsetPixelsY, 'Map offset Y:', offsetY);
-
     // Calculate new center (shift in both X and Y directions)
     const newCenter = [currentCenter[0] + offsetX, currentCenter[1] + offsetY];
-
-    console.log('Current center:', currentCenter, 'New center:', newCenter);
 
     // Animate to the new center (instant for snappy response)
     view.animate({

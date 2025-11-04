@@ -68,9 +68,7 @@ async function fetchElevations(
       if (!response.ok) {
         // Handle 413 Payload Too Large error
         if (response.status === 413 && iteration < 5) {
-          console.warn(
-            `Elevation API: Payload too large (413), splitting and retrying... (iteration ${iteration + 1}/5)`
-          );
+          // Payload too large (413), splitting and retrying
           // Split the coordinates into two batches
           const mid = Math.ceil(coords.length / 2);
           const batch1 = coords.slice(0, mid);
@@ -82,7 +80,6 @@ async function fetchElevations(
           return;
         }
 
-        console.warn(`Elevation API error: ${response.status}`);
         return;
       }
 
@@ -114,8 +111,8 @@ async function fetchElevations(
           }
         }
       }
-    } catch (error) {
-      console.warn('Error fetching elevation data:', error);
+    } catch {
+      // Silently ignore elevation parsing errors
     }
   }
 
@@ -162,7 +159,6 @@ export async function searchAddress(query: string, limit = 8): Promise<AddressSe
       type: result.kind,
     }));
   } catch (error) {
-    console.error('Error searching address:', error);
     throw new Error(
       `Failed to search address: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
@@ -592,18 +588,13 @@ export async function searchLocationsNearPath(
 
   const searchPromises = [
     await requestQueue.add(async () => {
-      try {
-        return await fetch(OVERPASS_API, {
-          method: 'POST',
-          body: overpassQuery,
-          headers: {
-            'Content-Type': 'application/osm3s',
-          },
-        });
-      } catch (error) {
-        console.error('Error in overpass search:', error);
-        throw error;
-      }
+      return await fetch(OVERPASS_API, {
+        method: 'POST',
+        body: overpassQuery,
+        headers: {
+          'Content-Type': 'application/osm3s',
+        },
+      });
     }),
   ];
 
@@ -619,15 +610,14 @@ export async function searchLocationsNearPath(
 
         // Check for parsing errors
         if (doc.documentElement.nodeName === 'parsererror') {
-          console.error('XML parsing error:', xmlText.slice(0, 500));
           continue;
         }
 
         // Handle Overpass API XML response format
         processXmlNodes(doc, results, pathPoints, searchDistanceKm, bufferPolygon);
         processXmlWays(doc, results, pathPoints, searchDistanceKm, bufferPolygon);
-      } catch (error) {
-        console.error('Error parsing Overpass API response:', error);
+      } catch {
+        // Silently ignore XML parsing errors
       }
     }
   }

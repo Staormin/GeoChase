@@ -78,8 +78,7 @@ async function onAddressSearch(query: string) {
       const results = await searchAddress(query);
       addressSearchResults.value = results;
       showResults.value = results.length > 0;
-    } catch (error) {
-      console.error('Error searching addresses:', error);
+    } catch {
       uiStore.addToast('Error searching addresses', 'error');
       showResults.value = false;
     } finally {
