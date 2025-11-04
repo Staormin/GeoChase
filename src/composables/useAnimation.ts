@@ -212,47 +212,47 @@ export function useAnimation(
 
       for (const element of visibleElements) {
         switch (element.type) {
-        case 'circle': {
-          minLat = Math.min(minLat, element.center.lat);
-          maxLat = Math.max(maxLat, element.center.lat);
-          minLon = Math.min(minLon, element.center.lon);
-          maxLon = Math.max(maxLon, element.center.lon);
-        
-        break;
-        }
-        case 'lineSegment': {
-          minLat = Math.min(minLat, element.center.lat);
-          maxLat = Math.max(maxLat, element.center.lat);
-          minLon = Math.min(minLon, element.center.lon);
-          maxLon = Math.max(maxLon, element.center.lon);
-          if (element.endpoint) {
-            minLat = Math.min(minLat, element.endpoint.lat);
-            maxLat = Math.max(maxLat, element.endpoint.lat);
-            minLon = Math.min(minLon, element.endpoint.lon);
-            maxLon = Math.max(maxLon, element.endpoint.lon);
+          case 'circle': {
+            minLat = Math.min(minLat, element.center.lat);
+            maxLat = Math.max(maxLat, element.center.lat);
+            minLon = Math.min(minLon, element.center.lon);
+            maxLon = Math.max(maxLon, element.center.lon);
+
+            break;
           }
-        
-        break;
-        }
-        case 'point': {
-          minLat = Math.min(minLat, element.coordinates.lat);
-          maxLat = Math.max(maxLat, element.coordinates.lat);
-          minLon = Math.min(minLon, element.coordinates.lon);
-          maxLon = Math.max(maxLon, element.coordinates.lon);
-        
-        break;
-        }
-        case 'polygon': {
-          for (const point of element.points) {
-            minLat = Math.min(minLat, point.lat);
-            maxLat = Math.max(maxLat, point.lat);
-            minLon = Math.min(minLon, point.lon);
-            maxLon = Math.max(maxLon, point.lon);
+          case 'lineSegment': {
+            minLat = Math.min(minLat, element.center.lat);
+            maxLat = Math.max(maxLat, element.center.lat);
+            minLon = Math.min(minLon, element.center.lon);
+            maxLon = Math.max(maxLon, element.center.lon);
+            if (element.endpoint) {
+              minLat = Math.min(minLat, element.endpoint.lat);
+              maxLat = Math.max(maxLat, element.endpoint.lat);
+              minLon = Math.min(minLon, element.endpoint.lon);
+              maxLon = Math.max(maxLon, element.endpoint.lon);
+            }
+
+            break;
           }
-        
-        break;
-        }
-        // No default
+          case 'point': {
+            minLat = Math.min(minLat, element.coordinates.lat);
+            maxLat = Math.max(maxLat, element.coordinates.lat);
+            minLon = Math.min(minLon, element.coordinates.lon);
+            maxLon = Math.max(maxLon, element.coordinates.lon);
+
+            break;
+          }
+          case 'polygon': {
+            for (const point of element.points) {
+              minLat = Math.min(minLat, point.lat);
+              maxLat = Math.max(maxLat, point.lat);
+              minLon = Math.min(minLon, point.lon);
+              maxLon = Math.max(maxLon, point.lon);
+            }
+
+            break;
+          }
+          // No default
         }
       }
 
@@ -319,12 +319,14 @@ export function useAnimation(
               if (drawing) {
                 // Animate line segments as they appear
                 const animate = element.type === 'lineSegment';
-                drawing.updateElementVisibility(element.type, element.id, true, animate).then(() => {
-                  currentIndex++;
+                drawing
+                  .updateElementVisibility(element.type, element.id, true, animate)
+                  .then(() => {
+                    currentIndex++;
 
-                  // Wait a moment to appreciate the element before moving to next
-                  setTimeout(showNextElement, waitTimeMs);
-                });
+                    // Wait a moment to appreciate the element before moving to next
+                    setTimeout(showNextElement, waitTimeMs);
+                  });
               } else {
                 currentIndex++;
                 setTimeout(showNextElement, waitTimeMs);

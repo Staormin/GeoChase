@@ -36,7 +36,7 @@
     </div>
 
     <!-- Layers list -->
-    <div v-else class="layers-list">
+    <div v-else ref="layersListRef" class="layers-list">
       <!-- Circles -->
       <div v-if="filteredCircles.length > 0">
         <div class="layers-section-header">
@@ -295,7 +295,7 @@ import type {
   PolygonElement,
 } from '@/services/storage';
 import { getDistance } from 'ol/sphere';
-import { computed, inject, ref } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
 import LayerContextMenu from '@/components/layers/LayerContextMenu.vue';
 import { calculateBearing, destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
@@ -311,7 +311,9 @@ const draggedPoint = ref<PointElement | null>(null);
 const dragOverPointId = ref<string | null>(null);
 const isDragging = ref(false);
 const lastDropTarget = ref<PointElement | null>(null);
+const layersListRef = ref<HTMLElement | null>(null);
 let dragLeaveTimeout: ReturnType<typeof setTimeout> | null = null;
+let autoScrollInterval: ReturnType<typeof setInterval> | null = null;
 
 // Filtered lists based on search query (using sorted arrays)
 const filteredCircles = computed(() => {
@@ -541,6 +543,45 @@ function handleDragOver(event: DragEvent, point: PointElement) {
     if (dragOverPointId.value !== point.id) {
       dragOverPointId.value = point.id || null;
     }
+
+    // Auto-scroll when near edges
+    handleAutoScroll(event);
+  }
+}
+
+function handleAutoScroll(event: DragEvent) {
+  // Find the scrollable container (.layers-list)
+  const target = event.target as HTMLElement;
+  const scrollContainer = target.closest('.layers-list') as HTMLElement;
+
+  if (!scrollContainer) return;
+
+  // Get scroll container bounds
+  const rect = scrollContainer.getBoundingClientRect();
+  const scrollThreshold = 60; // pixels from edge to trigger scroll
+  const scrollSpeed = 8; // pixels per interval
+
+  // Calculate distance from edges
+  const distanceFromTop = event.clientY - rect.top;
+  const distanceFromBottom = rect.bottom - event.clientY;
+
+  // Clear existing interval
+  if (autoScrollInterval) {
+    clearInterval(autoScrollInterval);
+    autoScrollInterval = null;
+  }
+
+  // Scroll up if near top
+  if (distanceFromTop < scrollThreshold && distanceFromTop > 0) {
+    autoScrollInterval = setInterval(() => {
+      scrollContainer.scrollTop -= scrollSpeed;
+    }, 16); // ~60fps
+  }
+  // Scroll down if near bottom
+  else if (distanceFromBottom < scrollThreshold && distanceFromBottom > 0) {
+    autoScrollInterval = setInterval(() => {
+      scrollContainer.scrollTop += scrollSpeed;
+    }, 16); // ~60fps
   }
 }
 
@@ -607,6 +648,9 @@ function handleDrop(event: DragEvent, targetPoint: PointElement) {
 
 function handleDragEnd(event: DragEvent) {
   const dropWasSuccessful = event.dataTransfer?.dropEffect !== 'none';
+
+  // Clean up auto-scroll interval
+  stopAutoScroll();
 
   // If drop didn't fire but we have a last drop target, create the line anyway
   if (!dropWasSuccessful && lastDropTarget.value && draggedPoint.value) {
@@ -709,6 +753,41 @@ function toggleAllElementsOfType(elementType: 'circle' | 'lineSegment' | 'point'
   const action = newVisibility ? 'shown' : 'hidden';
   uiStore.addToast(`All ${typeName} ${action}`, 'info');
 }
+
+function stopAutoScroll() {
+  if (autoScrollInterval) {
+    clearInterval(autoScrollInterval);
+    autoScrollInterval = null;
+  }
+}
+
+function handleLayersListDragLeave(event: DragEvent) {
+  const relatedTarget = event.relatedTarget as HTMLElement;
+  const currentTarget = event.currentTarget as HTMLElement;
+
+  // Check if mouse left the layers-list container entirely
+  if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
+    stopAutoScroll();
+  }
+}
+
+// Set up event listener for dragleave on layers-list container
+onMounted(() => {
+  if (layersListRef.value) {
+    layersListRef.value.addEventListener('dragleave', handleLayersListDragLeave as EventListener);
+  }
+});
+
+// Clean up event listener
+onBeforeUnmount(() => {
+  stopAutoScroll();
+  if (layersListRef.value) {
+    layersListRef.value.removeEventListener(
+      'dragleave',
+      handleLayersListDragLeave as EventListener
+    );
+  }
+});
 </script>
 
 <style scoped>
