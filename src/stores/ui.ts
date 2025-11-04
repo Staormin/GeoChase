@@ -71,6 +71,7 @@ export interface AnimationConfig {
   zoomSpeed: number; // 1-10
   transitionSpeed: number; // 1-10
   hideLabelsAndNotes: boolean;
+  disableZoomOnElement: boolean; // For startToFinish: show all elements in view without zooming to each
   startView?: ViewCapture; // Custom start view
   endView?: ViewCapture; // Custom end view
 }
@@ -128,6 +129,7 @@ export const useUIStore = defineStore('ui', () => {
     zoomSpeed: 5,
     transitionSpeed: 5,
     hideLabelsAndNotes: false,
+    disableZoomOnElement: false,
   });
   const viewCaptureState = ref<ViewCaptureState>({
     isCapturing: false,

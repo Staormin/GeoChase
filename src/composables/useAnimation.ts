@@ -200,11 +200,82 @@ export function useAnimation(
       }
     }
 
+    const config = uiStore.animationConfig;
+
+    // If disableZoomOnElement is enabled, fit all elements in view first
+    if (config.disableZoomOnElement) {
+      // Calculate bounds for all visible elements
+      let minLat = 90;
+      let maxLat = -90;
+      let minLon = 180;
+      let maxLon = -180;
+
+      for (const element of visibleElements) {
+        switch (element.type) {
+        case 'circle': {
+          minLat = Math.min(minLat, element.center.lat);
+          maxLat = Math.max(maxLat, element.center.lat);
+          minLon = Math.min(minLon, element.center.lon);
+          maxLon = Math.max(maxLon, element.center.lon);
+        
+        break;
+        }
+        case 'lineSegment': {
+          minLat = Math.min(minLat, element.center.lat);
+          maxLat = Math.max(maxLat, element.center.lat);
+          minLon = Math.min(minLon, element.center.lon);
+          maxLon = Math.max(maxLon, element.center.lon);
+          if (element.endpoint) {
+            minLat = Math.min(minLat, element.endpoint.lat);
+            maxLat = Math.max(maxLat, element.endpoint.lat);
+            minLon = Math.min(minLon, element.endpoint.lon);
+            maxLon = Math.max(maxLon, element.endpoint.lon);
+          }
+        
+        break;
+        }
+        case 'point': {
+          minLat = Math.min(minLat, element.coordinates.lat);
+          maxLat = Math.max(maxLat, element.coordinates.lat);
+          minLon = Math.min(minLon, element.coordinates.lon);
+          maxLon = Math.max(maxLon, element.coordinates.lon);
+        
+        break;
+        }
+        case 'polygon': {
+          for (const point of element.points) {
+            minLat = Math.min(minLat, point.lat);
+            maxLat = Math.max(maxLat, point.lat);
+            minLon = Math.min(minLon, point.lon);
+            maxLon = Math.max(maxLon, point.lon);
+          }
+        
+        break;
+        }
+        // No default
+        }
+      }
+
+      // Fit bounds to show all elements
+      if (mapContainer.flyToBounds && minLat <= maxLat && minLon <= maxLon) {
+        mapContainer.flyToBounds(
+          [
+            [minLat, minLon],
+            [maxLat, maxLon],
+          ],
+          { duration: 1 } // Quick 1 second transition to bounds
+        );
+      }
+    }
+
     let currentIndex = 0;
 
-    // Speed affects wait time: speed 1 = 3s, speed 10 = 0.5s
-    const config = uiStore.animationConfig;
-    const waitTimeMs = 3500 - config.transitionSpeed * 300; // 3200ms to 500ms
+    // Speed affects wait time
+    // If disableZoomOnElement: speed 1 = 1s, speed 10 = 0.1s (no navigation delay)
+    // Otherwise: speed 1 = 3s, speed 10 = 0.5s (includes navigation time)
+    const waitTimeMs = config.disableZoomOnElement
+      ? 1100 - config.transitionSpeed * 100 // 1000ms to 100ms
+      : 3500 - config.transitionSpeed * 300; // 3200ms to 500ms
 
     const showNextElement = () => {
       if (!uiStore.animationState.isPlaying) {
@@ -218,30 +289,48 @@ export function useAnimation(
         if (element) {
           uiStore.setAnimationIndex(currentIndex);
 
-          // First: Navigate to element with smooth transition
-          navigateToElement(element, () => {
-            // Then: Show element after camera has arrived (callback after flyTo completes)
-            if (!uiStore.animationState.isPlaying) {
-              // Animation was stopped during flight - restore original visibility
-              restoreOriginalVisibility();
-              return;
-            }
-
+          // If disableZoomOnElement is enabled, skip navigation
+          if (config.disableZoomOnElement) {
+            // Show element immediately without navigation
             uiStore.setElementVisibility(element.type, element.id, true);
             if (drawing) {
               // Animate line segments as they appear
               const animate = element.type === 'lineSegment';
               drawing.updateElementVisibility(element.type, element.id, true, animate).then(() => {
                 currentIndex++;
-
-                // Wait a moment to appreciate the element before moving to next
+                // No pause between elements in this mode
                 setTimeout(showNextElement, waitTimeMs);
               });
             } else {
               currentIndex++;
               setTimeout(showNextElement, waitTimeMs);
             }
-          });
+          } else {
+            // Original behavior: Navigate to element with smooth transition
+            navigateToElement(element, () => {
+              // Then: Show element after camera has arrived (callback after flyTo completes)
+              if (!uiStore.animationState.isPlaying) {
+                // Animation was stopped during flight - restore original visibility
+                restoreOriginalVisibility();
+                return;
+              }
+
+              uiStore.setElementVisibility(element.type, element.id, true);
+              if (drawing) {
+                // Animate line segments as they appear
+                const animate = element.type === 'lineSegment';
+                drawing.updateElementVisibility(element.type, element.id, true, animate).then(() => {
+                  currentIndex++;
+
+                  // Wait a moment to appreciate the element before moving to next
+                  setTimeout(showNextElement, waitTimeMs);
+                });
+              } else {
+                currentIndex++;
+                setTimeout(showNextElement, waitTimeMs);
+              }
+            });
+          }
         }
       } else {
         // Animation complete - elements are already shown, no need to restore

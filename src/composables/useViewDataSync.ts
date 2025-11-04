@@ -9,6 +9,15 @@ import { watch } from 'vue';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
 
+// Debounce helper to reduce localStorage writes during pan/zoom
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  return ((...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  }) as T;
+}
+
 export function useViewDataSync(mapContainer: MapContainer) {
   const projectsStore = useProjectsStore();
   const uiStore = useUIStore();
@@ -79,11 +88,15 @@ export function useViewDataSync(mapContainer: MapContainer) {
    * Setup watchers to auto-save view data when state changes
    */
   const setupWatchers = () => {
+    // Debounce saveViewData to avoid excessive localStorage writes
+    // 500ms is appropriate for user actions (longer than UI updates)
+    const debouncedSaveViewData = debounce(saveViewData, 500);
+
     // Watch top bar state
     watch(
       () => uiStore.topBarOpen,
       () => {
-        saveViewData();
+        debouncedSaveViewData();
       }
     );
 
@@ -91,21 +104,21 @@ export function useViewDataSync(mapContainer: MapContainer) {
     watch(
       () => uiStore.sidebarOpen,
       () => {
-        saveViewData();
+        debouncedSaveViewData();
       }
     );
 
     // Watch map view changes (center and zoom)
-    // We use a view change event listener for this
+    // Heavily debounced to reduce CPU and localStorage writes during interaction
     if (mapContainer.map.value) {
       const view = mapContainer.map.value.getView();
 
       view.on('change:center', () => {
-        saveViewData();
+        debouncedSaveViewData();
       });
 
       view.on('change:resolution', () => {
-        saveViewData();
+        debouncedSaveViewData();
       });
     }
 

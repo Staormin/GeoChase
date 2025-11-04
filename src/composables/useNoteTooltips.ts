@@ -14,6 +14,15 @@ import { useUIStore } from '@/stores/ui';
 
 const MIN_ZOOM_FOR_NOTES = 12; // Show notes only at zoom level 12 or higher
 
+// Simple debounce helper for performance optimization
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  return ((...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  }) as T;
+}
+
 export function useNoteTooltips(mapRef: any) {
   const layersStore = useLayersStore();
   const uiStore = useUIStore();
@@ -219,19 +228,24 @@ export function useNoteTooltips(mapRef: any) {
     noteOverlays.clear();
   }
 
+  // Debounced version of updateNoteTooltips for performance
+  const debouncedUpdateNoteTooltips = debounce(updateNoteTooltips, 150);
+
   // Watch for zoom changes to show/hide tooltips based on zoom level
+  // Debounced to avoid excessive updates during zoom animations
   if (mapRef.map?.value) {
     const view = mapRef.map.value.getView();
     view.on('change:resolution', () => {
-      updateNoteTooltips();
+      debouncedUpdateNoteTooltips();
     });
   }
 
   // Watch for changes in notes (add/edit/delete)
+  // Debounced to avoid excessive updates when multiple notes change
   watch(
     () => layersStore.notes,
     () => {
-      updateNoteTooltips();
+      debouncedUpdateNoteTooltips();
     },
     { deep: true }
   );

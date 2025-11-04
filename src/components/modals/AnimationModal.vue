@@ -108,6 +108,14 @@
 
     <!-- Start to Finish Options -->
     <template v-if="form.type === 'startToFinish'">
+      <v-checkbox
+        v-model="form.disableZoomOnElement"
+        class="mb-4"
+        hint="Fit all elements in view and draw them in sequence without zooming to each one"
+        label="Disable zoom on element"
+        persistent-hint
+      />
+
       <div class="mb-4">
         <div class="d-flex align-center justify-space-between mb-2">
           <label class="text-subtitle-2">Animation Speed</label>
