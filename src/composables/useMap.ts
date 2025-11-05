@@ -10,7 +10,7 @@ import { fromLonLat, toLonLat } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 import XYZ from 'ol/source/XYZ';
 import View from 'ol/View';
-import { nextTick, ref } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, getMapTilesUrl } from '@/services/geoportail';
 
 export type MapContainer = ReturnType<typeof useMap>;
@@ -31,6 +31,9 @@ export function useMap(containerId: string, uiStore?: any) {
   const linesSource = ref<VectorSource<any> | null>(null);
   const pointsSource = ref<VectorSource<any> | null>(null);
   const polygonsSource = ref<VectorSource<any> | null>(null);
+
+  // Tile source for map provider switching
+  const tileSource = ref<XYZ | null>(null);
 
   // Store initial view data for map initialization
   let initialViewData: { lat: number; lon: number; zoom: number } | null = null;
@@ -91,20 +94,24 @@ export function useMap(containerId: string, uiStore?: any) {
         : fromLonLat([DEFAULT_MAP_CENTER.lon, DEFAULT_MAP_CENTER.lat]);
       const initialZoom = initialViewData ? initialViewData.zoom : DEFAULT_MAP_ZOOM;
 
+      // Create tile source for map tiles
+      const initialProvider = uiStore?.mapProvider || 'geoportail';
+      tileSource.value = new XYZ({
+        url: getMapTilesUrl(initialProvider),
+        crossOrigin: 'anonymous',
+        maxZoom: 18,
+        transition: 0, // Disable tile fade-in to prevent mixing tiles from different zoom levels
+        cacheSize: 512, // Increased cache size to keep more tiles in memory (default is 128)
+        interpolate: true, // Enable smooth image interpolation during scaling
+      });
+
       // Create map centered on saved location (if available) or default location
       map.value = new Map({
         target: containerId,
         layers: [
           new TileLayer({
             preload: 3, // Preload tiles 3 zoom levels ahead for smoother animations
-            source: new XYZ({
-              url: getMapTilesUrl(),
-              crossOrigin: 'anonymous',
-              maxZoom: 18,
-              transition: 0, // Disable tile fade-in to prevent mixing tiles from different zoom levels
-              cacheSize: 512, // Increased cache size to keep more tiles in memory (default is 128)
-              interpolate: true, // Enable smooth image interpolation during scaling
-            }),
+            source: tileSource.value as any,
           }),
           circlesLayer.value as any,
           linesLayer.value as any,
@@ -141,6 +148,20 @@ export function useMap(containerId: string, uiStore?: any) {
       map.value.getView().on('change:resolution', updatePointLabelVisibility);
       // Set initial visibility
       updatePointLabelVisibility();
+
+      // Watch for map provider changes and update tile source
+      if (uiStore) {
+        watch(
+          () => uiStore.mapProvider,
+          (newProvider) => {
+            if (tileSource.value) {
+              tileSource.value.setUrl(getMapTilesUrl(newProvider));
+              // Clear the tile cache to force reload with new provider
+              tileSource.value.clear();
+            }
+          }
+        );
+      }
 
       // Update map size
       requestAnimationFrame(() => {

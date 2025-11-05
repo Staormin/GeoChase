@@ -165,19 +165,55 @@ export async function searchAddress(query: string, limit = 8): Promise<AddressSe
   }
 }
 
+export type MapProvider =
+  | 'geoportail'
+  | 'osm'
+  | 'google-plan'
+  | 'google-satellite'
+  | 'google-relief';
+
 /**
- * Get map tiles URL from Geoportail
- * Uses the WMTS service for IGN maps
+ * Get map tiles URL based on provider
+ * @param provider Map provider to use
  */
-export function getMapTilesUrl(): string {
-  return 'https://data.geopf.fr/private/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&apikey=ign_scan_ws';
+export function getMapTilesUrl(provider: MapProvider = 'geoportail'): string {
+  switch (provider) {
+    case 'google-plan': {
+      return 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+    }
+    case 'google-satellite': {
+      return 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}';
+    }
+    case 'google-relief': {
+      return 'https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}';
+    }
+    case 'osm': {
+      return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    }
+    default: {
+      return 'https://data.geopf.fr/private/wmts?REQUEST=GetTile&SERVICE=WMTS&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&apikey=ign_scan_ws';
+    }
+  }
 }
 
 /**
- * Get map attribution text
+ * Get map attribution text based on provider
+ * @param provider Map provider to use
  */
-export function getMapAttribution(): string {
-  return '&copy; <a href="https://www.ign.fr/">IGN</a>-F/Geoportail';
+export function getMapAttribution(provider: MapProvider = 'geoportail'): string {
+  switch (provider) {
+    case 'google-plan':
+    case 'google-satellite':
+    case 'google-relief': {
+      return '&copy; <a href="https://www.google.com/maps">Google</a>';
+    }
+    case 'osm': {
+      return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+    }
+    default: {
+      return '&copy; <a href="https://www.ign.fr/">IGN</a>-F/Geoportail';
+    }
+  }
 }
 
 /**

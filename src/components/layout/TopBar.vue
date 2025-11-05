@@ -29,6 +29,22 @@
 
         <v-spacer />
 
+        <!-- Map selector section -->
+        <div class="d-flex align-center">
+          <v-select
+            v-model="uiStore.mapProvider"
+            density="compact"
+            hide-details
+            :items="mapProviders"
+            style="width: 220px"
+            variant="outlined"
+          >
+            <template #prepend-inner>
+              <v-icon size="small">mdi-map</v-icon>
+            </template>
+          </v-select>
+        </div>
+
         <!-- Action buttons section -->
         <v-divider class="mx-2" vertical />
 
@@ -274,6 +290,14 @@ const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const coordinatesStore = useCoordinatesStore();
 const projectsStore = useProjectsStore();
+
+const mapProviders = [
+  { title: 'Geoportail (IGN)', value: 'geoportail' },
+  { title: 'OpenStreetMap', value: 'osm' },
+  { title: 'Google - Plan', value: 'google-plan' },
+  { title: 'Google - Satellite', value: 'google-satellite' },
+  { title: 'Google - Relief', value: 'google-relief' },
+];
 
 function handleNewProject() {
   uiStore.openModal('newProjectModal');

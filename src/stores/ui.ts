@@ -135,6 +135,9 @@ export const useUIStore = defineStore('ui', () => {
     isCapturing: false,
     captureType: null,
   });
+  const mapProvider = ref<
+    'geoportail' | 'osm' | 'google-plan' | 'google-satellite' | 'google-relief'
+  >('geoportail');
 
   // Computed
   const isModalOpen = computed(() => (modalId: string) => openModals.value.has(modalId));
@@ -427,6 +430,12 @@ export const useUIStore = defineStore('ui', () => {
     stopViewCapture();
   }
 
+  function setMapProvider(
+    provider: 'geoportail' | 'osm' | 'google-plan' | 'google-satellite' | 'google-relief'
+  ): void {
+    mapProvider.value = provider;
+  }
+
   return {
     // State
     openModals,
@@ -455,6 +464,7 @@ export const useUIStore = defineStore('ui', () => {
     animationState,
     animationConfig,
     viewCaptureState,
+    mapProvider,
 
     // Computed
     isModalOpen,
@@ -513,5 +523,6 @@ export const useUIStore = defineStore('ui', () => {
     startViewCapture,
     stopViewCapture,
     captureView,
+    setMapProvider,
   };
 });
