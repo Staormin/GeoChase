@@ -9,11 +9,13 @@ import { fromLonLat } from 'ol/proj';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 import { v4 as uuidv4 } from 'uuid';
 import { useLayersStore } from '@/stores/layers';
+import { usePointDrawing } from './usePointDrawing';
 
 const DEFAULT_COLOR = '#000000';
 
 export function useLineDrawing(mapRef: any) {
   const layersStore = useLayersStore();
+  const pointDrawing = usePointDrawing(mapRef);
 
   const generateId = () => uuidv4();
 
@@ -253,7 +255,9 @@ export function useLineDrawing(mapRef: any) {
     azimuth?: number,
     intersectLat?: number,
     intersectLon?: number,
-    intersectDistance?: number
+    intersectDistance?: number,
+    createEndpoint?: boolean,
+    endpointName?: string
   ): LineSegmentElement | null => {
     if (!mapRef.map?.value || !mapRef.linesSource?.value) {
       return null;
@@ -304,6 +308,26 @@ export function useLineDrawing(mapRef: any) {
 
     // Add feature to map AFTER adding to store
     mapRef.linesSource.value.addFeature(feature);
+
+    // Create endpoint if requested (for azimuth, intersection modes)
+    // Not for coordinate mode (already uses existing points) or parallel mode (has no endpoint)
+    if (createEndpoint && (mode === 'azimuth' || mode === 'intersection')) {
+      // Generate a name if not provided
+      let pointName = endpointName?.trim();
+      if (!pointName) {
+        // Auto-generate name based on context
+        if (mode === 'azimuth') {
+          pointName = `Point at ${azimuth}° from ${name || 'line'}`;
+        } else if (mode === 'intersection') {
+          pointName = `Endpoint of ${name || 'line'}`;
+        } else {
+          pointName = `Point ${layersStore.pointCount + 1}`;
+        }
+      }
+
+      // Draw the point on the map (this also adds it to the store and creates the label)
+      pointDrawing.drawPoint(endLat, endLon, pointName);
+    }
 
     // For intersection mode, show the intersection point marker
     if (mode === 'intersection' && intersectLat && intersectLon) {

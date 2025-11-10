@@ -12,6 +12,7 @@ export {};
 declare module 'vue' {
   export interface GlobalComponents {
     AddPointOnSegmentModal: typeof import('./components/modals/AddPointOnSegmentModal.vue')['default']
+    AngleLineModal: typeof import('./components/modals/AngleLineModal.vue')['default']
     AnimationCountdown: typeof import('./components/shared/AnimationCountdown.vue')['default']
     AnimationModal: typeof import('./components/modals/AnimationModal.vue')['default']
     AzimuthLineModal: typeof import('./components/modals/AzimuthLineModal.vue')['default']
@@ -26,7 +27,6 @@ declare module 'vue' {
     LayerContextMenu: typeof import('./components/layers/LayerContextMenu.vue')['default']
     LayerItem: typeof import('./components/layers/LayerItem.vue')['default']
     LayerSection: typeof import('./components/layers/LayerSection.vue')['default']
-    LineSegmentModal: typeof import('./components/modals/LineSegmentModal.vue')['default']
     LoadProjectModal: typeof import('./components/modals/LoadProjectModal.vue')['default']
     ModalsContainer: typeof import('./components/ui/ModalsContainer.vue')['default']
     NavigationBar: typeof import('./components/layout/NavigationBar.vue')['default']

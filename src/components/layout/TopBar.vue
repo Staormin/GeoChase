@@ -242,6 +242,16 @@
 
             <v-btn
               color="surface-bright"
+              icon="mdi-angle-acute"
+              variant="elevated"
+              @click="uiStore.openModal('angleLineModal')"
+            >
+              <v-icon>mdi-angle-acute</v-icon>
+              <v-tooltip activator="parent" location="bottom">Angle Line</v-tooltip>
+            </v-btn>
+
+            <v-btn
+              color="surface-bright"
               icon="mdi-pentagon-outline"
               variant="elevated"
               @click="uiStore.openModal('polygonModal')"

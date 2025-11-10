@@ -283,7 +283,27 @@ function submitForm() {
   coordinatesStore.addCoordinate(coordinateName, pointOnSegment.lat, pointOnSegment.lon);
 
   // Then draw the point (use the full name for the point on the map)
-  drawing.drawPoint(pointOnSegment.lat, pointOnSegment.lon, name);
+  const newPoint = drawing.drawPoint(pointOnSegment.lat, pointOnSegment.lon, name);
+
+  // Update bidirectional relationship: line -> point and point -> line
+  if (newPoint && selectedSegmentId.value) {
+    const updatedSegment = layersStore.lineSegments.find((s) => s.id === selectedSegmentId.value);
+    if (updatedSegment) {
+      // Initialize pointsOnLine array if not present
+      if (!updatedSegment.pointsOnLine) {
+        updatedSegment.pointsOnLine = [];
+      }
+      // Add the new point ID to the line's pointsOnLine array
+      updatedSegment.pointsOnLine.push(newPoint.id);
+
+      // Also update the point to reference this line (bidirectional relationship: 1 point => 0 or 1 line)
+      const pointInStore = layersStore.points.find((p) => p.id === newPoint.id);
+      if (pointInStore) {
+        pointInStore.lineId = selectedSegmentId.value;
+      }
+    }
+  }
+
   uiStore.addToast('Point and coordinate added successfully!', 'success');
   closeModal();
 }

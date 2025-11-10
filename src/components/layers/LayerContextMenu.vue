@@ -65,62 +65,6 @@
         <v-list-item-title>Add as coordinate</v-list-item-title>
       </v-list-item>
 
-      <!-- Create with (only for points) -->
-      <v-menu v-if="elementType === 'point'" location="end">
-        <template #activator="{ props: menuProps }">
-          <v-list-item v-bind="menuProps">
-            <template #prepend>
-              <v-icon icon="mdi-plus-circle" size="small" />
-            </template>
-            <v-list-item-title>Create with</v-list-item-title>
-            <template #append>
-              <v-icon icon="mdi-chevron-right" size="small" />
-            </template>
-          </v-list-item>
-        </template>
-
-        <v-list density="compact">
-          <!-- Create circle -->
-          <v-list-item @click="handleCreateCircle">
-            <template #prepend>
-              <v-icon icon="mdi-circle" size="small" />
-            </template>
-            <v-list-item-title>Circle</v-list-item-title>
-          </v-list-item>
-
-          <!-- Create line segment submenu -->
-          <v-menu location="end">
-            <template #activator="{ props: lineMenuProps }">
-              <v-list-item v-bind="lineMenuProps">
-                <template #prepend>
-                  <v-icon icon="mdi-minus" size="small" />
-                </template>
-                <v-list-item-title>Line segment</v-list-item-title>
-                <template #append>
-                  <v-icon icon="mdi-chevron-right" size="small" />
-                </template>
-              </v-list-item>
-            </template>
-
-            <v-list density="compact">
-              <v-list-item @click="handleCreateLineAsStart">
-                <template #prepend>
-                  <v-icon icon="mdi-circle-small" size="small" />
-                </template>
-                <v-list-item-title>As start point</v-list-item-title>
-              </v-list-item>
-
-              <v-list-item @click="handleCreateLineAsEnd">
-                <template #prepend>
-                  <v-icon icon="mdi-circle-small" size="small" />
-                </template>
-                <v-list-item-title>As end point</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
-        </v-list>
-      </v-menu>
-
       <!-- Add center as point (only for polygons) -->
       <v-list-item v-if="elementType === 'polygon'" @click="handleAddCenterAsPoint">
         <template #prepend>
@@ -329,60 +273,6 @@ function handleDelete() {
     uiStore.addToast(`${element.name} deleted`, 'success');
     isOpen.value = false;
   }
-}
-
-function handleCreateCircle() {
-  if (props.elementType !== 'point') {
-    return;
-  }
-
-  const point = layersStore.points.find((p) => p.id === props.elementId);
-  if (!point) {
-    uiStore.addToast('Point not found', 'error');
-    return;
-  }
-
-  // Open circle modal with pre-filled center from point coordinates
-  uiStore.startCreating('circle');
-  uiStore.setCircleCenter(point.coordinates.lat, point.coordinates.lon);
-  uiStore.openModal('circleModal');
-  isOpen.value = false;
-}
-
-function handleCreateLineAsStart() {
-  if (props.elementType !== 'point') {
-    return;
-  }
-
-  const point = layersStore.points.find((p) => p.id === props.elementId);
-  if (!point) {
-    uiStore.addToast('Point not found', 'error');
-    return;
-  }
-
-  // Open line segment modal with pre-filled start point
-  uiStore.startCreating('lineSegment');
-  uiStore.setLineSegmentStart(point.coordinates.lat, point.coordinates.lon);
-  uiStore.openModal('lineSegmentModal');
-  isOpen.value = false;
-}
-
-function handleCreateLineAsEnd() {
-  if (props.elementType !== 'point') {
-    return;
-  }
-
-  const point = layersStore.points.find((p) => p.id === props.elementId);
-  if (!point) {
-    uiStore.addToast('Point not found', 'error');
-    return;
-  }
-
-  // Open line segment modal with pre-filled end point
-  uiStore.startCreating('lineSegment');
-  uiStore.setLineSegmentEnd(point.coordinates.lat, point.coordinates.lon);
-  uiStore.openModal('lineSegmentModal');
-  isOpen.value = false;
 }
 
 function handleLocationNear() {

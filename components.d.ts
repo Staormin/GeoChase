@@ -12,6 +12,7 @@ export {};
 declare module 'vue' {
   export interface GlobalComponents {
     AddPointOnSegmentModal: typeof import('./src/components/modals/AddPointOnSegmentModal.vue')['default']
+    AngleLineModal: typeof import('./src/components/modals/AngleLineModal.vue')['default']
     AnimationCountdown: typeof import('./src/components/shared/AnimationCountdown.vue')['default']
     AnimationModal: typeof import('./src/components/modals/AnimationModal.vue')['default']
     AzimuthLineModal: typeof import('./src/components/modals/AzimuthLineModal.vue')['default']

@@ -28,21 +28,26 @@ if (globalThis.visualViewport === undefined) {
 }
 
 // Mock ResizeObserver for Vuetify components
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
 
 // Mock IntersectionObserver for Vuetify components
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-  root: null,
-  rootMargin: '',
-  thresholds: [],
-}));
+global.IntersectionObserver = class IntersectionObserver {
+  root = null;
+  rootMargin = '';
+  thresholds: number[] = [];
+
+  constructor() {
+    this.thresholds = [];
+  }
+
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
 
 // Mock requestAnimationFrame
 global.requestAnimationFrame = vi.fn((cb) => {

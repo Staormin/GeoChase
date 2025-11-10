@@ -121,6 +121,11 @@ export const useLayersStore = defineStore('layers', () => {
       segment.createdAt = Date.now();
     }
     lineSegments.value.push(segment);
+
+    // Update point references for this line
+    if (segment.id) {
+      updateLinePointReferences(segment.id);
+    }
   }
 
   function updateLineSegment(id: string | undefined, segment: Partial<LineSegmentElement>): void {
@@ -130,6 +135,11 @@ export const useLayersStore = defineStore('layers', () => {
         ...lineSegments.value[index],
         ...segment,
       } as LineSegmentElement;
+
+      // Update point references for this line after updating
+      if (id) {
+        updateLinePointReferences(id);
+      }
     }
   }
 
@@ -140,6 +150,16 @@ export const useLayersStore = defineStore('layers', () => {
       if (segment && segment.mapElementId !== undefined) {
         mapElementIdMap.value.delete(`lineSegment_${id}`);
       }
+
+      // Clear lineId from all points that reference this line
+      if (id) {
+        for (const point of points.value) {
+          if (point.lineId === id) {
+            point.lineId = undefined;
+          }
+        }
+      }
+
       lineSegments.value.splice(index, 1);
     }
   }
@@ -169,6 +189,11 @@ export const useLayersStore = defineStore('layers', () => {
 
       // Get the point's coordinates before deletion
       const deletedCoords = point!.coordinates;
+
+      // Remove references to this point from all lines
+      if (id) {
+        removePointReferencesFromLines(id);
+      }
 
       // Delete the point
       points.value.splice(index, 1);
@@ -526,6 +551,15 @@ export const useLayersStore = defineStore('layers', () => {
     points.value = [...validPoints];
     polygons.value = [...validPolygons];
     notes.value = [...validNotes];
+
+    // Update point references in all lines
+    // This ensures compatibility with both old projects (without point refs)
+    // and new projects (with point refs), and handles any data inconsistencies
+    for (const segment of lineSegments.value) {
+      if (segment.id) {
+        updateLinePointReferences(segment.id);
+      }
+    }
   }
 
   function exportLayers() {
@@ -536,6 +570,88 @@ export const useLayersStore = defineStore('layers', () => {
       polygons: polygons.value,
       notes: notes.value,
     };
+  }
+
+  // Helper function to find a point at specific coordinates
+  function findPointAtCoordinates(
+    lat: number,
+    lon: number,
+    tolerance = 0.0001
+  ): PointElement | undefined {
+    return points.value.find(
+      (p) =>
+        Math.abs(p.coordinates.lat - lat) < tolerance &&
+        Math.abs(p.coordinates.lon - lon) < tolerance
+    );
+  }
+
+  // Helper function to update point references in lines when a line is created/updated
+  // Maintains bidirectional relationship: line -> point and point -> line
+  function updateLinePointReferences(lineId: string) {
+    const line = lineSegments.value.find((l) => l.id === lineId);
+    if (!line || !line.center) return;
+
+    // Find points at start and end positions
+    const startPoint = findPointAtCoordinates(line.center.lat, line.center.lon);
+    const endPoint = line.endpoint
+      ? findPointAtCoordinates(line.endpoint.lat, line.endpoint.lon)
+      : undefined;
+
+    // Update the line with point references
+    line.startPointId = startPoint?.id;
+    line.endPointId = endPoint?.id;
+
+    // Initialize pointsOnLine if not present
+    if (!line.pointsOnLine) {
+      line.pointsOnLine = [];
+    }
+
+    // Update bidirectional relationship: set this line as the point's lineId (1 point => 0 or 1 line)
+    if (startPoint) {
+      startPoint.lineId = lineId;
+    }
+
+    if (endPoint) {
+      endPoint.lineId = lineId;
+    }
+
+    // Also update lineId for points in pointsOnLine array
+    for (const pointId of line.pointsOnLine) {
+      const point = points.value.find((p) => p.id === pointId);
+      if (point) {
+        point.lineId = lineId;
+      }
+    }
+  }
+
+  // Helper function to remove point references from all lines when a point is deleted
+  function removePointReferencesFromLines(pointId: string) {
+    for (const line of lineSegments.value) {
+      // Remove from startPointId
+      if (line.startPointId === pointId) {
+        line.startPointId = undefined;
+      }
+
+      // Remove from endPointId
+      if (line.endPointId === pointId) {
+        line.endPointId = undefined;
+      }
+
+      // Remove from pointsOnLine array
+      if (line.pointsOnLine && line.pointsOnLine.includes(pointId)) {
+        line.pointsOnLine = line.pointsOnLine.filter((id) => id !== pointId);
+      }
+    }
+  }
+
+  // Helper function to get all lines that reference a specific point
+  function getLinesReferencingPoint(pointId: string): LineSegmentElement[] {
+    return lineSegments.value.filter(
+      (line) =>
+        line.startPointId === pointId ||
+        line.endPointId === pointId ||
+        (line.pointsOnLine && line.pointsOnLine.includes(pointId))
+    );
   }
 
   return {
@@ -582,5 +698,9 @@ export const useLayersStore = defineStore('layers', () => {
     clearLayers,
     loadLayers,
     exportLayers,
+    findPointAtCoordinates,
+    updateLinePointReferences,
+    removePointReferencesFromLines,
+    getLinesReferencingPoint,
   };
 });

@@ -425,7 +425,28 @@ function handleEditCircle(circle: CircleElement) {
 function handleEditLineSegment(line: LineSegmentElement) {
   if (line.id) {
     uiStore.startEditing('lineSegment', line.id);
-    uiStore.openModal('lineSegmentModal');
+    // Open the appropriate modal based on line mode
+    switch (line.mode) {
+      case 'coordinate': {
+        uiStore.openModal('twoPointsLineModal');
+        break;
+      }
+      case 'azimuth': {
+        uiStore.openModal('azimuthLineModal');
+        break;
+      }
+      case 'intersection': {
+        uiStore.openModal('intersectionLineModal');
+        break;
+      }
+      case 'parallel': {
+        uiStore.openModal('parallelLineModal');
+        break;
+      }
+      default: {
+        uiStore.addToast('Cannot edit this line type', 'error');
+      }
+    }
   }
 }
 

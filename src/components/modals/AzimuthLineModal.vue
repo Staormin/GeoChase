@@ -44,6 +44,23 @@
         type="number"
         variant="outlined"
       />
+
+      <v-checkbox
+        v-model="form.createEndpoint"
+        class="mb-2"
+        density="compact"
+        label="Create point at endpoint"
+      />
+
+      <v-text-field
+        v-if="form.createEndpoint"
+        v-model="form.endpointName"
+        class="mb-4"
+        density="compact"
+        label="Endpoint name (optional)"
+        placeholder="Leave empty for auto-generated name"
+        variant="outlined"
+      />
     </v-form>
   </BaseModal>
 </template>
@@ -72,6 +89,8 @@ const form = reactive({
   startCoord: null as string | null,
   azimuth: 0,
   distance: 0,
+  createEndpoint: false,
+  endpointName: '',
 });
 
 watch(isOpen, (newVal) => {
@@ -89,6 +108,8 @@ watch(isOpen, (newVal) => {
       form.startCoord = null;
       form.azimuth = 0;
       form.distance = 0;
+      form.createEndpoint = false;
+      form.endpointName = '';
     }
   }
 });
@@ -139,7 +160,9 @@ async function submitForm() {
       form.azimuth,
       undefined,
       undefined,
-      undefined
+      undefined,
+      form.createEndpoint,
+      form.endpointName
     );
     uiStore.addToast('Line added successfully!', 'success');
   }

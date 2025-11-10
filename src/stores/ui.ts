@@ -97,8 +97,6 @@ export const useUIStore = defineStore('ui', () => {
   const selectedSegmentForPointCreation = ref<string | null>(null);
   const creatingElement = ref<CreatingElement | null>(null);
   const circleCenterPreFill = ref<{ lat: number; lon: number } | null>(null);
-  const lineSegmentStartPreFill = ref<{ lat: number; lon: number } | null>(null);
-  const lineSegmentEndPreFill = ref<{ lat: number; lon: number } | null>(null);
   const navigatingElement = ref<NavigatingElement | null>(null);
   const showTutorial = ref(false);
   const searchAlongPanel = ref<SearchAlongPanel>({
@@ -272,20 +270,10 @@ export const useUIStore = defineStore('ui', () => {
   function stopCreating(): void {
     creatingElement.value = null;
     circleCenterPreFill.value = null;
-    lineSegmentStartPreFill.value = null;
-    lineSegmentEndPreFill.value = null;
   }
 
   function setCircleCenter(lat: number, lon: number): void {
     circleCenterPreFill.value = { lat, lon };
-  }
-
-  function setLineSegmentStart(lat: number, lon: number): void {
-    lineSegmentStartPreFill.value = { lat, lon };
-  }
-
-  function setLineSegmentEnd(lat: number, lon: number): void {
-    lineSegmentEndPreFill.value = { lat, lon };
   }
 
   function startNavigating(type: 'circle' | 'lineSegment', id: string): void {
@@ -452,8 +440,6 @@ export const useUIStore = defineStore('ui', () => {
     selectedSegmentForPointCreation,
     creatingElement,
     circleCenterPreFill,
-    lineSegmentStartPreFill,
-    lineSegmentEndPreFill,
     navigatingElement,
     showTutorial,
     searchAlongPanel,
@@ -499,8 +485,6 @@ export const useUIStore = defineStore('ui', () => {
     startCreating,
     stopCreating,
     setCircleCenter,
-    setLineSegmentStart,
-    setLineSegmentEnd,
     startNavigating,
     stopNavigating,
     isNavigating,

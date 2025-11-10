@@ -6,8 +6,8 @@
   <IntersectionLineModal v-if="uiStore.isModalOpen('intersectionLineModal')" />
   <ParallelLineModal v-if="uiStore.isModalOpen('parallelLineModal')" />
   <FreeHandLineModal v-if="uiStore.isModalOpen('freeHandLineModal')" />
-  <LineSegmentModal v-if="uiStore.isModalOpen('lineSegmentModal')" />
   <PointModal v-if="uiStore.isModalOpen('pointModal')" />
+  <AngleLineModal v-if="uiStore.isModalOpen('angleLineModal')" />
   <PolygonModal v-if="uiStore.isModalOpen('polygonModal')" />
   <AddPointOnSegmentModal v-if="uiStore.isModalOpen('addPointOnSegmentModal')" />
   <CoordinatesModal v-if="uiStore.isModalOpen('coordinatesModal')" />
@@ -21,6 +21,7 @@
 
 <script lang="ts" setup>
 import AddPointOnSegmentModal from '@/components/modals/AddPointOnSegmentModal.vue';
+import AngleLineModal from '@/components/modals/AngleLineModal.vue';
 import AnimationModal from '@/components/modals/AnimationModal.vue';
 import AzimuthLineModal from '@/components/modals/AzimuthLineModal.vue';
 import BearingsModal from '@/components/modals/BearingsModal.vue';
@@ -28,7 +29,6 @@ import CircleModal from '@/components/modals/CircleModal.vue';
 import CoordinatesModal from '@/components/modals/CoordinatesModal.vue';
 import FreeHandLineModal from '@/components/modals/FreeHandLineModal.vue';
 import IntersectionLineModal from '@/components/modals/IntersectionLineModal.vue';
-import LineSegmentModal from '@/components/modals/LineSegmentModal.vue';
 import LoadProjectModal from '@/components/modals/LoadProjectModal.vue';
 import NewProjectModal from '@/components/modals/NewProjectModal.vue';
 import NoteModal from '@/components/modals/NoteModal.vue';

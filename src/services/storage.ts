@@ -66,6 +66,10 @@ export interface LineSegmentElement {
   mapElementId?: string; // OpenLayers feature ID
   noteId?: string; // ID of the linked note (one-to-one)
   createdAt?: number;
+  // Point references: IDs of points that are on this line
+  startPointId?: string; // ID of the point at the start position
+  endPointId?: string; // ID of the point at the end position
+  pointsOnLine?: string[]; // IDs of points that lie on this line (excluding start/end)
 }
 
 export interface PointElement {
@@ -77,6 +81,8 @@ export interface PointElement {
   mapElementId?: string; // OpenLayers feature ID
   noteId?: string; // ID of the linked note (one-to-one)
   createdAt?: number;
+  // Line reference: ID of the line that contains this point (bidirectional relationship: 1 point => 0 or 1 line)
+  lineId?: string; // ID of line where this point appears in pointsOnLine, startPointId, or endPointId
 }
 
 export interface PolygonElement {
