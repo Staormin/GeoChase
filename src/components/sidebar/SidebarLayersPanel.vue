@@ -220,7 +220,10 @@
           >
             <div class="layer-item-info">
               <div class="layer-item-name">{{ polygon.name }}</div>
-              <div class="layer-item-type">Polygon ({{ polygon.pointIds.length }} points)</div>
+              <div class="layer-item-type">
+                Polygon ({{ polygon.pointIds.length }} points) •
+                {{ formatDistance(calculatePolygonPerimeter(polygon)) }}
+              </div>
             </div>
             <div class="layer-item-actions" @click.stop>
               <LayerContextMenu
@@ -357,6 +360,47 @@ const filteredNotes = computed(() => {
     (n) => n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)
   );
 });
+
+// Calculate polygon perimeter in kilometers
+function calculatePolygonPerimeter(polygon: PolygonElement): number {
+  if (!polygon.pointIds || polygon.pointIds.length < 3) {
+    return 0;
+  }
+
+  // Resolve point IDs to coordinates
+  const points = polygon.pointIds
+    .map((pointId) => layersStore.points.find((p) => p.id === pointId)?.coordinates)
+    .filter((p): p is { lat: number; lon: number } => p !== undefined);
+
+  if (points.length < 3) {
+    return 0;
+  }
+
+  let perimeter = 0;
+
+  // Calculate distance between consecutive points
+  for (let i = 0; i < points.length; i++) {
+    const currentPoint = points[i];
+    const nextPoint = points[(i + 1) % points.length]; // Wrap around to first point
+
+    if (currentPoint && nextPoint) {
+      // getDistance returns meters, so convert to km
+      const distance =
+        getDistance([currentPoint.lon, currentPoint.lat], [nextPoint.lon, nextPoint.lat]) / 1000;
+      perimeter += distance;
+    }
+  }
+
+  return perimeter;
+}
+
+// Format distance for display
+function formatDistance(km: number): string {
+  if (km >= 1) {
+    return `${km.toFixed(2)} km`;
+  }
+  return `${(km * 1000).toFixed(0)} m`;
+}
 
 // Collapse states for each section
 const circlesExpanded = ref(true);

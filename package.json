@@ -16,7 +16,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "ci": "run-s type-check lint test:run format"
   },
   "dependencies": {
     "@fontsource/roboto": "5.2.7",
