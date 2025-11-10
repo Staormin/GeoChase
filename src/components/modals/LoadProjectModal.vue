@@ -25,6 +25,9 @@
                   Circles: {{ project.data.circles?.length || 0 }} | Lines:
                   {{ project.data.lineSegments?.length || 0 }} | Points:
                   {{ project.data.points?.length || 0 }}
+                  <span v-if="project.data.polygons && project.data.polygons.length > 0">
+                    | Polygons: {{ project.data.polygons.length }}
+                  </span>
                 </div>
                 <div v-if="project.updatedAt" class="text-caption text-disabled">
                   {{ new Date(project.updatedAt).toLocaleString() }}

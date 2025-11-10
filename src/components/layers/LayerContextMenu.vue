@@ -241,11 +241,20 @@ function handleAddCenterAsPoint() {
     return;
   }
 
-  // Calculate polygon center
-  const sumLat = polygon.points.reduce((sum, p) => sum + p.lat, 0);
-  const sumLon = polygon.points.reduce((sum, p) => sum + p.lon, 0);
-  const centerLat = sumLat / polygon.points.length;
-  const centerLon = sumLon / polygon.points.length;
+  // Calculate polygon center by resolving point IDs to coordinates
+  const points = polygon.pointIds
+    .map((pointId) => layersStore.points.find((p) => p.id === pointId)?.coordinates)
+    .filter((p): p is { lat: number; lon: number } => p !== undefined);
+
+  if (points.length === 0) {
+    uiStore.addToast('No valid points found for polygon', 'error');
+    return;
+  }
+
+  const sumLat = points.reduce((sum, p) => sum + p.lat, 0);
+  const sumLon = points.reduce((sum, p) => sum + p.lon, 0);
+  const centerLat = sumLat / points.length;
+  const centerLon = sumLon / points.length;
 
   // Create point at center
   if (drawing) {

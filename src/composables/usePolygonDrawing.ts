@@ -38,12 +38,26 @@ export function usePolygonDrawing(mapRef: any) {
   };
 
   // Polygon drawing
-  const drawPolygon = (points: { lat: number; lon: number }[], name?: string, color?: string) => {
+  const drawPolygon = (pointIds: string[], name?: string, color?: string) => {
     if (!mapRef.map?.value || !mapRef.polygonsSource?.value) {
       return null;
     }
 
-    if (points.length < 3) {
+    if (pointIds.length < 3) {
+      return null;
+    }
+
+    // Resolve point IDs to coordinates
+    const points = pointIds
+      .map((pointId) => {
+        const point = layersStore.points.find((p) => p.id === pointId);
+        return point ? point.coordinates : null;
+      })
+      .filter((p): p is { lat: number; lon: number } => p !== null);
+
+    // Verify all points were found
+    if (points.length !== pointIds.length) {
+      console.error('Some points not found for polygon');
       return null;
     }
 
@@ -52,7 +66,7 @@ export function usePolygonDrawing(mapRef: any) {
     const polygonElement: PolygonElement = {
       id: polygonId,
       name: name || `Polygon ${layersStore.polygonCount + 1}`,
-      points,
+      pointIds, // Store IDs instead of coordinates
       color: polygonColor,
     };
 
@@ -114,12 +128,21 @@ export function usePolygonDrawing(mapRef: any) {
   };
 
   // Helper function to redraw a polygon on the map without adding to store
-  const redrawPolygonOnMap = (
-    polygonId: string,
-    points: { lat: number; lon: number }[],
-    color = '#90EE90'
-  ) => {
+  const redrawPolygonOnMap = (polygonId: string, pointIds: string[], color = '#90EE90') => {
     if (!mapRef.map?.value || !mapRef.polygonsSource?.value) {
+      return;
+    }
+
+    // Resolve point IDs to coordinates
+    const points = pointIds
+      .map((pointId) => {
+        const point = layersStore.points.find((p) => p.id === pointId);
+        return point ? point.coordinates : null;
+      })
+      .filter((p): p is { lat: number; lon: number } => p !== null);
+
+    if (points.length < 3) {
+      console.error('Insufficient valid points for polygon');
       return;
     }
 

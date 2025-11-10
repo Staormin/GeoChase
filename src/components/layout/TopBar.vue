@@ -356,6 +356,8 @@ function handleExportJSON() {
     circles: layersStore.circles,
     lineSegments: layersStore.lineSegments,
     points: layersStore.points,
+    polygons: layersStore.polygons,
+    notes: layersStore.notes,
     coordinates: coordinatesStore.savedCoordinates,
     exportedAt: new Date().toISOString(),
   };
@@ -433,6 +435,30 @@ async function handleImportJSON() {
             elevation: point.elevation,
             color: point.color,
             mapElementId: point.mapElementId,
+          });
+        }
+      }
+
+      if (projectData.polygons && Array.isArray(projectData.polygons)) {
+        for (const polygon of projectData.polygons) {
+          layersStore.addPolygon({
+            id: polygon.id,
+            name: polygon.name,
+            pointIds: polygon.pointIds,
+            color: polygon.color,
+            mapElementId: polygon.mapElementId,
+          });
+        }
+      }
+
+      if (projectData.notes && Array.isArray(projectData.notes)) {
+        for (const note of projectData.notes) {
+          layersStore.addNote({
+            id: note.id,
+            title: note.title,
+            content: note.content,
+            linkedElementType: note.linkedElementType,
+            linkedElementId: note.linkedElementId,
           });
         }
       }

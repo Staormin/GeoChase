@@ -97,30 +97,11 @@ function submitForm() {
     return;
   }
 
-  // Get the coordinates of the selected points
-  const points = selectedPoints.value
-    .map((pointId) => {
-      const point = layersStore.points.find((p) => p.id === pointId);
-      if (point) {
-        return {
-          lat: point.coordinates.lat,
-          lon: point.coordinates.lon,
-        };
-      }
-      return null;
-    })
-    .filter((p): p is { lat: number; lon: number } => p !== null);
-
-  if (points.length < 3) {
-    uiStore.addToast('Unable to find selected points', 'error');
-    return;
-  }
-
   // Autogenerate name if empty
   const name = form.value.name.trim() || `Polygon ${layersStore.polygonCount + 1}`;
 
-  // Draw polygon with light green color
-  drawing.drawPolygon(points, name, '#90EE90');
+  // Draw polygon with point IDs (no coordinate extraction needed)
+  drawing.drawPolygon(selectedPoints.value, name, '#90EE90');
   uiStore.addToast('Polygon added successfully!', 'success');
 
   closeModal();

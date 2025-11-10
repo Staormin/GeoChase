@@ -101,7 +101,7 @@ export function useDrawing(mapRef: any) {
       case 'polygon': {
         const polygon = layersStore.polygons.find((p) => p.id === elementId);
         if (polygon && polygon.id) {
-          polygonDrawing.redrawPolygonOnMap(polygon.id, polygon.points, polygon.color);
+          polygonDrawing.redrawPolygonOnMap(polygon.id, polygon.pointIds, polygon.color);
         }
         break;
       }
@@ -182,41 +182,6 @@ export function useDrawing(mapRef: any) {
     }
   };
 
-  // Helper to remove polygons affected by point deletion
-  const removeAffectedPolygons = (deletedCoords: { lat: number; lon: number }) => {
-    const polygonsToRemove: string[] = [];
-
-    for (const polygon of layersStore.polygons) {
-      const containsPoint = polygon.points.some(
-        (p) =>
-          Math.abs(p.lat - deletedCoords.lat) < 0.000_001 &&
-          Math.abs(p.lon - deletedCoords.lon) < 0.000_001
-      );
-
-      if (containsPoint) {
-        const remainingPoints = polygon.points.filter(
-          (p) =>
-            Math.abs(p.lat - deletedCoords.lat) >= 0.000_001 ||
-            Math.abs(p.lon - deletedCoords.lon) >= 0.000_001
-        );
-
-        if (remainingPoints.length < 3 && polygon.id) {
-          polygonsToRemove.push(polygon.id);
-        }
-      }
-    }
-
-    for (const polygonId of polygonsToRemove) {
-      // Remove the feature from the polygons source
-      if (mapRef.polygonsSource?.value) {
-        const feature = mapRef.polygonsSource.value.getFeatureById(polygonId);
-        if (feature) {
-          mapRef.polygonsSource.value.removeFeature(feature);
-        }
-      }
-    }
-  };
-
   // Helper to remove feature by ID from source
   const removeFeatureById = (source: any, featureId: string) => {
     if (!source) {
@@ -228,11 +193,27 @@ export function useDrawing(mapRef: any) {
     }
   };
 
+  // Helper to redraw polygons after point deletion
+  const redrawAffectedPolygons = (polygonIds: string[]) => {
+    for (const polygonId of polygonIds) {
+      const polygon = layersStore.polygons.find((p) => p.id === polygonId);
+      if (polygon && polygon.id) {
+        // Remove old polygon feature from map
+        removeFeatureById(mapRef.polygonsSource?.value, polygon.id);
+        // Redraw with updated pointIds
+        polygonDrawing.redrawPolygonOnMap(polygon.id, polygon.pointIds, polygon.color);
+      }
+    }
+  };
+
   // Delete element from map
   const deleteElement = (elementType: string, elementId: string | undefined) => {
     if (!mapRef.map?.value || !elementId) {
       return;
     }
+
+    // Track polygons that need to be redrawn after point deletion
+    const polygonsToRedraw: string[] = [];
 
     // Remove from map using OpenLayers feature management
     switch (elementType) {
@@ -248,6 +229,27 @@ export function useDrawing(mapRef: any) {
         break;
       }
       case 'point': {
+        // Before deleting the point, collect polygons that will be affected
+        const point = layersStore.points.find((p) => p.id === elementId);
+        const polygonsToCleanup: string[] = [];
+
+        if (point?.polygonIds) {
+          for (const polygonId of point.polygonIds) {
+            const polygon = layersStore.polygons.find((p) => p.id === polygonId);
+            if (polygon) {
+              const remainingPoints = polygon.pointIds.filter((pid) => pid !== elementId).length;
+              // If polygon will drop below 3 points, it will be cascade-deleted
+              if (remainingPoints < 3) {
+                polygonsToCleanup.push(polygonId);
+              }
+              // If polygon will have 3+ points remaining, it needs to be redrawn
+              else if (remainingPoints >= 3) {
+                polygonsToRedraw.push(polygonId);
+              }
+            }
+          }
+        }
+
         removeFeatureById(mapRef.pointsSource?.value, elementId);
 
         // Also remove the label overlay
@@ -259,10 +261,11 @@ export function useDrawing(mapRef: any) {
           mapRef.map.value.removeOverlay(labelOverlay);
         }
 
-        const point = layersStore.points.find((p) => p.id === elementId);
-        if (point?.coordinates) {
-          removeAffectedPolygons(point.coordinates);
+        // Clean up polygons that will be cascade-deleted from the map
+        for (const polygonId of polygonsToCleanup) {
+          removeFeatureById(mapRef.polygonsSource?.value, polygonId);
         }
+
         break;
       }
       case 'polygon': {
@@ -301,6 +304,11 @@ export function useDrawing(mapRef: any) {
         break;
       }
       // No default
+    }
+
+    // After store deletion, redraw affected polygons with their new shape
+    if (elementType === 'point' && polygonsToRedraw.length > 0) {
+      redrawAffectedPolygons(polygonsToRedraw);
     }
   };
 
@@ -395,7 +403,7 @@ export function useDrawing(mapRef: any) {
     // Redraw polygons (using redraw helper to avoid adding to store twice)
     for (const polygon of polygons) {
       if (polygon.id) {
-        polygonDrawing.redrawPolygonOnMap(polygon.id, polygon.points, polygon.color);
+        polygonDrawing.redrawPolygonOnMap(polygon.id, polygon.pointIds, polygon.color);
       }
     }
 
@@ -437,11 +445,15 @@ export function useDrawing(mapRef: any) {
       }
 
       for (const polygon of polygons) {
-        for (const point of polygon.points) {
-          minLat = Math.min(minLat, point.lat);
-          maxLat = Math.max(maxLat, point.lat);
-          minLon = Math.min(minLon, point.lon);
-          maxLon = Math.max(maxLon, point.lon);
+        // Resolve point IDs to coordinates for bounds calculation
+        for (const pointId of polygon.pointIds) {
+          const point = layersStore.points.find((p) => p.id === pointId);
+          if (point) {
+            minLat = Math.min(minLat, point.coordinates.lat);
+            maxLat = Math.max(maxLat, point.coordinates.lat);
+            minLon = Math.min(minLon, point.coordinates.lon);
+            maxLon = Math.max(maxLon, point.coordinates.lon);
+          }
         }
       }
 

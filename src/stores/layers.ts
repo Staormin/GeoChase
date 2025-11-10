@@ -187,46 +187,36 @@ export const useLayersStore = defineStore('layers', () => {
         mapElementIdMap.value.delete(`point_${id}`);
       }
 
-      // Get the point's coordinates before deletion
-      const deletedCoords = point!.coordinates;
-
       // Remove references to this point from all lines
       if (id) {
         removePointReferencesFromLines(id);
       }
 
-      // Delete the point
-      points.value.splice(index, 1);
+      // Remove point from polygons and check validity (bidirectional relationship cleanup)
+      if (id && point && point.polygonIds) {
+        const polygonsToDelete: string[] = [];
 
-      // Check all polygons and delete those that used this point and now have < 3 points
-      const polygonsToDelete: string[] = [];
-      for (const polygon of polygons.value) {
-        // Check if this polygon contains the deleted point's coordinates
-        const containsPoint = polygon.points.some(
-          (p) =>
-            Math.abs(p.lat - deletedCoords.lat) < 0.000_001 &&
-            Math.abs(p.lon - deletedCoords.lon) < 0.000_001
-        );
+        for (const polygonId of point.polygonIds) {
+          const polygon = polygons.value.find((p) => p.id === polygonId);
+          if (polygon) {
+            // Remove this point from polygon's pointIds
+            polygon.pointIds = polygon.pointIds.filter((pid) => pid !== id);
 
-        if (containsPoint) {
-          // Count remaining points after removing this one
-          const remainingPoints = polygon.points.filter(
-            (p) =>
-              Math.abs(p.lat - deletedCoords.lat) >= 0.000_001 ||
-              Math.abs(p.lon - deletedCoords.lon) >= 0.000_001
-          );
-
-          // If polygon would have less than 3 points, mark it for deletion
-          if (remainingPoints.length < 3 && polygon.id) {
-            polygonsToDelete.push(polygon.id);
+            // If polygon now has < 3 points, mark for deletion
+            if (polygon.pointIds.length < 3) {
+              polygonsToDelete.push(polygonId);
+            }
           }
+        }
+
+        // Delete invalid polygons
+        for (const polygonId of polygonsToDelete) {
+          deletePolygon(polygonId);
         }
       }
 
-      // Delete invalid polygons
-      for (const polygonId of polygonsToDelete) {
-        deletePolygon(polygonId);
-      }
+      // Delete the point
+      points.value.splice(index, 1);
     }
   }
 
@@ -236,12 +226,22 @@ export const useLayersStore = defineStore('layers', () => {
       polygon.createdAt = Date.now();
     }
     polygons.value.push(polygon);
+
+    // Update bidirectional relationship: polygon -> points and points -> polygon
+    if (polygon.id) {
+      updatePolygonPointReferences(polygon.id);
+    }
   }
 
   function updatePolygon(id: string | undefined, polygon: Partial<PolygonElement>): void {
     const index = polygons.value.findIndex((p) => p.id === id);
     if (index !== -1 && polygons.value[index]) {
       polygons.value[index] = { ...polygons.value[index], ...polygon } as PolygonElement;
+
+      // Update bidirectional relationship after updating polygon
+      if (id) {
+        updatePolygonPointReferences(id);
+      }
     }
   }
 
@@ -249,6 +249,17 @@ export const useLayersStore = defineStore('layers', () => {
     const index = polygons.value.findIndex((p) => p.id === id);
     if (index !== -1 && polygons.value[index]) {
       const polygon = polygons.value[index];
+
+      // Clear polygon references from all points (bidirectional relationship cleanup)
+      if (id && polygon && polygon.pointIds) {
+        for (const pointId of polygon.pointIds) {
+          const point = points.value.find((p) => p.id === pointId);
+          if (point?.polygonIds) {
+            point.polygonIds = point.polygonIds.filter((pid) => pid !== id);
+          }
+        }
+      }
+
       if (polygon && polygon.mapElementId !== undefined) {
         mapElementIdMap.value.delete(`polygon_${id}`);
       }
@@ -452,16 +463,9 @@ export const useLayersStore = defineStore('layers', () => {
       polygon &&
       typeof polygon.id === 'string' &&
       typeof polygon.name === 'string' &&
-      Array.isArray(polygon.points) &&
-      polygon.points.length >= 3 &&
-      polygon.points.every(
-        (point: any) =>
-          point &&
-          typeof point.lat === 'number' &&
-          typeof point.lon === 'number' &&
-          !Number.isNaN(point.lat) &&
-          !Number.isNaN(point.lon)
-      )
+      Array.isArray(polygon.pointIds) &&
+      polygon.pointIds.length >= 3 &&
+      polygon.pointIds.every((pointId: any) => typeof pointId === 'string')
     );
   }
 
@@ -496,9 +500,59 @@ export const useLayersStore = defineStore('layers', () => {
       return validatePoint(point);
     });
 
-    const validPolygons = (data.polygons || []).filter((polygon) => {
-      return validatePolygon(polygon);
-    });
+    // Migrate old polygon format (coordinates) to new format (point IDs)
+    const validPolygons = (data.polygons || [])
+      .map((polygon: any) => {
+        // Check if this is an old format polygon with coordinates
+        if (polygon.points && !polygon.pointIds && Array.isArray(polygon.points)) {
+          // Old format: has coordinates array, need to convert to point IDs
+          const pointIds: string[] = [];
+
+          for (const coord of polygon.points) {
+            if (
+              coord &&
+              typeof coord.lat === 'number' &&
+              typeof coord.lon === 'number' &&
+              !Number.isNaN(coord.lat) &&
+              !Number.isNaN(coord.lon)
+            ) {
+              // Try to find existing point at these coordinates
+              let point = validPoints.find(
+                (p) =>
+                  Math.abs(p.coordinates.lat - coord.lat) < 0.000_001 &&
+                  Math.abs(p.coordinates.lon - coord.lon) < 0.000_001
+              );
+
+              if (!point) {
+                // Create a new point for this coordinate
+                const pointId = `${polygon.id}-point-${pointIds.length}`;
+                point = {
+                  id: pointId,
+                  name: `${polygon.name} Point ${pointIds.length + 1}`,
+                  coordinates: { lat: coord.lat, lon: coord.lon },
+                  createdAt: Date.now(),
+                };
+                validPoints.push(point);
+              }
+
+              pointIds.push(point.id);
+            }
+          }
+
+          // Return migrated polygon (convert to new format)
+          return {
+            ...polygon,
+            pointIds,
+            points: undefined, // Remove old field
+          };
+        }
+
+        // New format: already has pointIds
+        return polygon;
+      })
+      .filter((polygon) => {
+        return validatePolygon(polygon);
+      });
 
     const validNotes = (data.notes || []).filter((note) => {
       return validateNote(note);
@@ -558,6 +612,15 @@ export const useLayersStore = defineStore('layers', () => {
     for (const segment of lineSegments.value) {
       if (segment.id) {
         updateLinePointReferences(segment.id);
+      }
+    }
+
+    // Update point references in all polygons (bidirectional relationship)
+    // This ensures compatibility with both old projects (migrated from coordinates)
+    // and new projects (with point IDs), and handles any data inconsistencies
+    for (const polygon of polygons.value) {
+      if (polygon.id) {
+        updatePolygonPointReferences(polygon.id);
       }
     }
   }
@@ -654,6 +717,40 @@ export const useLayersStore = defineStore('layers', () => {
     );
   }
 
+  // Helper function to update point references in polygons when a polygon is created/updated
+  // Maintains bidirectional relationship: polygon -> points and points -> polygon
+  function updatePolygonPointReferences(polygonId: string) {
+    const polygon = polygons.value.find((p) => p.id === polygonId);
+    if (!polygon || !polygon.pointIds) return;
+
+    // Update bidirectional relationship: polygon → points and points → polygon
+    for (const pointId of polygon.pointIds) {
+      const point = points.value.find((p) => p.id === pointId);
+      if (point) {
+        // Initialize polygonIds array if not present
+        if (!point.polygonIds) {
+          point.polygonIds = [];
+        }
+        // Add this polygon if not already referenced
+        if (!point.polygonIds.includes(polygonId)) {
+          point.polygonIds.push(polygonId);
+        }
+      }
+    }
+
+    // Clean up: remove polygon reference from points no longer in polygon
+    for (const point of points.value) {
+      if (point.polygonIds?.includes(polygonId) && !polygon.pointIds.includes(point.id)) {
+        point.polygonIds = point.polygonIds.filter((pid) => pid !== polygonId);
+      }
+    }
+  }
+
+  // Helper function to get all polygons that reference a specific point
+  function getPolygonsReferencingPoint(pointId: string): PolygonElement[] {
+    return polygons.value.filter((polygon) => polygon.pointIds?.includes(pointId));
+  }
+
   return {
     // State
     circles,
@@ -702,5 +799,7 @@ export const useLayersStore = defineStore('layers', () => {
     updateLinePointReferences,
     removePointReferencesFromLines,
     getLinesReferencingPoint,
+    updatePolygonPointReferences,
+    getPolygonsReferencingPoint,
   };
 });

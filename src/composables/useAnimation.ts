@@ -243,7 +243,12 @@ export function useAnimation(
             break;
           }
           case 'polygon': {
-            for (const point of element.points) {
+            // Resolve point IDs to coordinates
+            const points = element.pointIds
+              .map((pointId) => layersStore.points.find((p) => p.id === pointId)?.coordinates)
+              .filter((p): p is { lat: number; lon: number } => p !== undefined);
+
+            for (const point of points) {
               minLat = Math.min(minLat, point.lat);
               maxLat = Math.max(maxLat, point.lat);
               minLon = Math.min(minLon, point.lon);

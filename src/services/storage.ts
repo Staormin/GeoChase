@@ -83,12 +83,14 @@ export interface PointElement {
   createdAt?: number;
   // Line reference: ID of the line that contains this point (bidirectional relationship: 1 point => 0 or 1 line)
   lineId?: string; // ID of line where this point appears in pointsOnLine, startPointId, or endPointId
+  // Polygon references: IDs of polygons that use this point (bidirectional relationship: 1 point => 0 or many polygons)
+  polygonIds?: string[]; // IDs of polygons where this point appears in pointIds array
 }
 
 export interface PolygonElement {
   id: string;
   name: string;
-  points: { lat: number; lon: number }[]; // Array of at least 3 points
+  pointIds: string[]; // Array of PointElement IDs (minimum 3) - bidirectional relationship with PointElement.polygonIds
   color?: string;
   mapElementId?: string; // OpenLayers feature ID
   noteId?: string; // ID of the linked note (one-to-one)

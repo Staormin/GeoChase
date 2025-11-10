@@ -220,7 +220,7 @@
           >
             <div class="layer-item-info">
               <div class="layer-item-name">{{ polygon.name }}</div>
-              <div class="layer-item-type">Polygon ({{ polygon.points.length }} points)</div>
+              <div class="layer-item-type">Polygon ({{ polygon.pointIds.length }} points)</div>
             </div>
             <div class="layer-item-actions" @click.stop>
               <LayerContextMenu
@@ -510,15 +510,24 @@ function handleGoTo(
     }
     case 'polygon': {
       const polygon = element as PolygonElement;
-      // Calculate center of polygon
-      const sumLat = polygon.points.reduce((sum, p) => sum + p.lat, 0);
-      const sumLon = polygon.points.reduce((sum, p) => sum + p.lon, 0);
-      lat = sumLat / polygon.points.length;
-      lon = sumLon / polygon.points.length;
+      // Calculate center of polygon by resolving point IDs to coordinates
+      const points = polygon.pointIds
+        .map((pointId) => layersStore.points.find((p) => p.id === pointId)?.coordinates)
+        .filter((p): p is { lat: number; lon: number } => p !== undefined);
+
+      if (points.length === 0) {
+        console.warn('No valid points found for polygon');
+        return;
+      }
+
+      const sumLat = points.reduce((sum, p) => sum + p.lat, 0);
+      const sumLon = points.reduce((sum, p) => sum + p.lon, 0);
+      lat = sumLat / points.length;
+      lon = sumLon / points.length;
 
       // Calculate bounds to determine zoom
-      const lats = polygon.points.map((p) => p.lat);
-      const lons = polygon.points.map((p) => p.lon);
+      const lats = points.map((p) => p.lat);
+      const lons = points.map((p) => p.lon);
       const minLat = Math.min(...lats);
       const maxLat = Math.max(...lats);
       const minLon = Math.min(...lons);
