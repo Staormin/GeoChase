@@ -12,6 +12,7 @@
           <v-text-field
             v-model="form.title"
             class="mb-4"
+            data-testid="note-title-input"
             density="compact"
             label="Title"
             variant="outlined"
@@ -20,6 +21,7 @@
           <v-textarea
             v-model="form.content"
             class="mb-4"
+            data-testid="note-content-input"
             density="compact"
             label="Content"
             rows="8"
@@ -30,6 +32,7 @@
             v-model="form.linkedElementType"
             class="mb-4"
             clearable
+            data-testid="note-link-type-select"
             density="compact"
             item-title="label"
             item-value="value"
@@ -44,6 +47,7 @@
             v-model="form.linkedElementId"
             class="mb-4"
             clearable
+            data-testid="note-link-element-select"
             density="compact"
             item-title="name"
             item-value="id"
@@ -55,10 +59,14 @@
       </v-card-text>
 
       <v-card-actions>
-        <v-btn v-if="isEditing" color="error" @click="handleDelete">Delete</v-btn>
+        <v-btn v-if="isEditing" color="error" data-testid="delete-note-btn" @click="handleDelete">
+          Delete
+        </v-btn>
         <v-spacer />
-        <v-btn @click="closeModal">Cancel</v-btn>
-        <v-btn color="primary" @click="submitForm">{{ isEditing ? 'Update' : 'Create' }}</v-btn>
+        <v-btn data-testid="cancel-note-btn" @click="closeModal">Cancel</v-btn>
+        <v-btn color="primary" data-testid="submit-note-btn" @click="submitForm">
+          {{ isEditing ? 'Update' : 'Create' }}
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

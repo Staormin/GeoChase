@@ -13,3 +13,11 @@ coverage
 *.gif
 .vscode
 .idea
+# Auto-generated files
+components.d.ts
+src/auto-imports.d.ts
+src/components.d.ts
+# Test artifacts
+playwright-report
+test-results
+.last-run.json

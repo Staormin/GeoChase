@@ -12,15 +12,18 @@
           <p class="text-medium-emphasis">No saved projects</p>
         </div>
 
-        <v-list v-else>
+        <v-list v-else data-testid="projects-list">
           <v-list-item
             v-for="project in projectsStore.sortedProjects"
             :key="project.id"
             class="mb-2"
+            :data-testid="`project-item-${project.id}`"
           >
             <template #default>
               <div class="w-full">
-                <div class="font-weight-medium">{{ project.name }}</div>
+                <div class="font-weight-medium" :data-testid="`project-name-${project.id}`">
+                  {{ project.name }}
+                </div>
                 <div class="text-caption text-medium-emphasis">
                   Circles: {{ project.data.circles?.length || 0 }} | Lines:
                   {{ project.data.lineSegments?.length || 0 }} | Points:
@@ -40,12 +43,14 @@
                 <v-btn
                   v-if="project.id"
                   color="primary"
+                  :data-testid="`load-project-${project.id}`"
                   icon="mdi-folder-open"
                   @click="loadProject(project.id)"
                 />
                 <v-btn
                   v-if="project.id"
                   color="error"
+                  :data-testid="`delete-project-${project.id}`"
                   icon="mdi-delete"
                   @click="deleteProject(project.id)"
                 />
@@ -57,7 +62,7 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn text @click="closeModal">Close</v-btn>
+        <v-btn data-testid="close-load-modal-btn" text @click="closeModal">Close</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

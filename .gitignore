@@ -3,6 +3,12 @@ node_modules
 /dist
 coverage/
 
+# Test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+.last-run.json
+
 # local env files
 .env.local
 .env.*.local

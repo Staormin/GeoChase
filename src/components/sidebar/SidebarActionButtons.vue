@@ -25,15 +25,25 @@
 
     <!-- Save/Load Menu (relative positioning for dropdown) -->
     <div class="save-menu-wrapper">
-      <button class="btn-action" @click="saveMenuOpen = !saveMenuOpen">💾 Save</button>
+      <button class="btn-action" data-testid="save-menu-btn" @click="saveMenuOpen = !saveMenuOpen">
+        💾 Save
+      </button>
 
       <!-- Dropdown menu -->
-      <div v-if="saveMenuOpen" class="dropdown-menu" @click.stop>
-        <button class="dropdown-item" @click="openNewProjectModal">✨ New Project</button>
-        <button class="dropdown-item" @click="openLoadProjectModal">📥 Load Project</button>
+      <div v-if="saveMenuOpen" class="dropdown-menu" data-testid="save-menu-dropdown" @click.stop>
+        <button class="dropdown-item" data-testid="new-project-btn" @click="openNewProjectModal">
+          ✨ New Project
+        </button>
+        <button class="dropdown-item" data-testid="load-project-btn" @click="openLoadProjectModal">
+          📥 Load Project
+        </button>
         <div class="dropdown-divider" />
-        <button class="dropdown-item" @click="exportAsJSON">📄 Export JSON</button>
-        <button class="dropdown-item" @click="importFromJSON">📋 Import JSON</button>
+        <button class="dropdown-item" data-testid="export-json-btn" @click="exportAsJSON">
+          📄 Export JSON
+        </button>
+        <button class="dropdown-item" data-testid="import-json-btn" @click="importFromJSON">
+          📋 Import JSON
+        </button>
       </div>
     </div>
 

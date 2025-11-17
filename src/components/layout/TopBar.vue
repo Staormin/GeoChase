@@ -61,6 +61,7 @@
 
           <v-btn
             color="surface-bright"
+            data-testid="create-note-btn"
             icon="mdi-note-text"
             variant="elevated"
             @click="handleCreateNote"
@@ -73,6 +74,7 @@
             <template #activator="{ props }">
               <v-btn
                 color="surface-bright"
+                data-testid="save-menu-btn"
                 icon="mdi-content-save"
                 variant="elevated"
                 v-bind="props"
@@ -81,27 +83,27 @@
                 <v-tooltip activator="parent" location="bottom">Save/Load Project</v-tooltip>
               </v-btn>
             </template>
-            <v-list density="compact">
-              <v-list-item @click="handleNewProject">
+            <v-list data-testid="save-menu-dropdown" density="compact">
+              <v-list-item data-testid="new-project-btn" @click="handleNewProject">
                 <template #prepend>
                   <v-icon size="small">mdi-plus-circle</v-icon>
                 </template>
                 <v-list-item-title>New Project</v-list-item-title>
               </v-list-item>
-              <v-list-item @click="handleLoadProject">
+              <v-list-item data-testid="load-project-btn" @click="handleLoadProject">
                 <template #prepend>
                   <v-icon size="small">mdi-folder-open</v-icon>
                 </template>
                 <v-list-item-title>Load Project</v-list-item-title>
               </v-list-item>
               <v-divider />
-              <v-list-item @click="handleExportJSON">
+              <v-list-item data-testid="export-json-btn" @click="handleExportJSON">
                 <template #prepend>
                   <v-icon size="small">mdi-file-export</v-icon>
                 </template>
                 <v-list-item-title>Export JSON</v-list-item-title>
               </v-list-item>
-              <v-list-item @click="handleImportJSON">
+              <v-list-item data-testid="import-json-btn" @click="handleImportJSON">
                 <template #prepend>
                   <v-icon size="small">mdi-file-import</v-icon>
                 </template>

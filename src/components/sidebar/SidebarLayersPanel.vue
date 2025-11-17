@@ -264,7 +264,13 @@
             <div class="layer-item-actions" @click.stop>
               <v-menu location="bottom">
                 <template #activator="{ props }">
-                  <v-btn icon="mdi-dots-vertical" size="x-small" variant="text" v-bind="props" />
+                  <v-btn
+                    data-testid="note-context-menu-btn"
+                    icon="mdi-dots-vertical"
+                    size="x-small"
+                    variant="text"
+                    v-bind="props"
+                  />
                 </template>
                 <v-list density="compact">
                   <v-list-item @click="handleEditNote(note)">

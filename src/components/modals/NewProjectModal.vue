@@ -14,6 +14,7 @@
             v-model="projectName"
             autofocus
             class="mb-4"
+            data-testid="project-name-input"
             density="compact"
             label="Project Name"
             placeholder="e.g., My Project"
@@ -24,8 +25,10 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn text @click="closeModal">Cancel</v-btn>
-        <v-btn color="primary" @click="submitForm">Create Project</v-btn>
+        <v-btn data-testid="cancel-project-btn" text @click="closeModal">Cancel</v-btn>
+        <v-btn color="primary" data-testid="create-project-btn" @click="submitForm">
+          Create Project
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

@@ -29,7 +29,8 @@ export const useLayersStore = defineStore('layers', () => {
       circles.value.length === 0 &&
       lineSegments.value.length === 0 &&
       points.value.length === 0 &&
-      polygons.value.length === 0
+      polygons.value.length === 0 &&
+      notes.value.length === 0
   );
 
   const totalCount = computed(
