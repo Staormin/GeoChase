@@ -9,7 +9,7 @@
       >
         <div class="d-flex flex-column align-center gap-2">
           <v-progress-circular color="primary" indeterminate size="32" width="3" />
-          <div class="text-caption text-disabled">Filtering...</div>
+          <div class="text-caption text-disabled">{{ $t('search.filtering') }}</div>
         </div>
       </div>
 
@@ -28,7 +28,7 @@
               @click="$emit('toggle-sort', 'name')"
             >
               <div class="text-xs font-medium text-slate-700 d-flex align-center gap-1">
-                Name
+                {{ $t('common.name') }}
                 <v-icon
                   v-if="sortBy === 'name'"
                   :icon="sortAsc ? 'mdi-sort-ascending' : 'mdi-sort-descending'"
@@ -42,7 +42,7 @@
               @click="$emit('toggle-sort', 'distance')"
             >
               <div class="text-xs font-medium text-slate-700 d-flex align-center justify-end gap-1">
-                Distance
+                {{ $t('search.distance') }}
                 <v-icon
                   v-if="sortBy === 'distance'"
                   :icon="sortAsc ? 'mdi-sort-ascending' : 'mdi-sort-descending'"
@@ -56,7 +56,7 @@
               @click="$emit('toggle-sort', 'elevation')"
             >
               <div class="text-xs font-medium text-slate-700 d-flex align-center justify-end gap-1">
-                Elevation
+                {{ $t('search.elevation') }}
                 <v-icon
                   v-if="sortBy === 'elevation'"
                   :icon="sortAsc ? 'mdi-sort-ascending' : 'mdi-sort-descending'"
@@ -129,7 +129,9 @@
                 white-space: nowrap;
               "
             >
-              <div class="text-sm font-medium">{{ getResultDistance(result).toFixed(1) }} km</div>
+              <div class="text-sm font-medium">
+                {{ getResultDistance(result).toFixed(1) }}{{ $t('common.kmUnit') }}
+              </div>
             </td>
             <td
               style="
@@ -141,7 +143,11 @@
               "
             >
               <div class="text-sm font-medium">
-                {{ result.elevation ? `${result.elevation} m` : 'N/A' }}
+                {{
+                  result.elevation
+                    ? `${result.elevation}${$t('common.mUnit')}`
+                    : $t('common.notAvailable')
+                }}
               </div>
             </td>
           </tr>
@@ -151,7 +157,7 @@
   </div>
   <div v-else class="text-caption text-disabled text-center py-8 px-4">
     <v-icon class="mb-2" icon="mdi-magnify" size="24" />
-    <div>No results match your filter.</div>
+    <div>{{ $t('search.noResultsMatch') }}</div>
   </div>
 </template>
 

@@ -6,7 +6,7 @@
     @keydown.esc="closeModal"
   >
     <v-card>
-      <v-card-title>{{ isEditing ? 'Edit Note' : 'Create Note' }}</v-card-title>
+      <v-card-title>{{ isEditing ? $t('note.editTitle') : $t('note.title') }}</v-card-title>
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
@@ -14,7 +14,7 @@
             class="mb-4"
             data-testid="note-title-input"
             density="compact"
-            label="Title"
+            :label="$t('common.name')"
             variant="outlined"
           />
 
@@ -23,7 +23,7 @@
             class="mb-4"
             data-testid="note-content-input"
             density="compact"
-            label="Content"
+            :label="$t('note.content')"
             rows="8"
             variant="outlined"
           />
@@ -37,7 +37,7 @@
             item-title="label"
             item-value="value"
             :items="linkOptions"
-            label="Link to element (optional)"
+            :label="$t('note.linkedTo')"
             variant="outlined"
             @update:model-value="handleLinkTypeChange"
           />
@@ -52,7 +52,7 @@
             item-title="name"
             item-value="id"
             :items="availableElements"
-            label="Select element"
+            :label="$t('drawing.point')"
             variant="outlined"
           />
         </v-form>
@@ -60,12 +60,12 @@
 
       <v-card-actions>
         <v-btn v-if="isEditing" color="error" data-testid="delete-note-btn" @click="handleDelete">
-          Delete
+          {{ $t('common.delete') }}
         </v-btn>
         <v-spacer />
-        <v-btn data-testid="cancel-note-btn" @click="closeModal">Cancel</v-btn>
+        <v-btn data-testid="cancel-note-btn" @click="closeModal">{{ $t('common.cancel') }}</v-btn>
         <v-btn color="primary" data-testid="submit-note-btn" @click="submitForm">
-          {{ isEditing ? 'Update' : 'Create' }}
+          {{ isEditing ? $t('common.save') : $t('common.add') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -77,11 +77,13 @@ import type { Ref } from 'vue';
 import type { NoteElement } from '@/services/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { computed, inject, nextTick, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
+const { t } = useI18n();
 
 // Inject note tooltips composable (provided as a ref)
 const noteTooltipsRef = inject<
@@ -111,11 +113,11 @@ const isEditing = computed(() => {
   return uiStore.editingElement?.type === 'note';
 });
 
-const linkOptions = [
-  { label: 'Circle', value: 'circle' },
-  { label: 'Line Segment', value: 'lineSegment' },
-  { label: 'Point', value: 'point' },
-];
+const linkOptions = computed(() => [
+  { label: t('common.circle'), value: 'circle' },
+  { label: t('common.line'), value: 'lineSegment' },
+  { label: t('common.point'), value: 'point' },
+]);
 
 const availableElements = computed(() => {
   if (!form.value.linkedElementType) {
@@ -171,7 +173,7 @@ function handleLinkTypeChange() {
 
 function submitForm() {
   if (!form.value.title.trim()) {
-    uiStore.addToast('Title is required', 'error');
+    uiStore.addToast(t('validation.required'), 'error');
     return;
   }
 
@@ -185,7 +187,7 @@ function submitForm() {
 
   if (isEditing.value) {
     layersStore.updateNote(noteData.id, noteData);
-    uiStore.addToast('Note updated successfully!', 'success');
+    uiStore.addToast(t('note.updated'), 'success');
     uiStore.stopEditing();
 
     // Refresh the tooltip on the map after Vue updates
@@ -197,7 +199,7 @@ function submitForm() {
     }
   } else {
     layersStore.addNote(noteData);
-    uiStore.addToast('Note created successfully!', 'success');
+    uiStore.addToast(t('note.created'), 'success');
 
     // Update tooltips to show the new note after Vue updates
     const noteTooltips = noteTooltipsRef?.value;
@@ -217,10 +219,10 @@ function handleDelete() {
     return;
   }
 
-  if (confirm('Are you sure you want to delete this note?')) {
+  if (confirm(t('note.deleted'))) {
     const noteId = uiStore.editingElement.id;
     layersStore.deleteNote(noteId);
-    uiStore.addToast('Note deleted successfully!', 'success');
+    uiStore.addToast(t('note.deleted'), 'success');
     uiStore.stopEditing();
 
     // Update tooltips to remove the deleted note

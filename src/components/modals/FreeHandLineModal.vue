@@ -6,7 +6,7 @@
     @keydown.esc="closeModal"
   >
     <v-card>
-      <v-card-title>Add Line (Free Hand)</v-card-title>
+      <v-card-title>{{ $t('line.freeHandTitle') }}</v-card-title>
 
       <v-card-text>
         <v-form @submit.prevent="submitForm">
@@ -14,41 +14,47 @@
             v-model="form.name"
             class="mb-4"
             density="compact"
-            label="Line Name (optional)"
+            :label="$t('line.name') + ' (' + $t('common.optional') + ')'"
             variant="outlined"
           />
 
           <CoordinateSelector
             v-model="form.startCoord"
             :items="coordinateItems"
-            label="Start Coordinates (optional)"
-            placeholder="Select a saved coordinate or click on map"
+            :label="
+              $t('common.start') +
+              ' ' +
+              $t('common.coordinates') +
+              ' (' +
+              $t('common.optional') +
+              ')'
+            "
+            :placeholder="$t('line.selectOrClickMap')"
           />
 
           <v-text-field
             v-model.number="form.azimuth"
             class="mb-4"
             density="compact"
-            label="Azimuth (degrees, optional)"
+            :label="$t('line.azimuth') + ' (' + $t('common.optional') + ')'"
             max="360"
             min="0"
-            placeholder="Leave empty for free direction"
+            :placeholder="$t('line.freeDirectionPlaceholder')"
             step="0.01"
             type="number"
             variant="outlined"
           />
 
           <v-alert class="mb-0" density="compact" type="info">
-            Click "Start Drawing" to enter drawing mode. Move your mouse to set the endpoint. Press
-            Escape to cancel.
+            {{ $t('line.freeHandInstructions') }}
           </v-alert>
         </v-form>
       </v-card-text>
 
       <v-card-actions>
         <v-spacer />
-        <v-btn @click="closeModal">Cancel</v-btn>
-        <v-btn color="primary" @click="submitForm">Start Drawing</v-btn>
+        <v-btn @click="closeModal">{{ $t('common.cancel') }}</v-btn>
+        <v-btn color="primary" @click="submitForm">{{ $t('line.startDrawing') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

@@ -16,7 +16,9 @@
         <template #prepend>
           <v-icon :icon="isVisible ? 'mdi-eye' : 'mdi-eye-off'" size="small" />
         </template>
-        <v-list-item-title>{{ isVisible ? 'Hide' : 'Show' }}</v-list-item-title>
+        <v-list-item-title>{{
+          isVisible ? $t('contextMenu.hide') : $t('contextMenu.show')
+        }}</v-list-item-title>
       </v-list-item>
 
       <!-- Navigate (only for circles and line segments) -->
@@ -24,7 +26,7 @@
         <template #prepend>
           <v-icon icon="mdi-navigation" size="small" />
         </template>
-        <v-list-item-title>Navigate</v-list-item-title>
+        <v-list-item-title>{{ $t('contextMenu.navigate') }}</v-list-item-title>
       </v-list-item>
 
       <!-- Add point on segment (only for line segments) -->
@@ -32,7 +34,7 @@
         <template #prepend>
           <v-icon icon="mdi-plus" size="small" />
         </template>
-        <v-list-item-title>Add point on</v-list-item-title>
+        <v-list-item-title>{{ $t('contextMenu.addPointOn') }}</v-list-item-title>
       </v-list-item>
 
       <!-- Location near (only for line segments and points) -->
@@ -43,7 +45,7 @@
         <template #prepend>
           <v-icon icon="mdi-magnify" size="small" />
         </template>
-        <v-list-item-title>Location near</v-list-item-title>
+        <v-list-item-title>{{ $t('contextMenu.locationNear') }}</v-list-item-title>
       </v-list-item>
 
       <!-- Bearings (only for points) -->
@@ -51,7 +53,7 @@
         <template #prepend>
           <v-icon icon="mdi-compass" size="small" />
         </template>
-        <v-list-item-title>Bearings</v-list-item-title>
+        <v-list-item-title>{{ $t('contextMenu.bearings') }}</v-list-item-title>
       </v-list-item>
 
       <!-- Add as coordinate (only for points without existing coordinate) -->
@@ -62,7 +64,7 @@
         <template #prepend>
           <v-icon icon="mdi-plus" size="small" />
         </template>
-        <v-list-item-title>Add as coordinate</v-list-item-title>
+        <v-list-item-title>{{ $t('contextMenu.addAsCoordinate') }}</v-list-item-title>
       </v-list-item>
 
       <!-- Add center as point (only for polygons) -->
@@ -70,7 +72,7 @@
         <template #prepend>
           <v-icon icon="mdi-image-filter-center-focus" size="small" />
         </template>
-        <v-list-item-title>Add center as point</v-list-item-title>
+        <v-list-item-title>{{ $t('contextMenu.addCenterAsPoint') }}</v-list-item-title>
       </v-list-item>
 
       <!-- Add/Edit note -->
@@ -78,7 +80,9 @@
         <template #prepend>
           <v-icon :icon="hasNote ? 'mdi-note-edit' : 'mdi-note-plus'" size="small" />
         </template>
-        <v-list-item-title>{{ hasNote ? 'Edit note' : 'Add note' }}</v-list-item-title>
+        <v-list-item-title>{{
+          hasNote ? $t('contextMenu.editNote') : $t('contextMenu.addNote')
+        }}</v-list-item-title>
       </v-list-item>
 
       <!-- Edit (not available for polygons) -->
@@ -86,7 +90,7 @@
         <template #prepend>
           <v-icon icon="mdi-pencil" size="small" />
         </template>
-        <v-list-item-title>Edit</v-list-item-title>
+        <v-list-item-title>{{ $t('contextMenu.edit') }}</v-list-item-title>
       </v-list-item>
 
       <!-- Delete -->
@@ -94,7 +98,7 @@
         <template #prepend>
           <v-icon color="error" icon="mdi-delete" size="small" />
         </template>
-        <v-list-item-title>Delete</v-list-item-title>
+        <v-list-item-title>{{ $t('contextMenu.delete') }}</v-list-item-title>
       </v-list-item>
     </v-list>
   </v-menu>
@@ -108,6 +112,7 @@ import type {
   PolygonElement,
 } from '@/services/storage';
 import { computed, inject, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -128,6 +133,7 @@ const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const coordinatesStore = useCoordinatesStore();
 const drawing = inject('drawing') as any;
+const { t } = useI18n();
 
 const isVisible = computed(() => uiStore.isElementVisible(props.elementType, props.elementId));
 
@@ -173,7 +179,10 @@ function handleToggleVisibility() {
     const isNowVisible = uiStore.isElementVisible(props.elementType, props.elementId);
     // Update the map visibility through the drawing composable
     drawing.updateElementVisibility(props.elementType, props.elementId, isNowVisible);
-    uiStore.addToast(`${element.name} is now ${isNowVisible ? 'visible' : 'hidden'}`, 'success');
+    uiStore.addToast(
+      t(isNowVisible ? 'toasts.elementVisible' : 'toasts.elementHidden', { name: element.name }),
+      'success'
+    );
   }
   isOpen.value = false;
 }
@@ -211,12 +220,12 @@ function handleAddAsCoordinate() {
 
   const point = layersStore.points.find((p) => p.id === props.elementId);
   if (!point) {
-    uiStore.addToast('Point not found', 'error');
+    uiStore.addToast(t('errors.pointNotFound'), 'error');
     return;
   }
 
   coordinatesStore.addCoordinate(point.name, point.coordinates.lat, point.coordinates.lon);
-  uiStore.addToast(`"${point.name}" added to saved coordinates`, 'success');
+  uiStore.addToast(t('toasts.coordinateAdded', { name: point.name }), 'success');
   isOpen.value = false;
 }
 
@@ -237,7 +246,7 @@ function handleAddCenterAsPoint() {
 
   const polygon = layersStore.polygons.find((p) => p.id === props.elementId);
   if (!polygon) {
-    uiStore.addToast('Polygon not found', 'error');
+    uiStore.addToast(t('errors.polygonNotFound'), 'error');
     return;
   }
 
@@ -247,7 +256,7 @@ function handleAddCenterAsPoint() {
     .filter((p): p is { lat: number; lon: number } => p !== undefined);
 
   if (points.length === 0) {
-    uiStore.addToast('No valid points found for polygon', 'error');
+    uiStore.addToast(t('errors.noValidPointsForPolygon'), 'error');
     return;
   }
 
@@ -258,13 +267,13 @@ function handleAddCenterAsPoint() {
 
   // Create point at center
   if (drawing) {
-    const pointName = `${polygon.name} Center`;
+    const pointName = t('polygon.centerPointName', { name: polygon.name });
     drawing.drawPoint(centerLat, centerLon, pointName);
 
     // Also save as coordinate
     coordinatesStore.addCoordinate(pointName, centerLat, centerLon);
 
-    uiStore.addToast('Center added as point and coordinate', 'success');
+    uiStore.addToast(t('toasts.centerAddedAsPoint'), 'success');
   }
 
   isOpen.value = false;
@@ -273,13 +282,13 @@ function handleAddCenterAsPoint() {
 function handleDelete() {
   const element = getElement();
   if (!element) {
-    uiStore.addToast('Element not found', 'error');
+    uiStore.addToast(t('errors.elementNotFound'), 'error');
     return;
   }
 
-  if (confirm(`Are you sure you want to delete "${element.name}"?`)) {
+  if (confirm(t('confirm.delete', { name: element.name }))) {
     emit('delete', props.elementType, props.elementId);
-    uiStore.addToast(`${element.name} deleted`, 'success');
+    uiStore.addToast(t('toasts.elementDeleted', { name: element.name }), 'success');
     isOpen.value = false;
   }
 }
@@ -292,7 +301,7 @@ function handleLocationNear() {
 
   const element = getElement();
   if (!element) {
-    uiStore.addToast('Element not found', 'error');
+    uiStore.addToast(t('errors.elementNotFound'), 'error');
     return;
   }
 
@@ -307,7 +316,7 @@ function handleBearings() {
 
   const element = getElement();
   if (!element) {
-    uiStore.addToast('Point not found', 'error');
+    uiStore.addToast(t('errors.pointNotFound'), 'error');
     return;
   }
 

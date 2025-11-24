@@ -7,14 +7,14 @@
     @keydown.esc="closeModal"
   >
     <v-card>
-      <v-card-title>{{ isEditing ? 'Edit Circle' : 'Add Circle' }}</v-card-title>
+      <v-card-title>{{ isEditing ? $t('circle.editTitle') : $t('circle.title') }}</v-card-title>
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
             v-model="form.name"
             class="mb-4"
             density="compact"
-            label="Circle Name"
+            :label="$t('circle.name')"
             variant="outlined"
           />
 
@@ -27,13 +27,15 @@
             item-title="label"
             item-value="value"
             :items="coordinateItems"
-            label="Center Coordinates"
-            placeholder="Select a saved coordinate"
+            :label="$t('common.coordinates')"
+            :placeholder="$t('coordinates.save')"
             variant="outlined"
           >
             <template #no-data>
               <v-list-item>
-                <v-list-item-title class="text-caption">No saved coordinates</v-list-item-title>
+                <v-list-item-title class="text-caption">{{
+                  $t('sidebar.noCoordinates')
+                }}</v-list-item-title>
               </v-list-item>
             </template>
           </v-select>
@@ -42,7 +44,7 @@
             v-model.number="form.radius"
             class="mb-4"
             density="compact"
-            label="Radius (km)"
+            :label="$t('circle.radius')"
             min="0"
             step="0.1"
             type="number"
@@ -53,9 +55,9 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn text @click="closeModal">Cancel</v-btn>
+        <v-btn text @click="closeModal">{{ $t('common.cancel') }}</v-btn>
         <v-btn color="primary" @click="submitForm">{{
-          isEditing ? 'Update Circle' : 'Add Circle'
+          isEditing ? $t('common.save') : $t('common.add')
         }}</v-btn>
       </v-card-actions>
     </v-card>
@@ -64,6 +66,7 @@
 
 <script lang="ts" setup>
 import { computed, inject, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { getReverseGeocodeAddress } from '@/services/address';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
@@ -73,6 +76,7 @@ const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const coordinatesStore = useCoordinatesStore();
 const drawing = inject('drawing') as any;
+const { t } = useI18n();
 
 const form = ref({
   name: '',
@@ -141,19 +145,19 @@ watch(
 
 async function submitForm() {
   if (!form.value.centerCoord) {
-    uiStore.addToast('Please select center coordinates', 'error');
+    uiStore.addToast(t('circle.errors.invalidCenter'), 'error');
     return;
   }
 
   if (form.value.radius <= 0) {
-    uiStore.addToast('Please enter a valid radius', 'error');
+    uiStore.addToast(t('circle.errors.invalidRadius'), 'error');
     return;
   }
 
   // Parse coordinates
   const parts = form.value.centerCoord.split(',').map((s) => Number.parseFloat(s.trim()));
   if (parts.length !== 2 || parts.some((p) => Number.isNaN(p))) {
-    uiStore.addToast('Invalid coordinates format. Use: lat, lon (e.g., 48.8566, 2.3522)', 'error');
+    uiStore.addToast(t('validation.invalidCoordinates'), 'error');
     return;
   }
 
@@ -169,23 +173,25 @@ async function submitForm() {
     );
 
     if (savedCoord) {
-      name = `Circle at ${savedCoord.name}`;
+      name = `${t('common.circle')} ${savedCoord.name}`;
     } else {
       // Try reverse geocoding
       const { address } = await getReverseGeocodeAddress(centerLat, centerLon);
-      name = address ? `Circle at ${address}` : `Circle ${layersStore.circleCount + 1}`;
+      name = address
+        ? `${t('common.circle')} ${address}`
+        : `${t('common.circle')} ${layersStore.circleCount + 1}`;
     }
   }
 
   if (isEditing.value && uiStore.editingElement) {
     // Update existing circle
     drawing.updateCircle(uiStore.editingElement.id, centerLat, centerLon, form.value.radius, name);
-    uiStore.addToast('Circle updated successfully!', 'success');
+    uiStore.addToast(t('circle.updated'), 'success');
     uiStore.stopEditing();
   } else {
     // Add new circle
     drawing.drawCircle(centerLat, centerLon, form.value.radius, name);
-    uiStore.addToast('Circle added successfully!', 'success');
+    uiStore.addToast(t('circle.created'), 'success');
   }
   closeModal();
   resetForm();

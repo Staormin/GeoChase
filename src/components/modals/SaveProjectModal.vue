@@ -7,15 +7,15 @@
     @keydown.esc="closeModal"
   >
     <v-card>
-      <v-card-title>Save Project</v-card-title>
+      <v-card-title>{{ $t('project.saveProject') }}</v-card-title>
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
             v-model="projectName"
             class="mb-4"
             density="compact"
-            label="Project Name"
-            placeholder="e.g., My Project"
+            :label="$t('project.projectName')"
+            :placeholder="$t('project.projectName')"
             variant="outlined"
           />
         </v-form>
@@ -23,8 +23,8 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn text @click="closeModal">Cancel</v-btn>
-        <v-btn color="primary" @click="submitForm">Save</v-btn>
+        <v-btn text @click="closeModal">{{ $t('common.cancel') }}</v-btn>
+        <v-btn color="primary" @click="submitForm">{{ $t('common.save') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -32,6 +32,7 @@
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
@@ -39,6 +40,7 @@ import { useUIStore } from '@/stores/ui';
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const projectsStore = useProjectsStore();
+const { t } = useI18n();
 
 const projectName = ref('');
 
@@ -62,11 +64,11 @@ function submitForm() {
       savedCoordinates: [],
       notes: layerData.notes,
     });
-    uiStore.addToast('Project saved successfully!', 'success');
+    uiStore.addToast(t('project.saved'), 'success');
     closeModal();
     projectName.value = '';
   } else {
-    uiStore.addToast('Please enter a project name', 'error');
+    uiStore.addToast(t('project.errors.invalidName'), 'error');
   }
 }
 

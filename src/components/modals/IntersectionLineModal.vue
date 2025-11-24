@@ -1,8 +1,10 @@
 <template>
   <BaseModal
     :is-open="isOpen"
-    :submit-text="isEditing ? 'Update' : 'Add'"
-    :title="isEditing ? 'Edit Line (Intersection)' : 'Add Line (Intersection)'"
+    :submit-text="isEditing ? $t('common.update') : $t('common.add')"
+    :title="
+      isEditing ? $t('modals.intersectionLine.editTitle') : $t('modals.intersectionLine.title')
+    "
     @close="closeModal"
     @submit="submitForm"
   >
@@ -11,29 +13,29 @@
         v-model="form.name"
         class="mb-4"
         density="compact"
-        label="Line Name"
+        :label="$t('common.name')"
         variant="outlined"
       />
 
       <CoordinateSelector
         v-model="form.startCoord"
         :items="coordinateItems"
-        label="Start Coordinates"
-        placeholder="Select a saved coordinate"
+        :label="$t('modals.intersectionLine.startCoordinates')"
+        :placeholder="$t('modals.intersectionLine.selectCoordinate')"
       />
 
       <CoordinateSelector
         v-model="form.intersectCoord"
         :items="coordinateItems"
-        label="Intersection Coordinates"
-        placeholder="Select a saved coordinate"
+        :label="$t('modals.intersectionLine.intersectionCoordinates')"
+        :placeholder="$t('modals.intersectionLine.selectCoordinate')"
       />
 
       <v-text-field
         v-model.number="form.distance"
         class="mb-4"
         density="compact"
-        label="Distance (km)"
+        :label="$t('modals.intersectionLine.distance')"
         min="0"
         step="0.1"
         type="number"
@@ -44,7 +46,7 @@
         v-model="form.createEndpoint"
         class="mb-2"
         density="compact"
-        label="Create point at endpoint"
+        :label="$t('modals.intersectionLine.createEndpoint')"
       />
 
       <v-text-field
@@ -52,8 +54,8 @@
         v-model="form.endpointName"
         class="mb-4"
         density="compact"
-        label="Endpoint name (optional)"
-        placeholder="Leave empty for auto-generated name"
+        :label="$t('modals.intersectionLine.endpointName')"
+        :placeholder="$t('modals.intersectionLine.endpointPlaceholder')"
         variant="outlined"
       />
     </v-form>
@@ -63,6 +65,7 @@
 <script lang="ts" setup>
 import { getDistance } from 'ol/sphere';
 import { computed, inject, reactive, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
 import { useCoordinateItems } from '@/composables/useCoordinateItems';
@@ -71,6 +74,7 @@ import { endpointFromIntersection } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
+const { t } = useI18n();
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const { coordinateItems } = useCoordinateItems();
@@ -119,7 +123,7 @@ function closeModal() {
 
 async function submitForm() {
   if (!form.startCoord || !form.intersectCoord) {
-    uiStore.addToast('Please select both start and intersection coordinates', 'error');
+    uiStore.addToast(t('modals.intersectionLine.selectBothCoordinates'), 'error');
     return;
   }
 
@@ -134,7 +138,7 @@ async function submitForm() {
   const distToIntersection = getDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
   if (form.distance < distToIntersection - 1e-6) {
     uiStore.addToast(
-      `Distance must be at least ${distToIntersection.toFixed(2)} km (distance to intersection)`,
+      t('modals.intersectionLine.distanceError', { distance: distToIntersection.toFixed(2) }),
       'error'
     );
     return;
@@ -163,7 +167,7 @@ async function submitForm() {
       intersectionPoint: { lat: intersectLat, lon: intersectLon },
       intersectionDistance: form.distance,
     });
-    uiStore.addToast('Line updated successfully!', 'success');
+    uiStore.addToast(t('messages.lineUpdated'), 'success');
   } else {
     // Create new intersection line
     drawing.drawLineSegment(
@@ -181,7 +185,7 @@ async function submitForm() {
       form.createEndpoint,
       form.endpointName
     );
-    uiStore.addToast('Line added successfully!', 'success');
+    uiStore.addToast(t('messages.lineAdded'), 'success');
   }
 
   closeModal();

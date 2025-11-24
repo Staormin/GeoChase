@@ -1,13 +1,15 @@
 <template>
   <v-dialog
     v-model="isOpen"
-    max-width="500px"
+    max-width="650px"
     @click:outside="closeModal"
     @keydown.enter="isEditing ? updateCoordinate() : saveAndAddAsPoint()"
     @keydown.esc="closeModal"
   >
     <v-card>
-      <v-card-title>{{ isEditing ? 'Edit Coordinate' : 'Save Coordinate' }}</v-card-title>
+      <v-card-title>{{
+        isEditing ? $t('modals.coordinates.editTitle') : $t('modals.coordinates.title')
+      }}</v-card-title>
       <v-card-text>
         <!-- Input section -->
         <div>
@@ -17,8 +19,8 @@
             autofocus
             class="mb-4"
             density="compact"
-            label="Coordinate Name (optional)"
-            placeholder="e.g., Paris Center"
+            :label="$t('modals.coordinates.nameLabel')"
+            :placeholder="$t('modals.coordinates.namePlaceholder')"
             variant="outlined"
           />
 
@@ -26,7 +28,7 @@
             v-model="form.coordinates"
             class="mb-4"
             density="compact"
-            label="Latitude, Longitude"
+            :label="$t('modals.coordinates.coordinatesLabel')"
             placeholder="48.8566, 2.3522"
             variant="outlined"
           />
@@ -37,9 +39,9 @@
 
         <!-- List section -->
         <div>
-          <h3 class="text-subtitle2 mb-4">Saved Coordinates</h3>
+          <h3 class="text-subtitle2 mb-4">{{ $t('modals.coordinates.savedCoordinates') }}</h3>
           <div v-if="coordinatesStore.sortedCoordinates.length === 0" class="text-center py-6">
-            <p class="text-caption">No saved coordinates yet.</p>
+            <p class="text-caption">{{ $t('modals.coordinates.noCoordinates') }}</p>
           </div>
 
           <div v-else class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto">
@@ -79,13 +81,23 @@
         </div>
       </v-card-text>
 
-      <v-card-actions>
+      <v-card-actions class="px-4 pb-4">
         <v-spacer />
-        <v-btn v-if="isEditing" text @click="cancelEdit"> Cancel </v-btn>
-        <v-btn v-if="!isEditing" text @click="closeModal"> Cancel </v-btn>
-        <v-btn v-if="isEditing" color="primary" @click="updateCoordinate"> Update </v-btn>
-        <v-btn v-if="!isEditing" color="primary" @click="saveCoordinate"> Save </v-btn>
-        <v-btn v-if="!isEditing" color="primary" @click="saveAndAddAsPoint"> Save & Point </v-btn>
+        <v-btn v-if="isEditing" variant="text" @click="cancelEdit">
+          {{ $t('common.cancel') }}
+        </v-btn>
+        <v-btn v-if="!isEditing" variant="text" @click="closeModal">
+          {{ $t('common.cancel') }}
+        </v-btn>
+        <v-btn v-if="isEditing" color="primary" variant="flat" @click="updateCoordinate">
+          {{ $t('common.update') }}
+        </v-btn>
+        <v-btn v-if="!isEditing" color="primary" variant="flat" @click="saveCoordinate">
+          {{ $t('common.save') }}
+        </v-btn>
+        <v-btn v-if="!isEditing" color="primary" variant="flat" @click="saveAndAddAsPoint">
+          {{ $t('modals.coordinates.saveAndPoint') }}
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -93,10 +105,12 @@
 
 <script lang="ts" setup>
 import { computed, inject, nextTick, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { getReverseGeocodeAddress } from '@/services/address';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useUIStore } from '@/stores/ui';
 
+const { t } = useI18n();
 const uiStore = useUIStore();
 const coordinatesStore = useCoordinatesStore();
 const drawing = inject('drawing') as any;
@@ -143,13 +157,13 @@ watch(isOpen, async (newValue) => {
 
 function validateAndParseCoordinates(): { lat: number; lon: number } | null {
   if (!form.value.coordinates.trim()) {
-    uiStore.addToast('Please enter latitude and longitude', 'error');
+    uiStore.addToast(t('modals.coordinates.enterCoordinates'), 'error');
     return null;
   }
 
   const parts = form.value.coordinates.split(',').map((p) => p.trim());
   if (parts.length !== 2) {
-    uiStore.addToast('Please enter coordinates in format: lat, lon', 'error');
+    uiStore.addToast(t('modals.coordinates.coordinatesFormat'), 'error');
     return null;
   }
 
@@ -157,7 +171,7 @@ function validateAndParseCoordinates(): { lat: number; lon: number } | null {
   const lon = Number.parseFloat(parts[1] || '');
 
   if (Number.isNaN(lat) || Number.isNaN(lon)) {
-    uiStore.addToast('Please enter valid numeric coordinates', 'error');
+    uiStore.addToast(t('modals.coordinates.invalidCoordinates'), 'error');
     return null;
   }
 
@@ -178,7 +192,7 @@ async function getCoordinateName(lat: number, lon: number): Promise<string> {
       return result.address;
     }
     // If no address found, use a generic name
-    return `Coordinates (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+    return t('modals.coordinates.genericName', { lat: lat.toFixed(4), lon: lon.toFixed(4) });
   } finally {
     isFetchingAddress.value = false;
   }
@@ -192,7 +206,7 @@ async function saveCoordinate() {
 
   const name = await getCoordinateName(coords.lat, coords.lon);
   coordinatesStore.addCoordinate(name, coords.lat, coords.lon);
-  uiStore.addToast('Coordinate saved successfully!', 'success');
+  uiStore.addToast(t('modals.coordinates.savedSuccess'), 'success');
   closeModal();
 }
 
@@ -210,12 +224,9 @@ async function saveAndAddAsPoint() {
   // Create a point with the same name
   if (drawing) {
     drawing.drawPoint(coords.lat, coords.lon, name);
-    uiStore.addToast(`Coordinate saved and point "${name}" created!`, 'success');
+    uiStore.addToast(t('modals.coordinates.savedAndPointCreated', { name }), 'success');
   } else {
-    uiStore.addToast(
-      'Coordinate saved (but point creation failed - drawing not available)',
-      'info'
-    );
+    uiStore.addToast(t('modals.coordinates.savedButPointFailed'), 'info');
   }
 
   closeModal();
@@ -243,7 +254,7 @@ async function updateCoordinate() {
   }
 
   coordinatesStore.updateCoordinate(editingCoordinateId.value, name, coords.lat, coords.lon);
-  uiStore.addToast('Coordinate updated successfully!', 'success');
+  uiStore.addToast(t('modals.coordinates.updatedSuccess'), 'success');
   cancelEdit();
 }
 
@@ -254,13 +265,13 @@ function cancelEdit() {
 
 function handleDeleteCoordinate(id: string | undefined) {
   if (!id) {
-    uiStore.addToast('Invalid coordinate ID', 'error');
+    uiStore.addToast(t('modals.coordinates.invalidId'), 'error');
     return;
   }
 
-  if (confirm('Delete this coordinate?')) {
+  if (confirm(t('modals.coordinates.deleteConfirm'))) {
     coordinatesStore.deleteCoordinate(id);
-    uiStore.addToast('Coordinate deleted!', 'success');
+    uiStore.addToast(t('modals.coordinates.deletedSuccess'), 'success');
   }
 }
 

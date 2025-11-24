@@ -1,8 +1,12 @@
 <template>
   <BaseModal
     :is-open="isOpen"
-    :submit-text="isEditing ? 'Update' : 'Add'"
-    :title="isEditing ? 'Edit Line (Two Points)' : 'Add Line (Two Points)'"
+    :submit-text="isEditing ? $t('common.save') : $t('common.add')"
+    :title="
+      isEditing
+        ? $t('line.editTitle') + ' (' + $t('line.twoPointsTitle') + ')'
+        : $t('line.twoPointsTitle')
+    "
     @close="closeModal"
     @submit="submitForm"
   >
@@ -11,22 +15,22 @@
         v-model="form.name"
         class="mb-4"
         density="compact"
-        label="Line Name"
+        :label="$t('line.name')"
         variant="outlined"
       />
 
       <CoordinateSelector
         v-model="form.startCoord"
         :items="coordinateItems"
-        label="Start Coordinates"
-        placeholder="Select a saved coordinate"
+        :label="$t('line.startLat') + ' / ' + $t('line.startLon')"
+        :placeholder="$t('coordinates.selectFromPoint')"
       />
 
       <CoordinateSelector
         v-model="form.endCoord"
         :items="coordinateItems"
-        label="End Coordinates"
-        placeholder="Select a saved coordinate"
+        :label="$t('line.endLat') + ' / ' + $t('line.endLon')"
+        :placeholder="$t('coordinates.selectFromPoint')"
       />
     </v-form>
   </BaseModal>
@@ -34,12 +38,15 @@
 
 <script lang="ts" setup>
 import { computed, inject, reactive, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
 import { useCoordinateItems } from '@/composables/useCoordinateItems';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
+
+const { t } = useI18n();
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
@@ -80,7 +87,7 @@ function closeModal() {
 
 async function submitForm() {
   if (!form.startCoord || !form.endCoord) {
-    uiStore.addToast('Please select both start and end coordinates', 'error');
+    uiStore.addToast(t('line.errors.invalidCoordinates'), 'error');
     return;
   }
 
@@ -104,7 +111,7 @@ async function submitForm() {
       endpoint: { lat: endLat, lon: endLon },
       mode: 'coordinate',
     });
-    uiStore.addToast('Line updated successfully!', 'success');
+    uiStore.addToast(t('line.updated'), 'success');
   } else {
     // Create new two-points line
     drawing.drawLineSegment(
@@ -120,7 +127,7 @@ async function submitForm() {
       undefined,
       undefined
     );
-    uiStore.addToast('Line added successfully!', 'success');
+    uiStore.addToast(t('line.created'), 'success');
   }
 
   closeModal();

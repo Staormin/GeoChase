@@ -24,6 +24,7 @@ declare module 'vue' {
     CursorTooltip: typeof import('./components/ui/CursorTooltip.vue')['default']
     FreeHandLineModal: typeof import('./components/modals/FreeHandLineModal.vue')['default']
     IntersectionLineModal: typeof import('./components/modals/IntersectionLineModal.vue')['default']
+    LanguageModal: typeof import('./components/modals/LanguageModal.vue')['default']
     LayerContextMenu: typeof import('./components/layers/LayerContextMenu.vue')['default']
     LayerItem: typeof import('./components/layers/LayerItem.vue')['default']
     LayerSection: typeof import('./components/layers/LayerSection.vue')['default']

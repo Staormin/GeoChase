@@ -6,11 +6,11 @@
   >
     <div class="cursor-tooltip-content">
       <div class="cursor-tooltip-row">
-        <span class="cursor-tooltip-label">Distance:</span>
+        <span class="cursor-tooltip-label">{{ $t('common.distance') }}:</span>
         <span class="cursor-tooltip-value">{{ tooltip.distance }}</span>
       </div>
       <div class="cursor-tooltip-row">
-        <span class="cursor-tooltip-label">Azimuth:</span>
+        <span class="cursor-tooltip-label">{{ $t('common.azimuth') }}:</span>
         <span class="cursor-tooltip-value">{{ tooltip.azimuth }}</span>
       </div>
     </div>

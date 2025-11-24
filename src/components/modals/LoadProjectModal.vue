@@ -6,10 +6,10 @@
     @keydown.esc="closeModal"
   >
     <v-card>
-      <v-card-title>Load Project</v-card-title>
+      <v-card-title>{{ $t('project.loadProject') }}</v-card-title>
       <v-card-text>
         <div v-if="projectsStore.projectCount === 0" class="text-center py-8">
-          <p class="text-medium-emphasis">No saved projects</p>
+          <p class="text-medium-emphasis">{{ $t('sidebar.noProjects') }}</p>
         </div>
 
         <v-list v-else data-testid="projects-list">
@@ -25,11 +25,12 @@
                   {{ project.name }}
                 </div>
                 <div class="text-caption text-medium-emphasis">
-                  Circles: {{ project.data.circles?.length || 0 }} | Lines:
-                  {{ project.data.lineSegments?.length || 0 }} | Points:
+                  {{ $t('layers.circles') }}: {{ project.data.circles?.length || 0 }} |
+                  {{ $t('layers.lines') }}: {{ project.data.lineSegments?.length || 0 }} |
+                  {{ $t('layers.points') }}:
                   {{ project.data.points?.length || 0 }}
                   <span v-if="project.data.polygons && project.data.polygons.length > 0">
-                    | Polygons: {{ project.data.polygons.length }}
+                    | {{ $t('layers.polygons') }}: {{ project.data.polygons.length }}
                   </span>
                 </div>
                 <div v-if="project.updatedAt" class="text-caption text-disabled">
@@ -62,7 +63,9 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn data-testid="close-load-modal-btn" text @click="closeModal">Close</v-btn>
+        <v-btn data-testid="close-load-modal-btn" text @click="closeModal">{{
+          $t('common.close')
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -70,6 +73,7 @@
 
 <script lang="ts" setup>
 import { computed, inject } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
@@ -82,6 +86,7 @@ const projectsStore = useProjectsStore();
 const mapContainer = inject('mapContainer') as any;
 const drawing = inject('drawing') as any;
 const noteTooltipsRef = inject('noteTooltips') as any;
+const { t } = useI18n();
 
 const isOpen = computed({
   get: () => uiStore.isModalOpen('loadProjectModal'),
@@ -119,14 +124,10 @@ function loadProject(projectId: string) {
       // Set this project as active so auto-save works correctly
       projectsStore.setActiveProject(projectId);
 
-      uiStore.addToast(`Project "${project.name}" loaded successfully!`, 'success');
+      uiStore.addToast(t('project.loaded'), 'success');
       closeModal();
     } catch {
-      uiStore.addToast(
-        `Failed to load project "${project.name}". Some data may be corrupted.`,
-        'error',
-        5000
-      );
+      uiStore.addToast(t('project.errors.loadFailed'), 'error', 5000);
 
       // Revert to clean state
       mapContainer.clearLayers();
@@ -138,11 +139,11 @@ function loadProject(projectId: string) {
 
 function deleteProject(projectId: string) {
   const project = projectsStore.projects.find((p) => p.id === projectId);
-  if (project && confirm(`Are you sure you want to delete "${project.name}"?`)) {
+  if (project && confirm(`${t('common.delete')} "${project.name}"?`)) {
     const index = projectsStore.projects.findIndex((p) => p.id === projectId);
     if (index !== -1) {
       projectsStore.deleteProject(index);
-      uiStore.addToast('Project deleted', 'success');
+      uiStore.addToast(t('project.deleted'), 'success');
     }
   }
 }

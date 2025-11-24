@@ -1,8 +1,8 @@
 <template>
   <BaseModal
     :is-open="isOpen"
-    submit-text="Add"
-    title="Add Angle Line"
+    :submit-text="$t('common.add')"
+    :title="$t('modals.angleLine.title')"
     @close="closeModal"
     @submit="submitForm"
   >
@@ -11,8 +11,8 @@
         v-model="form.name"
         class="mb-4"
         density="compact"
-        label="Line Name (optional)"
-        placeholder="Leave empty for auto-generated name"
+        :label="$t('modals.angleLine.lineName')"
+        :placeholder="$t('modals.angleLine.lineNamePlaceholder')"
         variant="outlined"
       />
 
@@ -21,7 +21,7 @@
         class="mb-4"
         density="compact"
         :items="pointsOnLineItems"
-        label="Point on Line"
+        :label="$t('modals.angleLine.pointOnLine')"
         variant="outlined"
       >
         <template #prepend-inner>
@@ -33,8 +33,8 @@
         v-model.number="form.angle"
         class="mb-4"
         density="compact"
-        hint="Angle from the line direction (0° = along the line, 90° = perpendicular)"
-        label="Angle (degrees)"
+        :hint="$t('modals.angleLine.angleHint')"
+        :label="$t('modals.angleLine.angle')"
         max="360"
         min="-360"
         persistent-hint
@@ -47,7 +47,7 @@
         v-model.number="form.distance"
         class="mb-4"
         density="compact"
-        label="Distance (km)"
+        :label="$t('modals.angleLine.distance')"
         min="0"
         step="0.1"
         type="number"
@@ -58,7 +58,7 @@
         v-model="form.createEndpoint"
         class="mb-2"
         density="compact"
-        label="Create point at endpoint"
+        :label="$t('modals.angleLine.createEndpoint')"
       />
 
       <v-text-field
@@ -66,8 +66,8 @@
         v-model="form.endpointName"
         class="mb-4"
         density="compact"
-        label="Endpoint name (optional)"
-        placeholder="Leave empty for auto-generated name"
+        :label="$t('modals.angleLine.endpointName')"
+        :placeholder="$t('modals.angleLine.endpointPlaceholder')"
         variant="outlined"
       />
     </v-form>
@@ -77,11 +77,13 @@
 <script lang="ts" setup>
 import type { PointElement } from '@/services/storage';
 import { computed, inject, reactive, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import { destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
+const { t } = useI18n();
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const drawing = inject('drawing') as any;
@@ -103,9 +105,9 @@ const pointsOnLineItems = computed(() => {
     .filter((point: PointElement) => point.lineId !== undefined)
     .map((point: PointElement) => {
       const line = layersStore.lineSegments.find((l) => l.id === point.lineId);
-      const lineName = line?.name || 'Unknown Line';
+      const lineName = line?.name || t('common.unknownLine');
       return {
-        title: `${point.name} (on ${lineName})`,
+        title: `${point.name} (${t('modals.angleLine.onLine', { line: lineName })})`,
         value: point.id,
       };
     });
@@ -185,20 +187,20 @@ function calculateLineBearingAtPoint(pointId: string): number | null {
 
 function submitForm() {
   if (!form.pointId) {
-    uiStore.addToast('Please select a point on a line', 'error');
+    uiStore.addToast(t('modals.angleLine.selectPointError'), 'error');
     return;
   }
 
   const point = layersStore.points.find((p) => p.id === form.pointId);
   if (!point) {
-    uiStore.addToast('Point not found', 'error');
+    uiStore.addToast(t('modals.angleLine.pointNotFoundError'), 'error');
     return;
   }
 
   // Calculate the bearing of the line at this point
   const lineBearing = calculateLineBearingAtPoint(form.pointId);
   if (lineBearing === null) {
-    uiStore.addToast('Could not calculate line bearing', 'error');
+    uiStore.addToast(t('modals.angleLine.bearingError'), 'error');
     return;
   }
 
@@ -215,7 +217,12 @@ function submitForm() {
 
   // Generate line name if not provided
   const lineName =
-    form.name.trim() || `Angle ${form.angle}° from ${point.name} (${form.distance.toFixed(1)} km)`;
+    form.name.trim() ||
+    t('modals.angleLine.generatedName', {
+      angle: form.angle,
+      pointName: point.name,
+      distance: form.distance.toFixed(1),
+    });
 
   // Draw the line
   drawing.drawLineSegment(
@@ -230,11 +237,16 @@ function submitForm() {
   // Create endpoint if requested
   if (form.createEndpoint) {
     const endpointName =
-      form.endpointName.trim() || `${point.name} + ${form.angle}° (${form.distance} km)`;
+      form.endpointName.trim() ||
+      t('modals.angleLine.generatedEndpointName', {
+        pointName: point.name,
+        angle: form.angle,
+        distance: form.distance,
+      });
     drawing.drawPoint(endpoint.lat, endpoint.lon, endpointName);
   }
 
-  uiStore.addToast('Angle line created successfully!', 'success');
+  uiStore.addToast(t('modals.angleLine.success'), 'success');
   closeModal();
 }
 

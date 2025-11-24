@@ -3,22 +3,22 @@
     :is-open="uiStore.isModalOpen('animationModal')"
     max-width="600"
     :submit-disabled="!canStartAnimation"
-    submit-text="Start Animation"
-    title="Animation Options"
+    :submit-text="$t('animation.startAnimation')"
+    :title="$t('animation.title')"
     @close="closeModal"
     @submit="startAnimation"
   >
     <!-- Animation Type Selection -->
     <v-radio-group v-model="form.type" class="mb-4">
       <template #label>
-        <span class="text-subtitle-1 font-weight-medium">Animation Type</span>
+        <span class="text-subtitle-1 font-weight-medium">{{ $t('animation.animationType') }}</span>
       </template>
       <v-radio label="Smooth Zoom Out" value="smoothZoomOut">
         <template #label>
           <div>
-            <div class="font-weight-medium">Smooth Zoom Out</div>
+            <div class="font-weight-medium">{{ $t('animation.smoothZoomOut') }}</div>
             <div class="text-caption text-medium-emphasis">
-              Start zoomed in and gradually reveal all elements
+              {{ $t('animation.smoothZoomOutDescription') }}
             </div>
           </div>
         </template>
@@ -26,9 +26,9 @@
       <v-radio label="Start to Finish" value="startToFinish">
         <template #label>
           <div>
-            <div class="font-weight-medium">Start to Finish</div>
+            <div class="font-weight-medium">{{ $t('animation.startToFinish') }}</div>
             <div class="text-caption text-medium-emphasis">
-              Show elements one by one in creation order
+              {{ $t('animation.startToFinishDescription') }}
             </div>
           </div>
         </template>
@@ -39,16 +39,16 @@
     <template v-if="form.type === 'smoothZoomOut'">
       <!-- View Capture Buttons -->
       <div class="mb-4">
-        <label class="text-subtitle-2 mb-2 d-block">Animation Views</label>
+        <label class="text-subtitle-2 mb-2 d-block">{{ $t('animation.animationViews') }}</label>
         <div class="view-capture-controls">
           <v-card class="view-capture-card" variant="outlined">
             <v-card-text class="pa-3">
-              <div class="view-label">Start View</div>
+              <div class="view-label">{{ $t('animation.startView') }}</div>
 
               <!-- Image Preview -->
               <div v-if="form.startView?.screenshot" class="view-preview mb-2">
                 <img
-                  alt="Start view preview"
+                  :alt="$t('animation.startViewPreview')"
                   class="preview-image"
                   :src="form.startView.screenshot"
                 />
@@ -56,31 +56,35 @@
 
               <v-btn block color="primary" size="small" variant="tonal" @click="handleSetStartView">
                 <v-icon start>mdi-camera-plus</v-icon>
-                {{ form.startView ? 'Update' : 'Set' }} Start
+                {{ form.startView ? $t('animation.updateStart') : $t('animation.setStart') }}
               </v-btn>
               <div v-if="form.startView" class="view-info">
                 <v-icon size="x-small">mdi-check-circle</v-icon>
-                View captured
+                {{ $t('animation.viewCaptured') }}
               </div>
             </v-card-text>
           </v-card>
 
           <v-card class="view-capture-card" variant="outlined">
             <v-card-text class="pa-3">
-              <div class="view-label">End View</div>
+              <div class="view-label">{{ $t('animation.endView') }}</div>
 
               <!-- Image Preview -->
               <div v-if="form.endView?.screenshot" class="view-preview mb-2">
-                <img alt="End view preview" class="preview-image" :src="form.endView.screenshot" />
+                <img
+                  :alt="$t('animation.endViewPreview')"
+                  class="preview-image"
+                  :src="form.endView.screenshot"
+                />
               </div>
 
               <v-btn block color="primary" size="small" variant="tonal" @click="handleSetEndView">
                 <v-icon start>mdi-camera-plus</v-icon>
-                {{ form.endView ? 'Update' : 'Set' }} End
+                {{ form.endView ? $t('animation.updateEnd') : $t('animation.setEnd') }}
               </v-btn>
               <div v-if="form.endView" class="view-info">
                 <v-icon size="x-small">mdi-check-circle</v-icon>
-                View captured
+                {{ $t('animation.viewCaptured') }}
               </div>
             </v-card-text>
           </v-card>
@@ -89,7 +93,7 @@
 
       <div class="mb-4">
         <div class="d-flex align-center justify-space-between mb-2">
-          <label class="text-subtitle-2">Zoom Speed</label>
+          <label class="text-subtitle-2">{{ $t('animation.zoomSpeed') }}</label>
           <span class="text-subtitle-2 font-weight-bold text-primary">
             {{ getSpeedLabel(form.zoomSpeed) }}
           </span>
@@ -111,14 +115,14 @@
       <v-checkbox
         v-model="form.disableZoomOnElement"
         class="mb-4"
-        hint="Fit all elements in view and draw them in sequence without zooming to each one"
-        label="Disable zoom on element"
+        :hint="$t('animation.disableZoomHint')"
+        :label="$t('animation.disableZoomOnElement')"
         persistent-hint
       />
 
       <div class="mb-4">
         <div class="d-flex align-center justify-space-between mb-2">
-          <label class="text-subtitle-2">Animation Speed</label>
+          <label class="text-subtitle-2">{{ $t('animation.animationSpeed') }}</label>
           <span class="text-subtitle-2 font-weight-bold text-primary">
             {{ getSpeedLabel(form.transitionSpeed) }}
           </span>
@@ -139,8 +143,8 @@
     <v-checkbox
       v-model="form.hideLabelsAndNotes"
       class="mb-4"
-      hint="Point labels and note tooltips will be hidden for a cleaner view"
-      label="Hide labels and notes during animation"
+      :hint="$t('animation.hideLabelsHint')"
+      :label="$t('animation.hideLabelsAndNotes')"
       persistent-hint
     />
 
@@ -148,17 +152,14 @@
     <v-alert type="info" variant="tonal">
       <template v-if="form.type === 'smoothZoomOut'">
         <template v-if="form.startView && form.endView">
-          Animation will smoothly transition from your custom start view to your custom end view,
-          revealing all {{ totalElements }} elements.
+          {{ $t('animation.smoothZoomPreview', { count: totalElements }) }}
         </template>
         <template v-else>
-          Set custom start and end views to create your animation. Click the map to capture each
-          view.
+          {{ $t('animation.setViewsPrompt') }}
         </template>
       </template>
       <template v-else>
-        Animation will show all {{ totalElements }} elements one by one in the order they were
-        created.
+        {{ $t('animation.startToFinishPreview', { count: totalElements }) }}
       </template>
     </v-alert>
   </BaseModal>
@@ -166,10 +167,12 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
+const { t } = useI18n();
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 
@@ -224,18 +227,18 @@ const canStartAnimation = computed(() => {
 
 function getSpeedLabel(speed: number) {
   if (speed <= 2) {
-    return 'Very Slow';
+    return t('animation.speedVerySlow');
   }
   if (speed <= 4) {
-    return 'Slow';
+    return t('animation.speedSlow');
   }
   if (speed <= 6) {
-    return 'Medium';
+    return t('animation.speedMedium');
   }
   if (speed <= 8) {
-    return 'Fast';
+    return t('animation.speedFast');
   }
-  return 'Very Fast';
+  return t('animation.speedVeryFast');
 }
 
 function handleSetStartView() {

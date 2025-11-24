@@ -2,6 +2,7 @@ import type { Ref } from 'vue';
 import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
 import { useNoteTooltips } from '@/composables/useNoteTooltips';
+import { isLanguageSet } from '@/plugins/i18n';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
@@ -41,7 +42,11 @@ export async function useMapInitialization(
     // Check if any projects exist
     if (projectsStore.projectCount === 0) {
       // Prompt for new project if none exist
-      uiStore.openModal('newProjectModal');
+      // Only open the modal if language is already set
+      // (App.vue will handle opening it after language selection)
+      if (isLanguageSet()) {
+        uiStore.openModal('newProjectModal');
+      }
     } else if (projectsStore.activeProjectId) {
       // Load the active project
       const activeProject = projectsStore.activeProject;

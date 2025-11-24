@@ -19,7 +19,7 @@
         <!-- Left section: Title and Search -->
         <div class="d-flex align-center ga-4">
           <!-- App title -->
-          <div class="text-h6 font-weight-bold">GeoChase</div>
+          <div class="text-h6 font-weight-bold">{{ $t('topbar.title') }}</div>
 
           <!-- Search bar next to title -->
           <div class="position-relative" style="width: 350px">
@@ -56,7 +56,9 @@
             @click="uiStore.openModal('coordinatesModal')"
           >
             <v-icon>mdi-book-open-variant</v-icon>
-            <v-tooltip activator="parent" location="bottom">Saved Coordinates</v-tooltip>
+            <v-tooltip activator="parent" location="bottom">{{
+              $t('coordinates.title')
+            }}</v-tooltip>
           </v-btn>
 
           <v-btn
@@ -67,7 +69,7 @@
             @click="handleCreateNote"
           >
             <v-icon>mdi-note-text</v-icon>
-            <v-tooltip activator="parent" location="bottom">Create Note</v-tooltip>
+            <v-tooltip activator="parent" location="bottom">{{ $t('note.title') }}</v-tooltip>
           </v-btn>
 
           <v-menu location="bottom">
@@ -80,7 +82,9 @@
                 v-bind="props"
               >
                 <v-icon>mdi-content-save</v-icon>
-                <v-tooltip activator="parent" location="bottom">Save/Load Project</v-tooltip>
+                <v-tooltip activator="parent" location="bottom">{{
+                  $t('project.title')
+                }}</v-tooltip>
               </v-btn>
             </template>
             <v-list data-testid="save-menu-dropdown" density="compact">
@@ -88,26 +92,26 @@
                 <template #prepend>
                   <v-icon size="small">mdi-plus-circle</v-icon>
                 </template>
-                <v-list-item-title>New Project</v-list-item-title>
+                <v-list-item-title>{{ $t('project.newProject') }}</v-list-item-title>
               </v-list-item>
               <v-list-item data-testid="load-project-btn" @click="handleLoadProject">
                 <template #prepend>
                   <v-icon size="small">mdi-folder-open</v-icon>
                 </template>
-                <v-list-item-title>Load Project</v-list-item-title>
+                <v-list-item-title>{{ $t('project.loadProject') }}</v-list-item-title>
               </v-list-item>
               <v-divider />
               <v-list-item data-testid="export-json-btn" @click="handleExportJSON">
                 <template #prepend>
                   <v-icon size="small">mdi-file-export</v-icon>
                 </template>
-                <v-list-item-title>Export JSON</v-list-item-title>
+                <v-list-item-title>{{ $t('project.exportProject') }}</v-list-item-title>
               </v-list-item>
               <v-list-item data-testid="import-json-btn" @click="handleImportJSON">
                 <template #prepend>
                   <v-icon size="small">mdi-file-import</v-icon>
                 </template>
-                <v-list-item-title>Import JSON</v-list-item-title>
+                <v-list-item-title>{{ $t('project.importProject') }}</v-list-item-title>
               </v-list-item>
             </v-list>
           </v-menu>
@@ -119,7 +123,9 @@
             @click="handleExportGPX"
           >
             <v-icon>mdi-download</v-icon>
-            <v-tooltip activator="parent" location="bottom">Export GPX</v-tooltip>
+            <v-tooltip activator="parent" location="bottom"
+              >{{ $t('project.exportProject') }}{{ ' ' }}GPX</v-tooltip
+            >
           </v-btn>
         </v-btn-group>
 
@@ -134,8 +140,19 @@
         >
           <v-icon>{{ uiStore.animationState.isPlaying ? 'mdi-stop' : 'mdi-play' }}</v-icon>
           <v-tooltip activator="parent" location="bottom">
-            {{ uiStore.animationState.isPlaying ? 'Stop Animation' : 'Play Animation' }}
+            {{ uiStore.animationState.isPlaying ? $t('animation.stop') : $t('animation.play') }}
           </v-tooltip>
+        </v-btn>
+
+        <!-- Language button -->
+        <v-btn
+          color="surface-bright"
+          icon="mdi-translate"
+          variant="elevated"
+          @click="uiStore.openModal('languageModal')"
+        >
+          <v-icon>mdi-translate</v-icon>
+          <v-tooltip activator="parent" location="bottom">{{ $t('common.language') }}</v-tooltip>
         </v-btn>
 
         <!-- Help button -->
@@ -147,7 +164,7 @@
           @click="uiStore.setShowTutorial(true)"
         >
           <v-icon>mdi-help-circle</v-icon>
-          <v-tooltip activator="parent" location="bottom">Help & Tutorial</v-tooltip>
+          <v-tooltip activator="parent" location="bottom">{{ $t('tutorial.title') }}</v-tooltip>
         </v-btn>
 
         <!-- Drawing tools - absolutely centered -->
@@ -166,7 +183,7 @@
               @click="uiStore.openModal('circleModal')"
             >
               <v-icon>mdi-circle-outline</v-icon>
-              <v-tooltip activator="parent" location="bottom">Circle</v-tooltip>
+              <v-tooltip activator="parent" location="bottom">{{ $t('drawing.circle') }}</v-tooltip>
             </v-btn>
 
             <v-btn
@@ -176,7 +193,9 @@
               @click="uiStore.openModal('twoPointsLineModal')"
             >
               <v-icon>mdi-vector-line</v-icon>
-              <v-tooltip activator="parent" location="bottom">Line (Two Points)</v-tooltip>
+              <v-tooltip activator="parent" location="bottom">{{
+                $t('drawing.twoPoints')
+              }}</v-tooltip>
             </v-btn>
 
             <v-btn
@@ -186,7 +205,9 @@
               @click="uiStore.openModal('azimuthLineModal')"
             >
               <v-icon>mdi-compass-outline</v-icon>
-              <v-tooltip activator="parent" location="bottom">Line (Azimuth)</v-tooltip>
+              <v-tooltip activator="parent" location="bottom">{{
+                $t('drawing.azimuth')
+              }}</v-tooltip>
             </v-btn>
 
             <v-btn
@@ -209,7 +230,9 @@
                   <circle cx="12" cy="12" fill="currentColor" r="3" />
                 </svg>
               </v-icon>
-              <v-tooltip activator="parent" location="bottom">Line (Intersection)</v-tooltip>
+              <v-tooltip activator="parent" location="bottom">{{
+                $t('drawing.intersection')
+              }}</v-tooltip>
             </v-btn>
 
             <v-btn
@@ -219,7 +242,9 @@
               @click="uiStore.openModal('parallelLineModal')"
             >
               <v-icon>mdi-minus</v-icon>
-              <v-tooltip activator="parent" location="bottom">Parallel Line</v-tooltip>
+              <v-tooltip activator="parent" location="bottom">{{
+                $t('drawing.parallel')
+              }}</v-tooltip>
             </v-btn>
 
             <v-btn
@@ -229,7 +254,9 @@
               @click="uiStore.openModal('freeHandLineModal')"
             >
               <v-icon>mdi-gesture</v-icon>
-              <v-tooltip activator="parent" location="bottom">Free Hand Line</v-tooltip>
+              <v-tooltip activator="parent" location="bottom">{{
+                $t('drawing.freehand')
+              }}</v-tooltip>
             </v-btn>
 
             <v-btn
@@ -239,7 +266,7 @@
               @click="uiStore.openModal('pointModal')"
             >
               <v-icon>mdi-map-marker</v-icon>
-              <v-tooltip activator="parent" location="bottom">Point</v-tooltip>
+              <v-tooltip activator="parent" location="bottom">{{ $t('drawing.point') }}</v-tooltip>
             </v-btn>
 
             <v-btn
@@ -249,7 +276,9 @@
               @click="uiStore.openModal('angleLineModal')"
             >
               <v-icon>mdi-angle-acute</v-icon>
-              <v-tooltip activator="parent" location="bottom">Angle Line</v-tooltip>
+              <v-tooltip activator="parent" location="bottom">{{
+                $t('drawing.angleFromLine')
+              }}</v-tooltip>
             </v-btn>
 
             <v-btn
@@ -259,7 +288,9 @@
               @click="uiStore.openModal('polygonModal')"
             >
               <v-icon>mdi-pentagon-outline</v-icon>
-              <v-tooltip activator="parent" location="bottom">Polygon</v-tooltip>
+              <v-tooltip activator="parent" location="bottom">{{
+                $t('drawing.polygon')
+              }}</v-tooltip>
             </v-btn>
           </v-btn-group>
         </div>
@@ -277,7 +308,7 @@
       }"
     >
       <v-btn
-        :aria-label="uiStore.topBarOpen ? 'Collapse top bar' : 'Expand top bar'"
+        :aria-label="uiStore.topBarOpen ? $t('topbar.collapseTopBar') : $t('topbar.expandTopBar')"
         color="surface-bright"
         elevation="4"
         :icon="uiStore.topBarOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'"

@@ -1,7 +1,7 @@
 <template>
   <div v-if="precisionLens.isActive.value" class="precision-mode-indicator">
     <v-icon size="small">mdi-magnify-plus</v-icon>
-    <span>Precision Mode (Z)</span>
+    <span>{{ $t('precision.modeActive') }}</span>
   </div>
 </template>
 

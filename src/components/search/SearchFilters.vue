@@ -6,7 +6,7 @@
       density="compact"
       :disabled="isSearching"
       :model-value="filterText"
-      placeholder="Filter results by name..."
+      :placeholder="$t('search.filterByName')"
       prepend-inner-icon="mdi-magnify"
       variant="outlined"
       @update:model-value="$emit('update:filterText', $event)"
@@ -20,7 +20,7 @@
       density="compact"
       :disabled="isSearching"
       :items="availableIncludeTypes"
-      label="Include types"
+      :label="$t('search.includeTypes')"
       :model-value="includedTypes"
       multiple
       variant="outlined"
@@ -39,7 +39,7 @@
           </v-chip>
         </template>
         <span v-else-if="index === 3" class="text-caption text-medium-emphasis ml-1">
-          +{{ includedTypes.length - 3 }} more
+          {{ `+${includedTypes.length - 3}` }} {{ $t('common.more') }}
         </span>
       </template>
     </v-select>
@@ -52,7 +52,7 @@
       density="compact"
       :disabled="isSearching"
       :items="availableExcludeTypes"
-      label="Exclude types"
+      :label="$t('search.excludeTypes')"
       :model-value="excludedTypes"
       multiple
       variant="outlined"
@@ -71,7 +71,7 @@
           </v-chip>
         </template>
         <span v-else-if="index === 3" class="text-caption text-medium-emphasis ml-1">
-          +{{ excludedTypes.length - 3 }} more
+          {{ `+${excludedTypes.length - 3}` }} {{ $t('common.more') }}
         </span>
       </template>
     </v-select>
@@ -79,9 +79,9 @@
     <!-- Distance Slider -->
     <div>
       <div class="d-flex align-center justify-space-between mb-2">
-        <label class="text-subtitle-2">Search Distance</label>
+        <label class="text-subtitle-2">{{ $t('search.searchDistance') }}</label>
         <span class="text-subtitle-2 font-weight-bold text-primary"
-          >{{ liveDisplayDistance.toFixed(1) }} km</span
+          >{{ liveDisplayDistance.toFixed(1) }}{{ $t('common.kmUnit') }}</span
         >
       </div>
       <v-slider
@@ -102,9 +102,10 @@
     <!-- Altitude Range Slider -->
     <div>
       <div class="d-flex align-center justify-space-between mb-2">
-        <label class="text-subtitle-2">Altitude Range</label>
+        <label class="text-subtitle-2">{{ $t('search.altitudeRange') }}</label>
         <span class="text-subtitle-2 font-weight-bold text-primary">
-          {{ liveAltitudeRange[0].toFixed(0) }} m - {{ liveAltitudeRange[1].toFixed(0) }} m
+          {{ liveAltitudeRange[0].toFixed(0) }}{{ $t('common.mUnit') }} -
+          {{ liveAltitudeRange[1].toFixed(0) }}{{ $t('common.mUnit') }}
         </span>
       </div>
       <v-range-slider

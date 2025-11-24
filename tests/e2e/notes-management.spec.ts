@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /**
  * E2E tests for notes management functionality
@@ -6,50 +6,7 @@ import { expect, test } from '@playwright/test';
  */
 
 test.describe('Notes Management', () => {
-  test.beforeEach(async ({ page }) => {
-    // Navigate to the app and wait for it to be ready
-    await page.goto('/', { waitUntil: 'networkidle' });
-    await page.waitForSelector('#map', { state: 'visible', timeout: 60_000 });
-    await page.waitForTimeout(300);
-
-    // Clear only notes from localStorage to start with a clean notes slate
-    // but keep projects to avoid the New Project modal
-    await page.evaluate(() => {
-      const projects = localStorage.getItem('gpxCircle_projects');
-      localStorage.clear();
-      if (projects) {
-        localStorage.setItem('gpxCircle_projects', projects);
-      } else {
-        // Create a default project if none exists
-        const defaultProject = {
-          id: 'test-project',
-          name: 'Test Project',
-          circles: [],
-          lineSegments: [],
-          points: [],
-          polygons: [],
-          notes: [],
-          createdAt: new Date().toISOString(),
-          modifiedAt: new Date().toISOString(),
-        };
-        localStorage.setItem('gpxCircle_projects', JSON.stringify([defaultProject]));
-      }
-    });
-
-    await page.reload({ waitUntil: 'networkidle' });
-    await page.waitForSelector('#map', { state: 'visible', timeout: 60_000 });
-    await page.waitForTimeout(300);
-
-    // Close New Project modal if it appears
-    const projectNameInput = page.getByTestId('project-name-input');
-    if (await projectNameInput.isVisible().catch(() => false)) {
-      await projectNameInput.locator('input').fill('Test Project');
-      await page.getByTestId('create-project-btn').evaluate((el) => (el as HTMLElement).click());
-      await page.waitForTimeout(500);
-    }
-  });
-
-  test('should create a simple note with title and content', async ({ page }) => {
+  test('should create a simple note with title and content', async ({ page, blankProject }) => {
     // Click create note button
     await page.getByTestId('create-note-btn').evaluate((el) => (el as HTMLElement).click());
 
@@ -58,13 +15,16 @@ test.describe('Notes Management', () => {
 
     // Fill in note details
     await page.getByTestId('note-title-input').locator('input').fill('My First Note');
-    await page.getByTestId('note-content-input').locator('textarea').fill('This is the content of my first note.');
+    await page
+      .getByTestId('note-content-input')
+      .locator('textarea')
+      .fill('This is the content of my first note.');
 
     // Submit the note
     await page.getByTestId('submit-note-btn').evaluate((el) => (el as HTMLElement).click());
 
     // Verify success toast
-    await expect(page.locator('text=Note created successfully!').first()).toBeVisible();
+    await expect(page.locator('text=Note created').first()).toBeVisible();
 
     // Wait for sidebar to update and note to appear
     await page.waitForTimeout(500);
@@ -73,7 +33,7 @@ test.describe('Notes Management', () => {
     await expect(page.locator('text=My First Note')).toBeVisible();
   });
 
-  test('should not create a note without a title', async ({ page }) => {
+  test('should not create a note without a title', async ({ page, blankProject }) => {
     // Click create note button
     await page.getByTestId('create-note-btn').evaluate((el) => (el as HTMLElement).click());
 
@@ -85,10 +45,10 @@ test.describe('Notes Management', () => {
     await page.getByTestId('submit-note-btn').evaluate((el) => (el as HTMLElement).click());
 
     // Verify error toast
-    await expect(page.locator('text=Title is required').first()).toBeVisible();
+    await expect(page.locator('text=This field is required').first()).toBeVisible();
   });
 
-  test('should create multiple notes', async ({ page }) => {
+  test('should create multiple notes', async ({ page, blankProject }) => {
     const noteTitles = ['Note 1', 'Note 2', 'Note 3'];
 
     for (const title of noteTitles) {
@@ -98,7 +58,7 @@ test.describe('Notes Management', () => {
       await page.getByTestId('note-content-input').locator('textarea').fill(`Content for ${title}`);
       await page.getByTestId('submit-note-btn').evaluate((el) => (el as HTMLElement).click());
 
-      await expect(page.locator(`text=Note created successfully!`).first()).toBeVisible();
+      await expect(page.locator(`text=Note created`).first()).toBeVisible();
       await page.waitForTimeout(500);
     }
 
@@ -108,14 +68,14 @@ test.describe('Notes Management', () => {
     }
   });
 
-  test('should edit an existing note', async ({ page }) => {
+  test('should edit an existing note', async ({ page, blankProject }) => {
     // Create a note first
     await page.getByTestId('create-note-btn').evaluate((el) => (el as HTMLElement).click());
     await expect(page.getByTestId('note-title-input')).toBeVisible();
     await page.getByTestId('note-title-input').locator('input').fill('Original Title');
     await page.getByTestId('note-content-input').locator('textarea').fill('Original content');
     await page.getByTestId('submit-note-btn').evaluate((el) => (el as HTMLElement).click());
-    await expect(page.locator('text=Note created successfully!').first()).toBeVisible();
+    await expect(page.locator('text=Note created').first()).toBeVisible();
     await page.waitForTimeout(500);
 
     // Find the note in the sidebar and click the context menu
@@ -134,20 +94,20 @@ test.describe('Notes Management', () => {
     await page.getByTestId('submit-note-btn').evaluate((el) => (el as HTMLElement).click());
 
     // Verify success toast
-    await expect(page.locator('text=Note updated successfully!').first()).toBeVisible();
+    await expect(page.locator('text=Note updated').first()).toBeVisible();
 
     // Verify updated title appears
     await expect(page.locator('text=Updated Title')).toBeVisible();
   });
 
-  test('should delete a note with confirmation', async ({ page }) => {
+  test('should delete a note with confirmation', async ({ page, blankProject }) => {
     // Create a note
     await page.getByTestId('create-note-btn').evaluate((el) => (el as HTMLElement).click());
     await expect(page.getByTestId('note-title-input')).toBeVisible();
     await page.getByTestId('note-title-input').locator('input').fill('Note to Delete');
     await page.getByTestId('note-content-input').locator('textarea').fill('This will be deleted');
     await page.getByTestId('submit-note-btn').evaluate((el) => (el as HTMLElement).click());
-    await expect(page.locator('text=Note created successfully!').first()).toBeVisible();
+    await expect(page.locator('text=Note created').first()).toBeVisible();
     await page.waitForTimeout(500);
 
     // Find the note in the sidebar and click the context menu
@@ -162,7 +122,7 @@ test.describe('Notes Management', () => {
 
     // Setup dialog handler to confirm deletion
     page.on('dialog', (dialog) => {
-      expect(dialog.message()).toContain('Are you sure you want to delete this note?');
+      expect(dialog.message()).toContain('Note deleted');
       dialog.accept();
     });
 
@@ -170,20 +130,20 @@ test.describe('Notes Management', () => {
     await page.getByTestId('delete-note-btn').evaluate((el) => (el as HTMLElement).click());
 
     // Verify success toast
-    await expect(page.locator('text=Note deleted successfully!').first()).toBeVisible();
+    await expect(page.locator('text=Note deleted').first()).toBeVisible();
 
     // Verify note no longer appears
     await expect(page.locator('text=Note to Delete')).not.toBeVisible();
   });
 
-  test('should cancel note deletion when dialog is dismissed', async ({ page }) => {
+  test('should cancel note deletion when dialog is dismissed', async ({ page, blankProject }) => {
     // Create a note
     await page.getByTestId('create-note-btn').evaluate((el) => (el as HTMLElement).click());
     await expect(page.getByTestId('note-title-input')).toBeVisible();
     await page.getByTestId('note-title-input').locator('input').fill('Persistent Note');
     await page.getByTestId('note-content-input').locator('textarea').fill('This should persist');
     await page.getByTestId('submit-note-btn').evaluate((el) => (el as HTMLElement).click());
-    await expect(page.locator('text=Note created successfully!').first()).toBeVisible();
+    await expect(page.locator('text=Note created').first()).toBeVisible();
     await page.waitForTimeout(500);
 
     // Find the note in the sidebar and click the context menu
@@ -208,7 +168,7 @@ test.describe('Notes Management', () => {
     await expect(page.locator('text=Persistent Note')).toBeVisible();
   });
 
-  test('should cancel note creation', async ({ page }) => {
+  test('should cancel note creation', async ({ page, blankProject }) => {
     // Open create note modal
     await page.getByTestId('create-note-btn').evaluate((el) => (el as HTMLElement).click());
     await expect(page.getByTestId('note-title-input')).toBeVisible();
@@ -226,7 +186,7 @@ test.describe('Notes Management', () => {
     await expect(page.locator('text=Cancelled Note')).not.toBeVisible();
   });
 
-  test('should show link type selector when creating a note', async ({ page }) => {
+  test('should show link type selector when creating a note', async ({ page, blankProject }) => {
     // Open create note modal
     await page.getByTestId('create-note-btn').evaluate((el) => (el as HTMLElement).click());
     await expect(page.getByTestId('note-title-input')).toBeVisible();
@@ -238,7 +198,7 @@ test.describe('Notes Management', () => {
     await page.getByTestId('cancel-note-btn').evaluate((el) => (el as HTMLElement).click());
   });
 
-  test('should reset form when canceling note creation', async ({ page }) => {
+  test('should reset form when canceling note creation', async ({ page, blankProject }) => {
     // Open create note modal
     await page.getByTestId('create-note-btn').evaluate((el) => (el as HTMLElement).click());
     await expect(page.getByTestId('note-title-input')).toBeVisible();
@@ -258,13 +218,16 @@ test.describe('Notes Management', () => {
 
     // Verify fields are empty (form should be reset)
     const titleValue = await page.getByTestId('note-title-input').locator('input').inputValue();
-    const contentValue = await page.getByTestId('note-content-input').locator('textarea').inputValue();
+    const contentValue = await page
+      .getByTestId('note-content-input')
+      .locator('textarea')
+      .inputValue();
 
     expect(titleValue).toBe('');
     expect(contentValue).toBe('');
   });
 
-  test('should handle long note content', async ({ page }) => {
+  test('should handle long note content', async ({ page, blankProject }) => {
     const longContent = 'A'.repeat(1000);
 
     await page.getByTestId('create-note-btn').evaluate((el) => (el as HTMLElement).click());
@@ -273,18 +236,18 @@ test.describe('Notes Management', () => {
     await page.getByTestId('note-content-input').locator('textarea').fill(longContent);
     await page.getByTestId('submit-note-btn').evaluate((el) => (el as HTMLElement).click());
 
-    await expect(page.locator('text=Note created successfully!').first()).toBeVisible();
+    await expect(page.locator('text=Note created').first()).toBeVisible();
     await expect(page.locator('text=Long Note')).toBeVisible();
   });
 
-  test('should trim whitespace from title and content', async ({ page }) => {
+  test('should trim whitespace from title and content', async ({ page, blankProject }) => {
     await page.getByTestId('create-note-btn').evaluate((el) => (el as HTMLElement).click());
     await expect(page.getByTestId('note-title-input')).toBeVisible();
     await page.getByTestId('note-title-input').locator('input').fill('  Trimmed Title  ');
     await page.getByTestId('note-content-input').locator('textarea').fill('  Trimmed Content  ');
     await page.getByTestId('submit-note-btn').evaluate((el) => (el as HTMLElement).click());
 
-    await expect(page.locator('text=Note created successfully!').first()).toBeVisible();
+    await expect(page.locator('text=Note created').first()).toBeVisible();
     await page.waitForTimeout(500);
 
     // Find the note in the sidebar and click the context menu
@@ -301,11 +264,11 @@ test.describe('Notes Management', () => {
     expect(titleValue).toBe('Trimmed Title');
   });
 
-  test('should show correct button text for create vs edit', async ({ page }) => {
+  test('should show correct button text for create vs edit', async ({ page, blankProject }) => {
     // Create mode
     await page.getByTestId('create-note-btn').evaluate((el) => (el as HTMLElement).click());
     await expect(page.getByTestId('note-title-input')).toBeVisible();
-    await expect(page.getByTestId('submit-note-btn')).toContainText('Create');
+    await expect(page.getByTestId('submit-note-btn')).toContainText('Add');
     await page.getByTestId('cancel-note-btn').evaluate((el) => (el as HTMLElement).click());
 
     // Edit mode - create a note first
@@ -313,7 +276,7 @@ test.describe('Notes Management', () => {
     await expect(page.getByTestId('note-title-input')).toBeVisible();
     await page.getByTestId('note-title-input').locator('input').fill('Test Note');
     await page.getByTestId('submit-note-btn').evaluate((el) => (el as HTMLElement).click());
-    await expect(page.locator('text=Note created successfully!').first()).toBeVisible();
+    await expect(page.locator('text=Note created').first()).toBeVisible();
     await page.waitForTimeout(500);
 
     // Find the note in the sidebar and click the context menu
@@ -325,7 +288,7 @@ test.describe('Notes Management', () => {
 
     // Verify edit mode UI
     await expect(page.getByTestId('note-title-input')).toBeVisible();
-    await expect(page.getByTestId('submit-note-btn')).toContainText('Update');
+    await expect(page.getByTestId('submit-note-btn')).toContainText('Save');
     await expect(page.getByTestId('delete-note-btn')).toBeVisible();
   });
 });

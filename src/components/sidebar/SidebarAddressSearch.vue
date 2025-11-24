@@ -16,7 +16,7 @@
           density="compact"
           hide-details
           :loading="addressSearchLoading"
-          placeholder="Search address..."
+          :placeholder="$t('search.addressPlaceholder')"
           prepend-inner-icon="mdi-magnify"
           variant="solo"
         />

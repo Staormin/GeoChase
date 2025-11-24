@@ -1,8 +1,12 @@
 <template>
   <BaseModal
     :is-open="isOpen"
-    :submit-text="isEditing ? 'Update' : 'Add'"
-    :title="isEditing ? 'Edit Line (Azimuth)' : 'Add Line (Azimuth)'"
+    :submit-text="isEditing ? $t('common.save') : $t('common.add')"
+    :title="
+      isEditing
+        ? $t('line.editTitle') + ' (' + $t('line.azimuthTitle') + ')'
+        : $t('line.azimuthTitle')
+    "
     @close="closeModal"
     @submit="submitForm"
   >
@@ -11,22 +15,22 @@
         v-model="form.name"
         class="mb-4"
         density="compact"
-        label="Line Name"
+        :label="$t('line.name')"
         variant="outlined"
       />
 
       <CoordinateSelector
         v-model="form.startCoord"
         :items="coordinateItems"
-        label="Start Coordinates"
-        placeholder="Select a saved coordinate"
+        :label="$t('common.start') + ' ' + $t('common.coordinates')"
+        :placeholder="$t('coordinates.selectFromPoint')"
       />
 
       <v-text-field
         v-model.number="form.azimuth"
         class="mb-4"
         density="compact"
-        label="Azimuth (degrees)"
+        :label="$t('line.azimuth')"
         max="360"
         min="0"
         step="0.01"
@@ -38,7 +42,7 @@
         v-model.number="form.distance"
         class="mb-4"
         density="compact"
-        label="Distance (km)"
+        :label="$t('line.distance')"
         min="0"
         step="0.1"
         type="number"
@@ -49,7 +53,7 @@
         v-model="form.createEndpoint"
         class="mb-2"
         density="compact"
-        label="Create point at endpoint"
+        :label="$t('point.createEndpoint')"
       />
 
       <v-text-field
@@ -57,8 +61,8 @@
         v-model="form.endpointName"
         class="mb-4"
         density="compact"
-        label="Endpoint name (optional)"
-        placeholder="Leave empty for auto-generated name"
+        :label="$t('point.endpointName')"
+        :placeholder="$t('point.endpointPlaceholder')"
         variant="outlined"
       />
     </v-form>
@@ -67,6 +71,7 @@
 
 <script lang="ts" setup>
 import { computed, inject, reactive, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
 import { useCoordinateItems } from '@/composables/useCoordinateItems';
@@ -74,6 +79,8 @@ import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
 import { destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
+
+const { t } = useI18n();
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
@@ -121,7 +128,7 @@ function closeModal() {
 
 async function submitForm() {
   if (!form.startCoord) {
-    uiStore.addToast('Please select start coordinates', 'error');
+    uiStore.addToast(t('line.errors.invalidCoordinates'), 'error');
     return;
   }
 
@@ -143,7 +150,7 @@ async function submitForm() {
       azimuth: form.azimuth,
       distance: form.distance,
     });
-    uiStore.addToast('Line updated successfully!', 'success');
+    uiStore.addToast(t('line.updated'), 'success');
   } else {
     // Calculate endpoint from azimuth and distance
     const endpoint = destinationPoint(startLat, startLon, form.distance, form.azimuth);
@@ -164,7 +171,7 @@ async function submitForm() {
       form.createEndpoint,
       form.endpointName
     );
-    uiStore.addToast('Line added successfully!', 'success');
+    uiStore.addToast(t('line.created'), 'success');
   }
 
   closeModal();

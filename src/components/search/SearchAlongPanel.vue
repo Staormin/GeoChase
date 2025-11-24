@@ -8,7 +8,7 @@
       <!-- Header -->
       <div class="d-flex align-center gap-2 flex-shrink-0 mb-4">
         <v-btn icon="mdi-arrow-left" size="small" variant="text" @click="handleClose" />
-        <span class="text-subtitle-2">Search Results</span>
+        <span class="text-subtitle-2">{{ $t('search.results') }}</span>
       </div>
 
       <!-- Filter Section -->
@@ -40,7 +40,7 @@
         style="min-height: 200px"
       >
         <v-progress-circular color="primary" indeterminate size="48" width="4" />
-        <div class="text-caption text-disabled mt-4">Searching...</div>
+        <div class="text-caption text-disabled mt-4">{{ $t('search.searching') }}</div>
       </div>
 
       <!-- Main Content Area -->
@@ -68,6 +68,7 @@ import type VectorLayer from 'ol/layer/Vector';
 import type { AddressSearchResult } from '@/services/geoportail';
 import * as turf from '@turf/turf';
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import SearchFilters from '@/components/search/SearchFilters.vue';
 import SearchResultsTable from '@/components/search/SearchResultsTable.vue';
 import { generateLinePointsLinear } from '@/services/geometry';
@@ -84,6 +85,7 @@ const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const mapContainer = inject('mapContainer') as any;
 const scrollContainer = ref<HTMLElement | null>(null);
+const { t } = useI18n();
 const searchDistance = ref(5); // Initial value, will be set based on element type
 const displayDistance = ref(1); // Committed value used for filtering
 const liveDisplayDistance = ref(1); // Live value shown while dragging slider
@@ -680,12 +682,12 @@ async function handleSearch() {
     performFiltering();
 
     if (locations.length === 0) {
-      uiStore.addToast('No locations found', 'info');
+      uiStore.addToast(t('search.noLocationsFound'), 'info');
     } else {
-      uiStore.addToast(`Found ${locations.length} location(s)`, 'success');
+      uiStore.addToast(t('search.foundLocations', { count: locations.length }), 'success');
     }
   } catch {
-    uiStore.addToast('Error searching locations', 'error');
+    uiStore.addToast(t('errors.searchLocationsError'), 'error');
   } finally {
     isSearching.value = false;
   }
@@ -694,7 +696,7 @@ async function handleSearch() {
 function handleResultClick(result: AddressSearchResult) {
   const mapInstance = mapContainer?.map?.value || mapContainer?.map;
   if (!mapInstance) {
-    uiStore.addToast('Map not available', 'error');
+    uiStore.addToast(t('errors.mapNotAvailable'), 'error');
     return;
   }
 
@@ -707,7 +709,7 @@ function handleResultClick(result: AddressSearchResult) {
     }
   );
 
-  uiStore.addToast(`Navigating to ${result.main}`, 'success');
+  uiStore.addToast(t('toasts.navigatingTo', { name: result.main }), 'success');
 }
 
 // Helper function for distance calculation (used in sorting)

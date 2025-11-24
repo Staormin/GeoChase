@@ -2,64 +2,70 @@
   <!-- Element count badge -->
   <div v-if="totalElements > 0" class="element-count-badge mb-2">
     <span class="count-item">
-      <span class="count-number">{{ layersStore.circleCount }}</span> circles
+      <span class="count-number">{{ layersStore.circleCount }}</span>
+      {{ $t('layers.circles', layersStore.circleCount) }}
     </span>
     <span class="count-divider">•</span>
     <span class="count-item">
-      <span class="count-number">{{ layersStore.lineSegmentCount }}</span> lines
+      <span class="count-number">{{ layersStore.lineSegmentCount }}</span>
+      {{ $t('layers.lines', layersStore.lineSegmentCount) }}
     </span>
     <span class="count-divider">•</span>
     <span class="count-item">
-      <span class="count-number">{{ layersStore.pointCount }}</span> points
+      <span class="count-number">{{ layersStore.pointCount }}</span>
+      {{ $t('layers.points', layersStore.pointCount) }}
     </span>
     <span v-if="layersStore.polygonCount > 0" class="count-divider">•</span>
     <span v-if="layersStore.polygonCount > 0" class="count-item">
-      <span class="count-number">{{ layersStore.polygonCount }}</span> polygons
+      <span class="count-number">{{ layersStore.polygonCount }}</span>
+      {{ $t('layers.polygons', layersStore.polygonCount) }}
     </span>
   </div>
 
   <!-- All three buttons in a row with equal width -->
   <div class="action-buttons">
     <!-- Coords Button -->
-    <button class="btn-action" @click="openCoordinatesModal">🗂️ Coords</button>
+    <button class="btn-action" @click="openCoordinatesModal">🗂️ {{ $t('sidebar.coords') }}</button>
 
     <!-- Save/Load Menu (relative positioning for dropdown) -->
     <div class="save-menu-wrapper">
       <button class="btn-action" data-testid="save-menu-btn" @click="saveMenuOpen = !saveMenuOpen">
-        💾 Save
+        💾 {{ $t('sidebar.save') }}
       </button>
 
       <!-- Dropdown menu -->
       <div v-if="saveMenuOpen" class="dropdown-menu" data-testid="save-menu-dropdown" @click.stop>
         <button class="dropdown-item" data-testid="new-project-btn" @click="openNewProjectModal">
-          ✨ New Project
+          ✨ {{ $t('sidebar.newProject') }}
         </button>
         <button class="dropdown-item" data-testid="load-project-btn" @click="openLoadProjectModal">
-          📥 Load Project
+          📥 {{ $t('sidebar.loadProject') }}
         </button>
         <div class="dropdown-divider" />
         <button class="dropdown-item" data-testid="export-json-btn" @click="exportAsJSON">
-          📄 Export JSON
+          📄 {{ $t('sidebar.exportJSON') }}
         </button>
         <button class="dropdown-item" data-testid="import-json-btn" @click="importFromJSON">
-          📋 Import JSON
+          📋 {{ $t('sidebar.importJSON') }}
         </button>
       </div>
     </div>
 
     <!-- Export GPX Button -->
-    <button class="btn-action" @click="exportAsGPX">📥 GPX</button>
+    <button class="btn-action" @click="exportAsGPX">📥 {{ $t('sidebar.gpx') }}</button>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { downloadGPX, generateCompleteGPX, getTimestamp } from '@/services/gpx';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
 
+const { t } = useI18n();
 const layersStore = useLayersStore();
 const uiStore = useUIStore();
 const coordinatesStore = useCoordinatesStore();
@@ -110,7 +116,7 @@ function exportAsGPX() {
   const filename = `${sanitizedName}_${getTimestamp()}.gpx`;
 
   downloadGPX(gpx, filename);
-  uiStore.addToast('GPX exported successfully!', 'success');
+  uiStore.addToast(t('messages.gpxExported'), 'success');
 }
 
 function exportAsJSON() {
@@ -138,7 +144,7 @@ function exportAsJSON() {
 
   link.click();
   URL.revokeObjectURL(url);
-  uiStore.addToast('Project exported as JSON successfully!', 'success');
+  uiStore.addToast(t('messages.jsonExported'), 'success');
 }
 
 async function importFromJSON() {
@@ -241,10 +247,12 @@ async function importFromJSON() {
         }
       }
 
-      uiStore.addToast('Project imported successfully!', 'success');
+      uiStore.addToast(t('messages.jsonImported'), 'success');
     } catch (error) {
       uiStore.addToast(
-        `Error importing project: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        t('messages.importError', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }),
         'error'
       );
     }

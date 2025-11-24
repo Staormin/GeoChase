@@ -15,6 +15,11 @@ vi.mock('@/composables/useNoteTooltips', () => ({
   })),
 }));
 
+// Mock isLanguageSet to return true (language is always set in tests)
+vi.mock('@/plugins/i18n', () => ({
+  isLanguageSet: vi.fn(() => true),
+}));
+
 describe('useMapInitialization', () => {
   let pinia: any;
   let projectsStore: any;

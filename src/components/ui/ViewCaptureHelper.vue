@@ -4,12 +4,16 @@
       <v-icon size="24">mdi-camera</v-icon>
       <div class="helper-text">
         <div class="helper-title">
-          {{ uiStore.viewCaptureState.captureType === 'start' ? 'Set Start View' : 'Set End View' }}
+          {{
+            uiStore.viewCaptureState.captureType === 'start'
+              ? $t('animation.setStartView')
+              : $t('animation.setEndView')
+          }}
         </div>
         <div class="helper-instructions">
-          Pan and zoom to desired view, then click anywhere to capture
+          {{ $t('animation.panAndZoomInstruction') }}
         </div>
-        <div class="helper-cancel">Press <kbd>ESC</kbd> to cancel</div>
+        <div class="helper-cancel">{{ $t('animation.pressEscToCancel') }}</div>
       </div>
     </div>
   </div>

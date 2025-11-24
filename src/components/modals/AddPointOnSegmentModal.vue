@@ -7,15 +7,15 @@
     @keydown.esc="closeModal"
   >
     <v-card>
-      <v-card-title>Add Point on Segment</v-card-title>
+      <v-card-title>{{ $t('modals.addPointOnSegment.title') }}</v-card-title>
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
             v-model="form.name"
             class="mb-4"
             density="compact"
-            label="Point Name (optional)"
-            placeholder="e.g., Waypoint, Landmark"
+            :label="$t('modals.addPointOnSegment.pointName')"
+            :placeholder="$t('modals.addPointOnSegment.pointNamePlaceholder')"
             variant="outlined"
           />
 
@@ -24,7 +24,7 @@
             class="mb-4"
             density="compact"
             :items="distanceFromOptions"
-            label="Distance From"
+            :label="$t('modals.addPointOnSegment.distanceFrom')"
             variant="outlined"
           />
 
@@ -33,22 +33,26 @@
               v-model.number="form.distance"
               class="flex-grow-1"
               density="compact"
-              label="Distance (km)"
+              :label="$t('modals.addPointOnSegment.distance')"
               min="0"
               placeholder="0.0"
               step="0.01"
               type="number"
               variant="outlined"
             />
-            <v-btn class="mt-1" color="secondary" @click="calculateMidpoint"> Midpoint </v-btn>
+            <v-btn class="mt-1" color="secondary" @click="calculateMidpoint">
+              {{ $t('modals.addPointOnSegment.midpoint') }}
+            </v-btn>
           </div>
         </v-form>
       </v-card-text>
 
       <v-card-actions>
         <v-spacer />
-        <v-btn text @click="closeModal">Cancel</v-btn>
-        <v-btn color="primary" @click="submitForm">Add Point</v-btn>
+        <v-btn text @click="closeModal">{{ $t('common.cancel') }}</v-btn>
+        <v-btn color="primary" @click="submitForm">{{
+          $t('modals.addPointOnSegment.addPoint')
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -58,20 +62,22 @@
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { getDistance } from 'ol/sphere';
 import { computed, inject, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { destinationPoint } from '@/services/geometry';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
+const { t } = useI18n();
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const coordinatesStore = useCoordinatesStore();
 const drawing = inject('drawing') as any;
 
-const distanceFromOptions = [
-  { title: 'Start', value: 'start' },
-  { title: 'End', value: 'end' },
-];
+const distanceFromOptions = computed(() => [
+  { title: t('modals.addPointOnSegment.start'), value: 'start' },
+  { title: t('modals.addPointOnSegment.end'), value: 'end' },
+]);
 
 const form = ref({
   name: '',
@@ -136,7 +142,7 @@ function calculateMidpoint() {
   form.value.distanceFrom = 'start';
 
   // Auto-name the point as "{line name} - Midpoint"
-  form.value.name = `${segment.name} - Midpoint`;
+  form.value.name = t('modals.addPointOnSegment.midpointName', { segment: segment.name });
 }
 
 function submitForm() {
@@ -146,13 +152,13 @@ function submitForm() {
 
   const segment = layersStore.lineSegments.find((s) => s.id === selectedSegmentId.value);
   if (!segment) {
-    uiStore.addToast('Segment not found', 'error');
+    uiStore.addToast(t('modals.addPointOnSegment.segmentNotFound'), 'error');
     return;
   }
 
   const endpoint = getSegmentEndpoint(segment);
   if (!endpoint) {
-    uiStore.addToast('Could not calculate segment endpoint', 'error');
+    uiStore.addToast(t('modals.addPointOnSegment.endpointError'), 'error');
     return;
   }
 
@@ -161,13 +167,13 @@ function submitForm() {
     getDistance([segment.center.lon, segment.center.lat], [endpoint.lon, endpoint.lat]) / 1000;
 
   if (form.value.distance > segmentLength) {
-    const msg = `Distance exceeds segment length (${segmentLength.toFixed(2)} km)`;
+    const msg = t('modals.addPointOnSegment.distanceExceeds', { length: segmentLength.toFixed(2) });
     uiStore.addToast(msg, 'error');
     return;
   }
 
   if (form.value.distance < 0) {
-    uiStore.addToast('Distance must be positive', 'error');
+    uiStore.addToast(t('modals.addPointOnSegment.distancePositive'), 'error');
     return;
   }
 
@@ -265,18 +271,21 @@ function submitForm() {
     }
   }
 
-  const name = form.value.name.trim() || `Point ${layersStore.pointCount + 1}`;
+  const name =
+    form.value.name.trim() || t('common.pointName', { count: layersStore.pointCount + 1 });
 
   // Create a simpler coordinate name (without the full line segment details)
   let coordinateName = name;
   if (form.value.name.trim()) {
-    if (name.includes(' - Midpoint')) {
+    if (name.includes(t('modals.addPointOnSegment.midpointSuffix'))) {
       // For midpoint, extract just the essential part
-      coordinateName = `Midpoint ${layersStore.pointCount + 1}`;
+      coordinateName = t('modals.addPointOnSegment.midpointCoordinateName', {
+        count: layersStore.pointCount + 1,
+      });
     }
   } else {
     // If auto-generated, use a simple format
-    coordinateName = `Point ${layersStore.pointCount + 1}`;
+    coordinateName = t('common.pointName', { count: layersStore.pointCount + 1 });
   }
 
   // Save the coordinate first
@@ -304,7 +313,7 @@ function submitForm() {
     }
   }
 
-  uiStore.addToast('Point and coordinate added successfully!', 'success');
+  uiStore.addToast(t('modals.addPointOnSegment.success'), 'success');
   closeModal();
 }
 

@@ -6,20 +6,20 @@
     @keydown.esc="closeModal"
   >
     <v-card>
-      <v-card-title>Add Polygon</v-card-title>
+      <v-card-title>{{ $t('polygon.title') }}</v-card-title>
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
             v-model="form.name"
             class="mb-4"
             density="compact"
-            label="Polygon Name (optional)"
+            :label="$t('polygon.name')"
             variant="outlined"
           />
 
           <!-- Points Selection -->
           <div class="mb-4">
-            <div class="text-subtitle-2 mb-2">Select Points (minimum 3)</div>
+            <div class="text-subtitle-2 mb-2">{{ $t('polygon.selectPoints') }}</div>
             <v-chip-group v-model="selectedPoints" column multiple>
               <v-chip
                 v-for="point in layersStore.sortedPoints"
@@ -39,7 +39,7 @@
               type="info"
               variant="tonal"
             >
-              No points available. Create at least 3 points first.
+              {{ $t('polygon.errors.minimumPoints') }}
             </v-alert>
 
             <v-alert
@@ -49,7 +49,7 @@
               type="warning"
               variant="tonal"
             >
-              Select at least 3 points to create a polygon ({{ selectedPoints.length }}/3 selected)
+              {{ $t('polygon.pointsSelected', { count: selectedPoints.length }) }}
             </v-alert>
           </div>
         </v-form>
@@ -57,9 +57,9 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn text @click="closeModal">Cancel</v-btn>
+        <v-btn text @click="closeModal">{{ $t('common.cancel') }}</v-btn>
         <v-btn color="primary" :disabled="selectedPoints.length < 3" @click="submitForm">
-          Add Polygon
+          {{ $t('common.add') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -68,6 +68,7 @@
 
 <script lang="ts" setup>
 import { computed, inject, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -75,6 +76,7 @@ const uiStore = useUIStore();
 const layersStore = useLayersStore();
 inject('mapContainer');
 const drawing = inject('drawing') as any;
+const { t } = useI18n();
 
 const form = ref({
   name: '',
@@ -93,16 +95,16 @@ const isOpen = computed({
 
 function submitForm() {
   if (selectedPoints.value.length < 3) {
-    uiStore.addToast('Please select at least 3 points to create a polygon', 'error');
+    uiStore.addToast(t('polygon.errors.minimumPoints'), 'error');
     return;
   }
 
   // Autogenerate name if empty
-  const name = form.value.name.trim() || `Polygon ${layersStore.polygonCount + 1}`;
+  const name = form.value.name.trim() || `${t('common.polygon')} ${layersStore.polygonCount + 1}`;
 
   // Draw polygon with point IDs (no coordinate extraction needed)
   drawing.drawPolygon(selectedPoints.value, name, '#90EE90');
-  uiStore.addToast('Polygon added successfully!', 'success');
+  uiStore.addToast(t('polygon.created'), 'success');
 
   closeModal();
   resetForm();

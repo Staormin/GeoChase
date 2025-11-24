@@ -1,8 +1,12 @@
 <template>
   <BaseModal
     :is-open="isOpen"
-    :submit-text="isEditing ? 'Update' : 'Add'"
-    :title="isEditing ? 'Edit Parallel Line' : 'Add Parallel Line'"
+    :submit-text="isEditing ? $t('common.save') : $t('common.add')"
+    :title="
+      isEditing
+        ? $t('line.editTitle') + ' (' + $t('line.parallelTitle') + ')'
+        : $t('line.parallelTitle')
+    "
     @close="closeModal"
     @submit="submitForm"
   >
@@ -11,7 +15,7 @@
         v-model="form.name"
         class="mb-4"
         density="compact"
-        label="Line Name"
+        :label="$t('line.name')"
         variant="outlined"
       />
 
@@ -23,13 +27,15 @@
         item-title="label"
         item-value="value"
         :items="latitudeItems"
-        label="Latitude"
-        placeholder="Select a saved coordinate for latitude"
+        :label="$t('common.latitude')"
+        :placeholder="$t('coordinates.selectFromPoint')"
         variant="outlined"
       >
         <template #no-data>
           <v-list-item>
-            <v-list-item-title class="text-caption">No saved coordinates</v-list-item-title>
+            <v-list-item-title class="text-caption">{{
+              $t('sidebar.noCoordinates')
+            }}</v-list-item-title>
           </v-list-item>
         </template>
       </v-select>
@@ -39,11 +45,14 @@
 
 <script lang="ts" setup>
 import { computed, inject, reactive, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
+
+const { t } = useI18n();
 
 const uiStore = useUIStore();
 const coordinatesStore = useCoordinatesStore();
@@ -88,13 +97,13 @@ function closeModal() {
 
 function submitForm() {
   if (form.latitude === null) {
-    uiStore.addToast('Please select a latitude', 'error');
+    uiStore.addToast(t('line.errors.invalidCoordinates'), 'error');
     return;
   }
 
   // Validate latitude range
   if (form.latitude < -90 || form.latitude > 90) {
-    uiStore.addToast('Latitude must be between -90 and 90 degrees', 'error');
+    uiStore.addToast(t('validation.invalidCoordinates'), 'error');
     return;
   }
 
@@ -107,11 +116,11 @@ function submitForm() {
   if (isEditing.value && uiStore.editingElement) {
     // Update existing parallel
     drawing.updateParallel(uiStore.editingElement.id, form.latitude, name);
-    uiStore.addToast('Parallel line updated successfully!', 'success');
+    uiStore.addToast(t('line.updated'), 'success');
   } else {
     // Create new parallel line
     drawing.drawParallel(form.latitude, name);
-    uiStore.addToast('Parallel line added successfully!', 'success');
+    uiStore.addToast(t('line.created'), 'success');
   }
 
   closeModal();

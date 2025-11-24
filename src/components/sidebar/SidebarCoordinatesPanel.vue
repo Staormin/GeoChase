@@ -1,11 +1,11 @@
 <template>
   <v-card class="overflow-y-auto" style="max-height: 300px" variant="flat">
     <v-card-title class="text-caption font-weight-bold text-uppercase py-2 px-3">
-      Saved Coordinates
+      {{ $t('sidebar.savedCoordinates') }}
     </v-card-title>
     <v-card-text class="pa-2">
       <div v-if="coordinatesStore.coordinateCount === 0" class="text-center py-3">
-        <p class="text-caption text-medium-emphasis">Right-click on the map to save coordinates</p>
+        <p class="text-caption text-medium-emphasis">{{ $t('sidebar.rightClickHint') }}</p>
       </div>
 
       <v-list v-else class="pa-0 bg-transparent" density="compact">

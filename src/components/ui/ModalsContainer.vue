@@ -16,6 +16,7 @@
   <BearingsModal v-if="uiStore.bearingsPanel.isOpen" />
   <NoteModal v-if="uiStore.isModalOpen('noteModal')" />
   <AnimationModal v-if="uiStore.isModalOpen('animationModal')" />
+  <LanguageModal />
   <TutorialModal />
 </template>
 
@@ -29,6 +30,7 @@ import CircleModal from '@/components/modals/CircleModal.vue';
 import CoordinatesModal from '@/components/modals/CoordinatesModal.vue';
 import FreeHandLineModal from '@/components/modals/FreeHandLineModal.vue';
 import IntersectionLineModal from '@/components/modals/IntersectionLineModal.vue';
+import LanguageModal from '@/components/modals/LanguageModal.vue';
 import LoadProjectModal from '@/components/modals/LoadProjectModal.vue';
 import NewProjectModal from '@/components/modals/NewProjectModal.vue';
 import NoteModal from '@/components/modals/NoteModal.vue';

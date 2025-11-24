@@ -1,9 +1,9 @@
 <template>
   <div class="sidebar-header">
-    <img alt="GeoChase Logo" class="logo-image" src="@/assets/logo.png" />
+    <img :alt="$t('app.logoAlt')" class="logo-image" src="@/assets/logo.png" />
     <div class="logo-text">
-      <h1 class="app-title">GeoChase</h1>
-      <p class="app-subtitle">Treasure Hunt Solver</p>
+      <h1 class="app-title">{{ $t('app.title') }}</h1>
+      <p class="app-subtitle">{{ $t('app.subtitle') }}</p>
     </div>
   </div>
 </template>

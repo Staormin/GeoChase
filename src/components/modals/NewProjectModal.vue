@@ -7,7 +7,7 @@
     @keydown.esc="closeModal"
   >
     <v-card>
-      <v-card-title>New Project</v-card-title>
+      <v-card-title>{{ $t('project.newProject') }}</v-card-title>
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
@@ -16,8 +16,8 @@
             class="mb-4"
             data-testid="project-name-input"
             density="compact"
-            label="Project Name"
-            placeholder="e.g., My Project"
+            :label="$t('project.projectName')"
+            :placeholder="$t('project.projectName')"
             variant="outlined"
           />
         </v-form>
@@ -25,9 +25,11 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn data-testid="cancel-project-btn" text @click="closeModal">Cancel</v-btn>
+        <v-btn data-testid="cancel-project-btn" text @click="closeModal">{{
+          $t('common.cancel')
+        }}</v-btn>
         <v-btn color="primary" data-testid="create-project-btn" @click="submitForm">
-          Create Project
+          {{ $t('common.add') }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -36,6 +38,7 @@
 
 <script lang="ts" setup>
 import { computed, inject, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
@@ -46,6 +49,7 @@ const layersStore = useLayersStore();
 const projectsStore = useProjectsStore();
 const coordinatesStore = useCoordinatesStore();
 const mapContainer = inject('mapContainer') as any;
+const { t } = useI18n();
 
 const projectName = ref('');
 
@@ -99,11 +103,11 @@ function submitForm() {
       mapContainer.clearLayers();
     }
 
-    uiStore.addToast(`Project "${projectName.value}" created!`, 'success');
+    uiStore.addToast(t('project.created'), 'success');
     closeModal();
     projectName.value = '';
   } else {
-    uiStore.addToast('Please enter a project name', 'error');
+    uiStore.addToast(t('project.errors.invalidName'), 'error');
   }
 }
 

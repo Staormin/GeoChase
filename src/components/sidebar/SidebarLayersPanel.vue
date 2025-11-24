@@ -1,7 +1,7 @@
 <template>
   <div class="layers-panel">
     <!-- Title -->
-    <h3 class="layers-panel-title">Layers</h3>
+    <h3 class="layers-panel-title">{{ $t('layers.title') }}</h3>
 
     <!-- Search bar (only show when there are elements) -->
     <div v-if="!layersStore.isEmpty" class="mb-3">
@@ -11,7 +11,7 @@
         clearable
         density="compact"
         hide-details
-        placeholder="Filter layers..."
+        :placeholder="$t('layers.filterPlaceholder')"
         prepend-inner-icon="mdi-magnify"
         variant="outlined"
       />
@@ -19,7 +19,7 @@
 
     <!-- Empty state -->
     <div v-if="layersStore.isEmpty" class="layers-empty">
-      <p>No elements added yet. Use the buttons above to add circles, line segments, or points.</p>
+      <p>{{ $t('layers.emptyState') }}</p>
     </div>
 
     <!-- No results state -->
@@ -32,7 +32,7 @@
       "
       class="layers-empty"
     >
-      <p>No layers match "{{ searchQuery }}"</p>
+      <p>{{ $t('layers.noMatch', { query: searchQuery }) }}</p>
     </div>
 
     <!-- Layers list -->
@@ -40,16 +40,18 @@
       <!-- Circles -->
       <div v-if="filteredCircles.length > 0">
         <div class="layers-section-header">
-          <span class="layers-section-title" @click="circlesExpanded = !circlesExpanded"
-            >Circles ({{ filteredCircles.length
-            }}{{ searchQuery ? ` of ${layersStore.circleCount}` : '' }})</span
-          >
+          <span class="layers-section-title" @click="circlesExpanded = !circlesExpanded">{{
+            $t('layers.circlesSection', {
+              count: filteredCircles.length,
+              total: searchQuery ? layersStore.circleCount : null,
+            })
+          }}</span>
           <div class="layers-section-actions">
             <v-btn
               color="primary"
               :icon="allCirclesVisible ? 'mdi-eye-off' : 'mdi-eye'"
               size="x-small"
-              :title="allCirclesVisible ? 'Hide all circles' : 'Show all circles'"
+              :title="allCirclesVisible ? $t('layers.hideAllCircles') : $t('layers.showAllCircles')"
               variant="text"
               @click.stop="toggleAllElementsOfType('circle')"
             />
@@ -88,8 +90,8 @@
       <div v-if="filteredLines.length > 0">
         <div class="layers-section-header">
           <span class="layers-section-title" @click="linesExpanded = !linesExpanded"
-            >Lines ({{ filteredLines.length
-            }}{{ searchQuery ? ` of ${layersStore.lineSegmentCount}` : '' }})</span
+            >{{ $t('layers.lines') }} ({{ filteredLines.length
+            }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.lineSegmentCount}` : '' }})</span
           >
           <div class="layers-section-actions">
             <v-btn
@@ -116,7 +118,9 @@
           >
             <div class="layer-item-info" @click="handleGoTo('lineSegment', line)">
               <div class="layer-item-name">{{ line.name }}</div>
-              <div class="layer-item-type">Line segment • {{ getLineInfo(line) }}</div>
+              <div class="layer-item-type">
+                {{ $t('layers.lineSegmentType') }} • {{ getLineInfo(line) }}
+              </div>
             </div>
             <div class="layer-item-actions">
               <LayerContextMenu
@@ -135,8 +139,8 @@
       <div v-if="filteredPoints.length > 0">
         <div class="layers-section-header">
           <span class="layers-section-title" @click="pointsExpanded = !pointsExpanded"
-            >Points ({{ filteredPoints.length
-            }}{{ searchQuery ? ` of ${layersStore.pointCount}` : '' }})</span
+            >{{ $t('layers.points') }} ({{ filteredPoints.length
+            }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.pointCount}` : '' }})</span
           >
           <div class="layers-section-actions">
             <v-btn
@@ -172,7 +176,7 @@
           >
             <div class="layer-item-info">
               <div class="layer-item-name">{{ point.name }}</div>
-              <div class="layer-item-type">Point</div>
+              <div class="layer-item-type">{{ $t('layers.pointType') }}</div>
             </div>
             <div class="layer-item-actions" @click.stop>
               <LayerContextMenu
@@ -191,8 +195,8 @@
       <div v-if="filteredPolygons.length > 0">
         <div class="layers-section-header">
           <span class="layers-section-title" @click="polygonsExpanded = !polygonsExpanded"
-            >Polygons ({{ filteredPolygons.length
-            }}{{ searchQuery ? ` of ${layersStore.polygonCount}` : '' }})</span
+            >{{ $t('layers.polygons') }} ({{ filteredPolygons.length
+            }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.polygonCount}` : '' }})</span
           >
           <div class="layers-section-actions">
             <v-btn
@@ -221,7 +225,8 @@
             <div class="layer-item-info">
               <div class="layer-item-name">{{ polygon.name }}</div>
               <div class="layer-item-type">
-                Polygon ({{ polygon.pointIds.length }} points) •
+                {{ $t('layers.polygonType') }} ({{ polygon.pointIds.length }}
+                {{ $t('common.points') }}) •
                 {{ formatDistance(calculatePolygonPerimeter(polygon)) }}
               </div>
             </div>
@@ -241,8 +246,8 @@
       <div v-if="filteredNotes.length > 0">
         <div class="layers-section-header" @click="notesExpanded = !notesExpanded">
           <span class="layers-section-title"
-            >Notes ({{ filteredNotes.length
-            }}{{ searchQuery ? ` of ${layersStore.noteCount}` : '' }})</span
+            >{{ $t('layers.notes') }} ({{ filteredNotes.length
+            }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.noteCount}` : '' }})</span
           >
           <span class="collapse-icon">{{ notesExpanded ? '▼' : '▶' }}</span>
         </div>
@@ -257,7 +262,9 @@
               <div class="layer-item-name">{{ note.title }}</div>
               <div class="layer-item-type">
                 {{
-                  note.linkedElementType ? `Linked to ${note.linkedElementType}` : 'Standalone note'
+                  note.linkedElementType
+                    ? `${$t('layers.linkedTo')} ${note.linkedElementType}`
+                    : $t('layers.standaloneNote')
                 }}
               </div>
             </div>
@@ -277,13 +284,13 @@
                     <template #prepend>
                       <v-icon icon="mdi-pencil" size="small" />
                     </template>
-                    <v-list-item-title>Edit</v-list-item-title>
+                    <v-list-item-title>{{ $t('common.edit') }}</v-list-item-title>
                   </v-list-item>
                   <v-list-item class="text-error" @click="handleDeleteNote(note)">
                     <template #prepend>
                       <v-icon color="error" icon="mdi-delete" size="small" />
                     </template>
-                    <v-list-item-title>Delete</v-list-item-title>
+                    <v-list-item-title>{{ $t('common.delete') }}</v-list-item-title>
                   </v-list-item>
                 </v-list>
               </v-menu>
@@ -305,11 +312,13 @@ import type {
 } from '@/services/storage';
 import { getDistance } from 'ol/sphere';
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import LayerContextMenu from '@/components/layers/LayerContextMenu.vue';
 import { calculateBearing, destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
+const { t: _t } = useI18n();
 const layersStore = useLayersStore();
 const uiStore = useUIStore();
 const drawing = inject('drawing') as any;

@@ -3,7 +3,7 @@
     <v-card class="tutorial-card">
       <v-card-title class="tutorial-title d-flex align-center gap-2">
         <v-icon icon="mdi-book-open-variant" />
-        GeoChase Tutorial
+        {{ $t('tutorial.title') }}
       </v-card-title>
 
       <v-card-text class="tutorial-content">
@@ -11,61 +11,61 @@
           <!-- Getting Started Tab -->
           <v-tab value="getting-started">
             <v-icon class="me-2" icon="mdi-rocket" />
-            Getting Started
+            {{ $t('tutorial.gettingStarted') }}
           </v-tab>
 
           <!-- Drawing Tab -->
           <v-tab value="drawing">
             <v-icon class="me-2" icon="mdi-pencil" />
-            Drawing Tools
+            {{ $t('tutorial.drawingTools') }}
           </v-tab>
 
           <!-- Search Tab -->
           <v-tab value="search">
             <v-icon class="me-2" icon="mdi-magnify" />
-            Search & Explore
+            {{ $t('tutorial.searchExplore') }}
           </v-tab>
 
           <!-- Navigation Tab -->
           <v-tab value="navigation">
             <v-icon class="me-2" icon="mdi-navigation" />
-            Navigation
+            {{ $t('tutorial.navigation') }}
           </v-tab>
 
           <!-- Layers Tab -->
           <v-tab value="layers">
             <v-icon class="me-2" icon="mdi-layers" />
-            Layers
+            {{ $t('tutorial.layers') }}
           </v-tab>
 
           <!-- Notes Tab -->
           <v-tab value="notes">
             <v-icon class="me-2" icon="mdi-note-text" />
-            Notes
+            {{ $t('tutorial.notes') }}
           </v-tab>
 
           <!-- Coordinates Tab -->
           <v-tab value="coordinates">
             <v-icon class="me-2" icon="mdi-map-marker" />
-            Coordinates
+            {{ $t('tutorial.coordinates') }}
           </v-tab>
 
           <!-- Projects Tab -->
           <v-tab value="projects">
             <v-icon class="me-2" icon="mdi-folder" />
-            Projects
+            {{ $t('tutorial.projects') }}
           </v-tab>
 
           <!-- Elevation Tab -->
           <v-tab value="elevation">
             <v-icon class="me-2" icon="mdi-mountain" />
-            Elevation Data
+            {{ $t('tutorial.elevationData') }}
           </v-tab>
 
           <!-- Tips Tab -->
           <v-tab value="tips">
             <v-icon class="me-2" icon="mdi-lightbulb" />
-            Tips & Tricks
+            {{ $t('tutorial.tipsTricks') }}
           </v-tab>
         </v-tabs>
 
@@ -73,26 +73,44 @@
           <!-- Getting Started -->
           <v-window-item value="getting-started">
             <div class="tutorial-section">
-              <h3 class="mb-3">🎯 Welcome to GeoChase</h3>
+              <h3 class="mb-3">{{ $t('tutorial.gettingStartedSection.heading') }}</h3>
               <p class="mb-2">
-                GeoChase is a powerful treasure hunt solver designed to help you discover locations,
-                analyze clues, and find hidden treasures using advanced geographic mapping and
-                location search tools.
+                {{ $t('tutorial.gettingStartedSection.intro') }}
               </p>
-              <p class="mb-3">Here's what you can do to solve treasure hunts:</p>
+              <p class="mb-3">{{ $t('tutorial.gettingStartedSection.whatYouCanDo') }}</p>
               <ul class="tutorial-list">
                 <li>
-                  <strong>Draw circles, lines, points, and polygons</strong> on an interactive map
+                  <strong>{{ $t('tutorial.gettingStartedSection.features.drawShapes') }}</strong>
                 </li>
-                <li><strong>Search for locations</strong> by address and explore nearby places</li>
                 <li>
-                  <strong>Find locations along paths</strong> with distance and altitude filters
+                  <strong>{{
+                    $t('tutorial.gettingStartedSection.features.searchLocations')
+                  }}</strong>
                 </li>
-                <li><strong>View elevation data</strong> for coordinates and search results</li>
-                <li><strong>Save coordinates</strong> for quick access across projects</li>
-                <li><strong>Create and manage projects</strong> with multiple drawings</li>
-                <li><strong>Navigate</strong> around your shapes using arrow keys</li>
-                <li><strong>Export as GPX</strong> for use in other mapping applications</li>
+                <li>
+                  <strong>{{
+                    $t('tutorial.gettingStartedSection.features.findAlongPaths')
+                  }}</strong>
+                </li>
+                <li>
+                  <strong>{{ $t('tutorial.gettingStartedSection.features.viewElevation') }}</strong>
+                </li>
+                <li>
+                  <strong>{{
+                    $t('tutorial.gettingStartedSection.features.saveCoordinates')
+                  }}</strong>
+                </li>
+                <li>
+                  <strong>{{
+                    $t('tutorial.gettingStartedSection.features.manageProjects')
+                  }}</strong>
+                </li>
+                <li>
+                  <strong>{{ $t('tutorial.gettingStartedSection.features.navigate') }}</strong>
+                </li>
+                <li>
+                  <strong>{{ $t('tutorial.gettingStartedSection.features.exportGPX') }}</strong>
+                </li>
               </ul>
             </div>
           </v-window-item>
@@ -100,83 +118,83 @@
           <!-- Drawing Tools -->
           <v-window-item value="drawing">
             <div class="tutorial-section">
-              <h3 class="mb-3">🔧 Drawing Tools</h3>
+              <h3 class="mb-3">{{ $t('tutorial.drawingToolsSection.heading') }}</h3>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">Accessing Drawing Tools</h4>
-                <p class="mb-2">All drawing tools are located in the <strong>top bar</strong>:</p>
+                <h4 class="mb-2">{{ $t('tutorial.drawingToolsSection.accessing.title') }}</h4>
+                <p class="mb-2">
+                  {{ $t('tutorial.drawingToolsSection.accessing.description') }}
+                </p>
                 <ul class="tutorial-list">
-                  <li>Click the buttons in the center of the top bar to open drawing modals</li>
-                  <li>The top bar can be collapsed/expanded using the chevron button</li>
-                  <li>Drawing tools include: Circle, Lines (multiple types), Point, and Polygon</li>
+                  <li>{{ $t('tutorial.drawingToolsSection.accessing.clickButtons') }}</li>
+                  <li>{{ $t('tutorial.drawingToolsSection.accessing.collapse') }}</li>
+                  <li>{{ $t('tutorial.drawingToolsSection.accessing.toolsInclude') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">🔵 Circle</h4>
-                <p class="mb-2">Draw a circle on the map by specifying:</p>
+                <h4 class="mb-2">{{ $t('tutorial.drawingToolsSection.circle.title') }}</h4>
+                <p class="mb-2">{{ $t('tutorial.drawingToolsSection.circle.description') }}</p>
                 <ul class="tutorial-list">
                   <li>
-                    <strong>Name:</strong> Give your circle a name (optional, auto-generated if
-                    empty)
-                  </li>
-                  <li><strong>Center Coordinates:</strong> Select from your saved coordinates</li>
-                  <li><strong>Radius:</strong> Size in kilometers</li>
-                </ul>
-              </div>
-
-              <div class="tutorial-step mb-4">
-                <h4 class="mb-2">➖ Line Segment</h4>
-                <p class="mb-2">Draw a line with multiple modes:</p>
-                <ul class="tutorial-list">
-                  <li><strong>Two Points:</strong> Connect two saved coordinates</li>
-                  <li>
-                    <strong>Azimuth Mode:</strong> Create a line at a specific angle (azimuth) and
-                    distance
+                    <strong>{{ $t('tutorial.drawingToolsSection.circle.name') }}</strong>
                   </li>
                   <li>
-                    <strong>Intersection Mode:</strong> Draw a line passing through a point at a
-                    specific distance
+                    <strong>{{ $t('tutorial.drawingToolsSection.circle.center') }}</strong>
                   </li>
                   <li>
-                    <strong>Parallel Mode:</strong> Draw a parallel line (latitude) across the map
-                  </li>
-                  <li>
-                    <strong>Free Hand Mode:</strong> Draw lines interactively by clicking on the map
-                    with optional azimuth lock
-                  </li>
-                  <li>
-                    <strong>Drag & Drop:</strong> Drag a point to another point in the layers panel
-                    to create a line between them
+                    <strong>{{ $t('tutorial.drawingToolsSection.circle.radius') }}</strong>
                   </li>
                 </ul>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">📍 Point</h4>
+                <h4 class="mb-2">{{ $t('tutorial.drawingToolsSection.line.title') }}</h4>
+                <p class="mb-2">{{ $t('tutorial.drawingToolsSection.line.description') }}</p>
+                <ul class="tutorial-list">
+                  <li>
+                    <strong>{{ $t('tutorial.drawingToolsSection.line.twoPoints') }}</strong>
+                  </li>
+                  <li>
+                    <strong>{{ $t('tutorial.drawingToolsSection.line.azimuth') }}</strong>
+                  </li>
+                  <li>
+                    <strong>{{ $t('tutorial.drawingToolsSection.line.intersection') }}</strong>
+                  </li>
+                  <li>
+                    <strong>{{ $t('tutorial.drawingToolsSection.line.parallel') }}</strong>
+                  </li>
+                  <li>
+                    <strong>{{ $t('tutorial.drawingToolsSection.line.freeHand') }}</strong>
+                  </li>
+                  <li>
+                    <strong>{{ $t('tutorial.drawingToolsSection.line.dragDrop') }}</strong>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="tutorial-step mb-4">
+                <h4 class="mb-2">{{ $t('tutorial.drawingToolsSection.point.title') }}</h4>
                 <p>
-                  Mark specific locations on the map. Points can be saved as coordinates for reuse.
+                  {{ $t('tutorial.drawingToolsSection.point.description') }}
                 </p>
               </div>
 
               <div class="tutorial-step">
-                <h4 class="mb-2">⬟ Polygon</h4>
-                <p class="mb-2">Create an area by connecting multiple points:</p>
+                <h4 class="mb-2">{{ $t('tutorial.drawingToolsSection.polygon.title') }}</h4>
+                <p class="mb-2">{{ $t('tutorial.drawingToolsSection.polygon.description') }}</p>
                 <ul class="tutorial-list">
                   <li>
-                    <strong>Select Points:</strong> Choose at least 3 existing points from the map
+                    <strong>{{ $t('tutorial.drawingToolsSection.polygon.selectPoints') }}</strong>
                   </li>
                   <li>
-                    <strong>Visual:</strong> Polygons are displayed in light green with
-                    semi-transparent fill
+                    <strong>{{ $t('tutorial.drawingToolsSection.polygon.visual') }}</strong>
                   </li>
                   <li>
-                    <strong>Extract Center:</strong> Right-click menu to add the polygon's center as
-                    a point and coordinate
+                    <strong>{{ $t('tutorial.drawingToolsSection.polygon.extractCenter') }}</strong>
                   </li>
                   <li>
-                    <strong>Use Case:</strong> Define search areas, mark zones of interest, or
-                    visualize boundaries
+                    <strong>{{ $t('tutorial.drawingToolsSection.polygon.useCase') }}</strong>
                   </li>
                 </ul>
               </div>
@@ -186,44 +204,42 @@
           <!-- Search & Explore -->
           <v-window-item value="search">
             <div class="tutorial-section">
-              <h3 class="mb-3">🔍 Search & Explore</h3>
+              <h3 class="mb-3">{{ $t('tutorial.searchSection.heading') }}</h3>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">🏘️ Address Search</h4>
-                <p class="mb-2">Find locations by address and explore nearby places:</p>
+                <h4 class="mb-2">{{ $t('tutorial.searchSection.addressSearch.title') }}</h4>
+                <p class="mb-2">{{ $t('tutorial.searchSection.addressSearch.description') }}</p>
                 <ol class="tutorial-list">
-                  <li>
-                    Use the <strong>search bar in the top bar</strong> next to the GeoChase title
-                  </li>
-                  <li>Type an <strong>address, city, or place name</strong></li>
-                  <li>View results with their <strong>coordinates</strong> in the dropdown</li>
-                  <li>Click a result to <strong>center the map</strong> on that location</li>
-                  <li>Create circles or points at the selected location</li>
+                  <li>{{ $t('tutorial.searchSection.addressSearch.step1') }}</li>
+                  <li>{{ $t('tutorial.searchSection.addressSearch.step2') }}</li>
+                  <li>{{ $t('tutorial.searchSection.addressSearch.step3') }}</li>
+                  <li>{{ $t('tutorial.searchSection.addressSearch.step4') }}</li>
+                  <li>{{ $t('tutorial.searchSection.addressSearch.step5') }}</li>
                 </ol>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">🗺️ Search Along Path</h4>
-                <p class="mb-2">Find locations near your drawn lines and points:</p>
+                <h4 class="mb-2">{{ $t('tutorial.searchSection.alongPath.title') }}</h4>
+                <p class="mb-2">{{ $t('tutorial.searchSection.alongPath.description') }}</p>
                 <ol class="tutorial-list">
-                  <li>Draw a <strong>line segment or point</strong> on the map</li>
-                  <li>Open the <strong>Layers panel</strong> in the left sidebar</li>
-                  <li>Click the <strong>⋮ menu</strong> on a line or point</li>
-                  <li>Select <strong>Search Along</strong> from the menu</li>
-                  <li>Adjust the <strong>search distance</strong> with the slider (0.5 - 25 km)</li>
-                  <li>Filter results by <strong>altitude range</strong> for elevation analysis</li>
-                  <li>Filter by <strong>name</strong> to find specific locations</li>
-                  <li>Click results to <strong>mark them on the map</strong></li>
+                  <li>{{ $t('tutorial.searchSection.alongPath.step1') }}</li>
+                  <li>{{ $t('tutorial.searchSection.alongPath.step2') }}</li>
+                  <li>{{ $t('tutorial.searchSection.alongPath.step3') }}</li>
+                  <li>{{ $t('tutorial.searchSection.alongPath.step4') }}</li>
+                  <li>{{ $t('tutorial.searchSection.alongPath.step5') }}</li>
+                  <li>{{ $t('tutorial.searchSection.alongPath.step6') }}</li>
+                  <li>{{ $t('tutorial.searchSection.alongPath.step7') }}</li>
+                  <li>{{ $t('tutorial.searchSection.alongPath.step8') }}</li>
                 </ol>
               </div>
 
               <div class="tutorial-step">
-                <h4 class="mb-2">💡 Tips</h4>
+                <h4 class="mb-2">{{ $t('tutorial.searchSection.tips.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>Search results include automatic elevation data</li>
-                  <li>Use altitude filtering to find locations at specific elevations</li>
-                  <li>Results are filtered by location type (place, amenity, etc.)</li>
-                  <li>Click the name filter field to search across all results</li>
+                  <li>{{ $t('tutorial.searchSection.tips.elevationData') }}</li>
+                  <li>{{ $t('tutorial.searchSection.tips.altitudeFilter') }}</li>
+                  <li>{{ $t('tutorial.searchSection.tips.filtered') }}</li>
+                  <li>{{ $t('tutorial.searchSection.tips.nameFilter') }}</li>
                 </ul>
               </div>
             </div>
@@ -232,26 +248,26 @@
           <!-- Navigation -->
           <v-window-item value="navigation">
             <div class="tutorial-section">
-              <h3 class="mb-3">🧭 Navigate Around Shapes</h3>
-              <p class="mb-3">Use arrow keys to move around circles and line segments:</p>
+              <h3 class="mb-3">{{ $t('tutorial.navigationSection.heading') }}</h3>
+              <p class="mb-3">{{ $t('tutorial.navigationSection.intro') }}</p>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">How to Navigate</h4>
+                <h4 class="mb-2">{{ $t('tutorial.navigationSection.howTo.title') }}</h4>
                 <ol class="tutorial-list">
-                  <li>Open the <strong>Layers</strong> panel</li>
-                  <li>Click the <strong>⋮ (menu)</strong> button on a circle or line</li>
-                  <li>Select <strong>Navigate</strong></li>
-                  <li>Use <strong>← →</strong> arrow keys to move</li>
-                  <li>Press <strong>ESC</strong> to exit navigation</li>
+                  <li>{{ $t('tutorial.navigationSection.howTo.step1') }}</li>
+                  <li>{{ $t('tutorial.navigationSection.howTo.step2') }}</li>
+                  <li>{{ $t('tutorial.navigationSection.howTo.step3') }}</li>
+                  <li>{{ $t('tutorial.navigationSection.howTo.step4') }}</li>
+                  <li>{{ $t('tutorial.navigationSection.howTo.step5') }}</li>
                 </ol>
               </div>
 
               <div class="tutorial-step">
-                <h4 class="mb-2">💡 Tips</h4>
+                <h4 class="mb-2">{{ $t('tutorial.navigationSection.tips.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>Speed adjusts automatically based on zoom level</li>
-                  <li>Higher zoom = smaller movements, lower zoom = larger movements</li>
-                  <li>The sidebar hides during navigation for a clearer view</li>
+                  <li>{{ $t('tutorial.navigationSection.tips.speedAdjust') }}</li>
+                  <li>{{ $t('tutorial.navigationSection.tips.zoomBehavior') }}</li>
+                  <li>{{ $t('tutorial.navigationSection.tips.sidebarHide') }}</li>
                 </ul>
               </div>
             </div>
@@ -260,54 +276,42 @@
           <!-- Layers -->
           <v-window-item value="layers">
             <div class="tutorial-section">
-              <h3 class="mb-3">📚 Layers Panel</h3>
-              <p class="mb-3">Manage all your drawings in the left sidebar:</p>
+              <h3 class="mb-3">{{ $t('tutorial.layersSection.heading') }}</h3>
+              <p class="mb-3">{{ $t('tutorial.layersSection.intro') }}</p>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">Accessing the Layers Panel</h4>
+                <h4 class="mb-2">{{ $t('tutorial.layersSection.accessing.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>The layers panel is located in the <strong>left sidebar</strong></li>
-                  <li>Toggle the left sidebar using the button on the left edge of the screen</li>
-                  <li>All circles, lines, points, and polygons are listed in separate sections</li>
+                  <li>{{ $t('tutorial.layersSection.accessing.location') }}</li>
+                  <li>{{ $t('tutorial.layersSection.accessing.toggle') }}</li>
+                  <li>{{ $t('tutorial.layersSection.accessing.sections') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">Layer Actions</h4>
+                <h4 class="mb-2">{{ $t('tutorial.layersSection.actions.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li><strong>Click item:</strong> Navigate to and center on the shape</li>
-                  <li><strong>Click ⋮ menu:</strong> Show options for the shape</li>
-                  <li><strong>👁 Hide/Show:</strong> Toggle visibility on the map</li>
-                  <li><strong>✏️ Edit:</strong> Modify the shape's properties</li>
-                  <li><strong>🗑️ Delete:</strong> Remove the shape permanently</li>
-                  <li>
-                    <strong>🔍 Search Along:</strong> Find locations near the element (lines and
-                    points)
-                  </li>
-                  <li>
-                    <strong>🧭 Navigate:</strong> Use arrow keys to move around the shape (circles
-                    and lines)
-                  </li>
-                  <li>
-                    <strong>🧭 Bearings:</strong> View distances and azimuths to all other points
-                    (points only)
-                  </li>
-                  <li><strong>➕ Create with:</strong> Create new shapes from a point</li>
-                  <li>
-                    <strong>⬟ Add center as point:</strong> Extract polygon center as a point and
-                    coordinate (polygons only)
-                  </li>
+                  <li>{{ $t('tutorial.layersSection.actions.click') }}</li>
+                  <li>{{ $t('tutorial.layersSection.actions.menu') }}</li>
+                  <li>{{ $t('tutorial.layersSection.actions.hideShow') }}</li>
+                  <li>{{ $t('tutorial.layersSection.actions.edit') }}</li>
+                  <li>{{ $t('tutorial.layersSection.actions.delete') }}</li>
+                  <li>{{ $t('tutorial.layersSection.actions.searchAlong') }}</li>
+                  <li>{{ $t('tutorial.layersSection.actions.navigate') }}</li>
+                  <li>{{ $t('tutorial.layersSection.actions.bearings') }}</li>
+                  <li>{{ $t('tutorial.layersSection.actions.createWith') }}</li>
+                  <li>{{ $t('tutorial.layersSection.actions.addCenter') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step">
-                <h4 class="mb-2">Drag & Drop</h4>
-                <p class="mb-2">Quickly create lines between points:</p>
+                <h4 class="mb-2">{{ $t('tutorial.layersSection.dragDrop.title') }}</h4>
+                <p class="mb-2">{{ $t('tutorial.layersSection.dragDrop.description') }}</p>
                 <ul class="tutorial-list">
-                  <li><strong>Drag a point</strong> from the Points section to another point</li>
-                  <li>A line will automatically be created connecting the two points</li>
-                  <li>The line is named "Point A → Point B" with distance and azimuth info</li>
-                  <li>This is the fastest way to connect existing points</li>
+                  <li>{{ $t('tutorial.layersSection.dragDrop.drag') }}</li>
+                  <li>{{ $t('tutorial.layersSection.dragDrop.autoCreate') }}</li>
+                  <li>{{ $t('tutorial.layersSection.dragDrop.naming') }}</li>
+                  <li>{{ $t('tutorial.layersSection.dragDrop.fastest') }}</li>
                 </ul>
               </div>
             </div>
@@ -316,56 +320,39 @@
           <!-- Notes -->
           <v-window-item value="notes">
             <div class="tutorial-section">
-              <h3 class="mb-3">📝 Notes</h3>
-              <p class="mb-3">
-                Add notes to your drawings to document important information, observations, or
-                clues:
-              </p>
+              <h3 class="mb-3">{{ $t('tutorial.notesSection.heading') }}</h3>
+              <p class="mb-3">{{ $t('tutorial.notesSection.intro') }}</p>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">How to Add Notes</h4>
+                <h4 class="mb-2">{{ $t('tutorial.notesSection.howToAdd.title') }}</h4>
                 <ol class="tutorial-list">
-                  <li>Open the <strong>Layers panel</strong> in the left sidebar</li>
-                  <li>Click the <strong>⋮ menu</strong> on a circle, line, point, or polygon</li>
-                  <li>Select <strong>Add note</strong> from the menu</li>
-                  <li>Enter a <strong>title</strong> and <strong>content</strong> for your note</li>
-                  <li>Click <strong>Save</strong> to attach the note to the element</li>
+                  <li>{{ $t('tutorial.notesSection.howToAdd.step1') }}</li>
+                  <li>{{ $t('tutorial.notesSection.howToAdd.step2') }}</li>
+                  <li>{{ $t('tutorial.notesSection.howToAdd.step3') }}</li>
+                  <li>{{ $t('tutorial.notesSection.howToAdd.step4') }}</li>
+                  <li>{{ $t('tutorial.notesSection.howToAdd.step5') }}</li>
                 </ol>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">Managing Notes</h4>
+                <h4 class="mb-2">{{ $t('tutorial.notesSection.managing.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>
-                    <strong>View notes on map:</strong> Notes appear as tooltips when you hover over
-                    elements on the map
-                  </li>
-                  <li>
-                    <strong>Edit notes:</strong> Click the ⋮ menu and select "Edit note" to modify
-                    an existing note
-                  </li>
-                  <li>
-                    <strong>Delete notes:</strong> Click the trash icon in the note tooltip or edit
-                    the note and delete it
-                  </li>
-                  <li>
-                    <strong>One note per element:</strong> Each element can have only one note
-                  </li>
-                  <li>
-                    <strong>Notes are saved:</strong> Notes are stored with your project and
-                    included in exports
-                  </li>
+                  <li>{{ $t('tutorial.notesSection.managing.viewOnMap') }}</li>
+                  <li>{{ $t('tutorial.notesSection.managing.edit') }}</li>
+                  <li>{{ $t('tutorial.notesSection.managing.delete') }}</li>
+                  <li>{{ $t('tutorial.notesSection.managing.onePerElement') }}</li>
+                  <li>{{ $t('tutorial.notesSection.managing.saved') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step">
-                <h4 class="mb-2">💡 Use Cases</h4>
+                <h4 class="mb-2">{{ $t('tutorial.notesSection.useCases.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>Document clues or hints associated with specific locations</li>
-                  <li>Record observations about terrain, landmarks, or features</li>
-                  <li>Keep track of why you created a particular circle or line</li>
-                  <li>Store calculations, measurements, or reference data</li>
-                  <li>Add reminders or next steps for your treasure hunt investigation</li>
+                  <li>{{ $t('tutorial.notesSection.useCases.clues') }}</li>
+                  <li>{{ $t('tutorial.notesSection.useCases.observations') }}</li>
+                  <li>{{ $t('tutorial.notesSection.useCases.whyCreated') }}</li>
+                  <li>{{ $t('tutorial.notesSection.useCases.calculations') }}</li>
+                  <li>{{ $t('tutorial.notesSection.useCases.reminders') }}</li>
                 </ul>
               </div>
             </div>
@@ -374,44 +361,39 @@
           <!-- Coordinates -->
           <v-window-item value="coordinates">
             <div class="tutorial-section">
-              <h3 class="mb-3">📌 Saved Coordinates</h3>
-              <p class="mb-3">Save frequently-used locations for quick access:</p>
+              <h3 class="mb-3">{{ $t('tutorial.coordinatesSection.heading') }}</h3>
+              <p class="mb-3">{{ $t('tutorial.coordinatesSection.intro') }}</p>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">How to Save Coordinates</h4>
+                <h4 class="mb-2">{{ $t('tutorial.coordinatesSection.howToSave.title') }}</h4>
                 <ol class="tutorial-list">
-                  <li><strong>Right-click on the map</strong> to save a location</li>
-                  <li>A modal will open with the coordinates pre-filled</li>
-                  <li>
-                    Enter a <strong>name</strong> for the coordinate (or leave empty for
-                    auto-generated address)
-                  </li>
-                  <li>Click <strong>Save</strong> to add it to your coordinates library</li>
-                  <li>Click <strong>Save & Point</strong> to save and create a point on the map</li>
+                  <li>{{ $t('tutorial.coordinatesSection.howToSave.step1') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.howToSave.step2') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.howToSave.step3') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.howToSave.step4') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.howToSave.step5') }}</li>
                 </ol>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">Managing Coordinates</h4>
+                <h4 class="mb-2">{{ $t('tutorial.coordinatesSection.managing.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>
-                    Access the coordinates modal from the <strong>top bar</strong> (book icon)
-                  </li>
-                  <li>View all saved coordinates with their lat/lon values</li>
-                  <li>Edit existing coordinates by clicking the pencil icon</li>
-                  <li>Delete coordinates by clicking the trash icon</li>
-                  <li>Coordinates are sorted by creation date (newest first)</li>
+                  <li>{{ $t('tutorial.coordinatesSection.managing.access') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.managing.view') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.managing.edit') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.managing.delete') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.managing.sorted') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step">
-                <h4 class="mb-2">💡 Use Cases</h4>
+                <h4 class="mb-2">{{ $t('tutorial.coordinatesSection.useCases.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>Save locations before drawing - all shapes require saved coordinates</li>
-                  <li>Build a library of important locations for your treasure hunt</li>
-                  <li>Quick reference points for multiple projects</li>
-                  <li>Reuse coordinates across different drawings without re-entering them</li>
-                  <li>Auto-generated names use reverse geocoding to find addresses</li>
+                  <li>{{ $t('tutorial.coordinatesSection.useCases.saveFirst') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.useCases.library') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.useCases.quickReference') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.useCases.reuse') }}</li>
+                  <li>{{ $t('tutorial.coordinatesSection.useCases.autoGenerated') }}</li>
                 </ul>
               </div>
             </div>
@@ -420,42 +402,35 @@
           <!-- Projects -->
           <v-window-item value="projects">
             <div class="tutorial-section">
-              <h3 class="mb-3">🗂️ Projects</h3>
-              <p class="mb-3">Organize your work into separate projects:</p>
+              <h3 class="mb-3">{{ $t('tutorial.projectsSection.heading') }}</h3>
+              <p class="mb-3">{{ $t('tutorial.projectsSection.intro') }}</p>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">Accessing Project Management</h4>
+                <h4 class="mb-2">{{ $t('tutorial.projectsSection.accessing.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>
-                    Click the <strong>save icon</strong> in the top bar to access project options
-                  </li>
-                  <li>A dropdown menu shows all project actions</li>
+                  <li>{{ $t('tutorial.projectsSection.accessing.icon') }}</li>
+                  <li>{{ $t('tutorial.projectsSection.accessing.dropdown') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">Project Actions</h4>
+                <h4 class="mb-2">{{ $t('tutorial.projectsSection.projectActions.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li><strong>New Project:</strong> Create a new empty project</li>
-                  <li>
-                    <strong>Load Project:</strong> Switch to another saved project from the modal
-                  </li>
-                  <li><strong>Export JSON:</strong> Save your project as a JSON file for backup</li>
-                  <li><strong>Import JSON:</strong> Load a project from a JSON file</li>
-                  <li>
-                    <strong>Export GPX:</strong> Export your drawings as GPX for use in other apps
-                    (download icon in top bar)
-                  </li>
+                  <li>{{ $t('tutorial.projectsSection.projectActions.newProject') }}</li>
+                  <li>{{ $t('tutorial.projectsSection.projectActions.loadProject') }}</li>
+                  <li>{{ $t('tutorial.projectsSection.projectActions.exportJSON') }}</li>
+                  <li>{{ $t('tutorial.projectsSection.projectActions.importJSON') }}</li>
+                  <li>{{ $t('tutorial.projectsSection.projectActions.exportGPX') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step">
-                <h4 class="mb-2">Features</h4>
+                <h4 class="mb-2">{{ $t('tutorial.projectsSection.features.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>Each project stores all your drawings and coordinates separately</li>
-                  <li>Projects are saved automatically to your browser's local storage</li>
-                  <li>Rename or delete projects from the Load Project modal</li>
-                  <li>Export as GPX to use your drawings in other mapping applications</li>
+                  <li>{{ $t('tutorial.projectsSection.features.storage') }}</li>
+                  <li>{{ $t('tutorial.projectsSection.features.autoSave') }}</li>
+                  <li>{{ $t('tutorial.projectsSection.features.renameDelete') }}</li>
+                  <li>{{ $t('tutorial.projectsSection.features.gpxExport') }}</li>
                 </ul>
               </div>
             </div>
@@ -464,53 +439,38 @@
           <!-- Elevation Data -->
           <v-window-item value="elevation">
             <div class="tutorial-section">
-              <h3 class="mb-3">⛰️ Elevation Data</h3>
-              <p class="mb-3">
-                GeoChase automatically fetches elevation information for all locations:
-              </p>
+              <h3 class="mb-3">{{ $t('tutorial.elevationSection.heading') }}</h3>
+              <p class="mb-3">{{ $t('tutorial.elevationSection.intro') }}</p>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">Where Elevation Data is Available</h4>
+                <h4 class="mb-2">{{ $t('tutorial.elevationSection.whereAvailable.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>
-                    <strong>Address search results</strong> - Shows elevation for each location
-                  </li>
-                  <li>
-                    <strong>Search along path results</strong> - Includes elevation in location
-                    details
-                  </li>
-                  <li>
-                    <strong>Saved coordinates</strong> - Elevation data displayed in the coordinates
-                    panel
-                  </li>
-                  <li>
-                    <strong>Search filters</strong> - Filter locations by altitude range (min/max
-                    elevation)
-                  </li>
+                  <li>{{ $t('tutorial.elevationSection.whereAvailable.addressSearch') }}</li>
+                  <li>{{ $t('tutorial.elevationSection.whereAvailable.alongPath') }}</li>
+                  <li>{{ $t('tutorial.elevationSection.whereAvailable.coordinates') }}</li>
+                  <li>{{ $t('tutorial.elevationSection.whereAvailable.filters') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">📊 Using Elevation in Search</h4>
-                <p class="mb-2">When searching along paths, you can filter by altitude:</p>
+                <h4 class="mb-2">{{ $t('tutorial.elevationSection.usingInSearch.title') }}</h4>
+                <p class="mb-2">{{ $t('tutorial.elevationSection.usingInSearch.description') }}</p>
                 <ol class="tutorial-list">
-                  <li>Open the search results panel for a path</li>
-                  <li>Use the <strong>Altitude Range slider</strong> to set min/max elevation</li>
-                  <li>Results will be <strong>filtered to match your altitude range</strong></li>
-                  <li>The slider shows the actual min/max elevation of all results</li>
-                  <li>
-                    Combine with <strong>distance filter</strong> for powerful location analysis
-                  </li>
+                  <li>{{ $t('tutorial.elevationSection.usingInSearch.step1') }}</li>
+                  <li>{{ $t('tutorial.elevationSection.usingInSearch.step2') }}</li>
+                  <li>{{ $t('tutorial.elevationSection.usingInSearch.step3') }}</li>
+                  <li>{{ $t('tutorial.elevationSection.usingInSearch.step4') }}</li>
+                  <li>{{ $t('tutorial.elevationSection.usingInSearch.step5') }}</li>
                 </ol>
               </div>
 
               <div class="tutorial-step">
-                <h4 class="mb-2">💡 Tips</h4>
+                <h4 class="mb-2">{{ $t('tutorial.elevationSection.tips.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>Elevation is measured in meters above sea level</li>
-                  <li>Data comes from the Open-Elevation API (globally available)</li>
-                  <li>Use altitude filtering to find locations at specific elevations</li>
-                  <li>Combine search distance + altitude for advanced location discovery</li>
+                  <li>{{ $t('tutorial.elevationSection.tips.measurement') }}</li>
+                  <li>{{ $t('tutorial.elevationSection.tips.source') }}</li>
+                  <li>{{ $t('tutorial.elevationSection.tips.filtering') }}</li>
+                  <li>{{ $t('tutorial.elevationSection.tips.combine') }}</li>
                 </ul>
               </div>
             </div>
@@ -519,160 +479,90 @@
           <!-- Tips & Tricks -->
           <v-window-item value="tips">
             <div class="tutorial-section">
-              <h3 class="mb-3">💡 Tips & Tricks</h3>
+              <h3 class="mb-3">{{ $t('tutorial.tipsSection.heading') }}</h3>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">⌨️ Keyboard Shortcuts</h4>
+                <h4 class="mb-2">{{ $t('tutorial.tipsSection.keyboardShortcuts.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>
-                    <strong>Arrow Keys (← →)</strong> - Navigate along circles/lines during
-                    navigation mode
-                  </li>
-                  <li><strong>Z</strong> - Toggle precision mode (magnified lens view)</li>
-                  <li>
-                    <strong>ESC</strong> - Exit navigation mode, precision mode, or cancel free hand
-                    drawing
-                  </li>
-                  <li>
-                    <strong>Right-click on map</strong> - Save coordinates at that location (also
-                    closes precision mode)
-                  </li>
-                  <li>
-                    <strong>ALT</strong> - Hold during free hand drawing to lock azimuth (only when
-                    no predefined azimuth)
-                  </li>
-                  <li><strong>CTRL</strong> - Hold during free hand drawing to lock distance</li>
+                  <li>{{ $t('tutorial.tipsSection.keyboardShortcuts.arrows') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.keyboardShortcuts.z') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.keyboardShortcuts.esc') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.keyboardShortcuts.rightClick') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.keyboardShortcuts.alt') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.keyboardShortcuts.ctrl') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">🔍 Precision Mode</h4>
-                <p class="mb-2">
-                  Precision mode provides a magnified view of the map for accurate positioning:
-                </p>
+                <h4 class="mb-2">{{ $t('tutorial.tipsSection.precisionMode.title') }}</h4>
+                <p class="mb-2">{{ $t('tutorial.tipsSection.precisionMode.description') }}</p>
                 <ul class="tutorial-list">
-                  <li>
-                    <strong>Activate:</strong> Press the <strong>Z</strong> key to toggle precision
-                    mode
-                  </li>
-                  <li>
-                    <strong>Magnified lens:</strong> A circular lens appears above your cursor
-                    showing a 2.5x magnified view
-                  </li>
-                  <li>
-                    <strong>Crosshair:</strong> The center crosshair helps you pinpoint exact
-                    locations
-                  </li>
-                  <li>
-                    <strong>Same zoom level:</strong> The lens shows the same map zoom level, just
-                    magnified for easier viewing
-                  </li>
-                  <li>
-                    <strong>Deactivate:</strong> Press <strong>Z</strong> again,
-                    <strong>ESC</strong>, or <strong>right-click</strong> to exit
-                  </li>
-                  <li>
-                    Use precision mode when placing points, drawing lines, or examining detailed map
-                    features
-                  </li>
+                  <li>{{ $t('tutorial.tipsSection.precisionMode.activate') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.precisionMode.lens') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.precisionMode.crosshair') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.precisionMode.sameZoom') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.precisionMode.deactivate') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.precisionMode.use') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">🧭 Bearings Analysis</h4>
-                <p class="mb-2">
-                  Analyze distances and directions between points for treasure hunt navigation:
-                </p>
+                <h4 class="mb-2">{{ $t('tutorial.tipsSection.bearingsAnalysis.title') }}</h4>
+                <p class="mb-2">{{ $t('tutorial.tipsSection.bearingsAnalysis.description') }}</p>
                 <ul class="tutorial-list">
-                  <li>
-                    <strong>Open bearings view</strong> - Click ⋮ menu on any point and select
-                    "Bearings"
-                  </li>
-                  <li>
-                    <strong>View calculations</strong> - See distance (km), azimuth (bearing to
-                    point), and inverse azimuth (return bearing) for all other points
-                  </li>
-                  <li><strong>Sort data</strong> - Click column headers to sort by any field</li>
-                  <li>
-                    <strong>Navigate quickly</strong> - Click any row to close the modal and jump to
-                    that point on the map
-                  </li>
-                  <li>
-                    Use bearings to triangulate locations or verify geometric relationships between
-                    points
-                  </li>
+                  <li>{{ $t('tutorial.tipsSection.bearingsAnalysis.openView') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.bearingsAnalysis.viewCalc') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.bearingsAnalysis.sort') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.bearingsAnalysis.navigate') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.bearingsAnalysis.use') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">🎯 Drawing Tips</h4>
+                <h4 class="mb-2">{{ $t('tutorial.tipsSection.drawingTips.title') }}</h4>
                 <ul class="tutorial-list">
+                  <li>{{ $t('tutorial.tipsSection.drawingTips.saveFirst') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.drawingTips.quickLine') }}</li>
                   <li>
-                    <strong>Save coordinates first</strong> - Right-click on the map to save
-                    locations before drawing shapes
-                  </li>
-                  <li>
-                    <strong>Quick line creation</strong> - Drag a point to another point in the
-                    layers panel to instantly create a line
-                  </li>
-                  <li>
-                    <strong>Free Hand Mode</strong> - Draw lines interactively by clicking start and
-                    end points:
+                    <strong>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.title') }}</strong>
                     <ul>
-                      <li>Click on the map to set the start point</li>
+                      <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.setStart') }}</li>
+                      <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.preview') }}</li>
+                      <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.lockAzimuth') }}</li>
                       <li>
-                        Move your mouse to preview the line with real-time distance and azimuth
+                        {{ $t('tutorial.tipsSection.drawingTips.freeHandMode.lockDistance') }}
                       </li>
-                      <li>
-                        Hold <strong>ALT</strong> to lock the azimuth (direction) at the current
-                        angle - useful for drawing parallel lines or maintaining specific directions
-                      </li>
-                      <li>
-                        Hold <strong>CTRL</strong> to lock the distance at the current length -
-                        useful for drawing multiple lines of the same length
-                      </li>
-                      <li>The floating tooltip shows whether azimuth or distance is locked</li>
-                      <li>Click again to finalize the line</li>
-                      <li>
-                        When using predefined azimuth lock from the modal, ALT keybind is disabled
-                      </li>
+                      <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.tooltip') }}</li>
+                      <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.finalize') }}</li>
+                      <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.predefined') }}</li>
                     </ul>
                   </li>
-                  <li>Create <strong>multiple line segments</strong> to map routes or paths</li>
-                  <li>
-                    Use <strong>intersection mode</strong> to draw lines passing through specific
-                    points
-                  </li>
-                  <li>
-                    Use <strong>azimuth mode</strong> with precise angles (supports 2 decimal
-                    places, e.g., 45.67°) for exact positioning
-                  </li>
-                  <li><strong>Parallel mode</strong> draws latitude lines across the entire map</li>
-                  <li>Names are auto-generated based on locations if left empty</li>
+                  <li>{{ $t('tutorial.tipsSection.drawingTips.multipleLines') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.drawingTips.intersectionMode') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.drawingTips.azimuthMode') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.drawingTips.parallelMode') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.drawingTips.autoNames') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">🔍 Search Workflow</h4>
+                <h4 class="mb-2">{{ $t('tutorial.tipsSection.searchWorkflow.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>Start with <strong>address search</strong> to locate general areas</li>
-                  <li>Draw a <strong>line or point</strong> at your location of interest</li>
-                  <li>Use <strong>"Search Along Path"</strong> to find nearby locations</li>
-                  <li>
-                    Filter by <strong>altitude</strong> if you're looking for specific terrain
-                    elevation
-                  </li>
-                  <li>Mark interesting findings as new <strong>circles or points</strong></li>
+                  <li>{{ $t('tutorial.tipsSection.searchWorkflow.addressSearch') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.searchWorkflow.drawLine') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.searchWorkflow.searchAlong') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.searchWorkflow.filterAltitude') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.searchWorkflow.markFindings') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step">
-                <h4 class="mb-2">📦 Project Management</h4>
+                <h4 class="mb-2">{{ $t('tutorial.tipsSection.projectManagement.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>Save projects frequently during work</li>
-                  <li>Use <strong>descriptive project names</strong> for easy identification</li>
-                  <li>Export as GPX to share with others or use in other applications</li>
-                  <li>Import GPX files from other sources to extend your work</li>
+                  <li>{{ $t('tutorial.tipsSection.projectManagement.saveFrequently') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.projectManagement.descriptiveNames') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.projectManagement.exportGPX') }}</li>
+                  <li>{{ $t('tutorial.tipsSection.projectManagement.importGPX') }}</li>
                 </ul>
               </div>
             </div>
@@ -682,7 +572,7 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn color="primary" @click="isOpen = false">Close</v-btn>
+        <v-btn color="primary" @click="isOpen = false">{{ $t('common.close') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

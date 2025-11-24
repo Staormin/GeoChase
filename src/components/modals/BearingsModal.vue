@@ -7,7 +7,7 @@
   >
     <v-card>
       <v-card-title class="flex items-center justify-between">
-        <span>Bearings from {{ sourcePoint?.name }}</span>
+        <span>{{ $t('modals.bearings.title', { name: sourcePoint?.name }) }}</span>
         <v-btn icon="mdi-close" size="small" variant="text" @click="closeModal" />
       </v-card-title>
       <v-card-text>
@@ -22,7 +22,7 @@
 
         <!-- Other Points List -->
         <div v-if="otherPoints.length === 0" class="text-center text-gray-500 py-8">
-          No other points in the project to calculate bearings to.
+          {{ $t('modals.bearings.noPoints') }}
         </div>
 
         <v-table v-else density="compact">
@@ -30,7 +30,7 @@
             <tr>
               <th class="text-left cursor-pointer select-none" @click="sortBy('name')">
                 <div class="flex items-center gap-1">
-                  Point
+                  {{ $t('modals.bearings.point') }}
                   <v-icon v-if="sortField === 'name'" size="small">{{
                     sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'
                   }}</v-icon>
@@ -38,7 +38,7 @@
               </th>
               <th class="text-right cursor-pointer select-none" @click="sortBy('distance')">
                 <div class="flex items-center justify-end gap-1">
-                  Distance (km)
+                  {{ $t('modals.bearings.distance') }}
                   <v-icon v-if="sortField === 'distance'" size="small">{{
                     sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'
                   }}</v-icon>
@@ -46,7 +46,7 @@
               </th>
               <th class="text-right cursor-pointer select-none" @click="sortBy('azimuth')">
                 <div class="flex items-center justify-end gap-1">
-                  Azimuth (°)
+                  {{ $t('modals.bearings.azimuth') }}
                   <v-icon v-if="sortField === 'azimuth'" size="small">{{
                     sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'
                   }}</v-icon>
@@ -54,7 +54,7 @@
               </th>
               <th class="text-right cursor-pointer select-none" @click="sortBy('inverseAzimuth')">
                 <div class="flex items-center justify-end gap-1">
-                  Inverse Azimuth (°)
+                  {{ $t('modals.bearings.inverseAzimuth') }}
                   <v-icon v-if="sortField === 'inverseAzimuth'" size="small">{{
                     sortDirection === 'asc' ? 'mdi-arrow-up' : 'mdi-arrow-down'
                   }}</v-icon>
@@ -86,7 +86,7 @@
 
       <v-card-actions>
         <v-spacer />
-        <v-btn @click="closeModal">Close</v-btn>
+        <v-btn @click="closeModal">{{ $t('common.close') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

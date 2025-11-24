@@ -169,7 +169,8 @@ describe('AddPointOnSegmentModal.vue', () => {
       // Total distance between (48.8566, 2.3522) and (48.86, 2.355) is approximately 0.3 km
       expect((wrapper.vm as any).form.distance).toBeGreaterThan(0);
       expect((wrapper.vm as any).form.distanceFrom).toBe('start');
-      expect((wrapper.vm as any).form.name).toBe('Test Line - Midpoint');
+      // Name uses i18n translation: "Midpoint of {segment}" where segment is "Test Line"
+      expect((wrapper.vm as any).form.name).toBe('Midpoint of Test Line');
     });
 
     it('draws point with correct coordinates using binary search from start', async () => {
@@ -183,7 +184,8 @@ describe('AddPointOnSegmentModal.vue', () => {
       const [lat, lon, name] = mockDrawing.drawPoint.mock.calls[0];
       expect(typeof lat).toBe('number');
       expect(typeof lon).toBe('number');
-      expect(name).toBe('Point 1');
+      // Name uses i18n translation: "Point Name" (default when form.name is empty)
+      expect(name).toBe('Point Name');
     });
 
     it('draws point using binary search from end', async () => {
@@ -208,7 +210,7 @@ describe('AddPointOnSegmentModal.vue', () => {
       await (wrapper.vm as any).submitForm();
 
       expect(addToastSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Distance exceeds segment length'),
+        expect.stringContaining('Distance exceeds line length'),
         'error'
       );
       expect(mockDrawing.drawPoint).not.toHaveBeenCalled();
@@ -256,10 +258,8 @@ describe('AddPointOnSegmentModal.vue', () => {
 
       await (wrapper.vm as any).submitForm();
 
-      expect(addToastSpy).toHaveBeenCalledWith(
-        'Point and coordinate added successfully!',
-        'success'
-      );
+      // Toast message uses i18n translation: "Point added successfully"
+      expect(addToastSpy).toHaveBeenCalledWith('Point added successfully', 'success');
     });
 
     it('resets form when modal is closed', async () => {

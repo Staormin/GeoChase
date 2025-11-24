@@ -14,7 +14,9 @@
   >
     <template #no-data>
       <v-list-item>
-        <v-list-item-title class="text-caption">No saved coordinates</v-list-item-title>
+        <v-list-item-title class="text-caption">{{
+          $t('sidebar.noCoordinates')
+        }}</v-list-item-title>
       </v-list-item>
     </template>
   </v-select>

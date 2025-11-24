@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /**
  * E2E tests for project management functionality
@@ -6,30 +6,7 @@ import { expect, test } from '@playwright/test';
  */
 
 test.describe('Project Management', () => {
-  test.beforeEach(async ({ page }) => {
-    // Navigate to the app and wait for network to be idle
-    await page.goto('/', { waitUntil: 'networkidle' });
-
-    // Wait for the app to be ready (map element visible)
-    await page.waitForSelector('#map', { state: 'visible', timeout: 60_000 });
-
-    // Wait a moment for the page to fully stabilize (tooltips, overlays, etc.)
-    await page.waitForTimeout(300);
-
-    // Clear localStorage to start fresh
-    await page.evaluate(() => {
-      localStorage.clear();
-    });
-
-    // Reload to apply cleared storage
-    await page.reload({ waitUntil: 'networkidle' });
-    await page.waitForSelector('#map', { state: 'visible', timeout: 60_000 });
-
-    // Wait again for page to stabilize
-    await page.waitForTimeout(300);
-  });
-
-  test('should create a new project with a custom name', async ({ page }) => {
+  test('should create a new project with a custom name', async ({ page, cleanState }) => {
     // Open the save menu using JavaScript click to bypass Vuetify overlay interception
     await page.getByTestId('save-menu-btn').evaluate((el) => (el as HTMLElement).click());
 
@@ -50,7 +27,7 @@ test.describe('Project Management', () => {
     await page.getByTestId('create-project-btn').evaluate((el) => (el as HTMLElement).click());
 
     // Verify success toast appears
-    await expect(page.locator(`text=Project "${projectName}" created!`)).toBeVisible();
+    await expect(page.locator(`text=Project created`).first()).toBeVisible();
 
     // Verify the project is stored in localStorage
     const projects = await page.evaluate(() => {
@@ -62,7 +39,7 @@ test.describe('Project Management', () => {
     expect(projects[0].name).toBe(projectName);
   });
 
-  test('should not create a project with empty name', async ({ page }) => {
+  test('should not create a project with empty name', async ({ page, cleanState }) => {
     // Open the save menu and click New Project using JavaScript click
     await page.getByTestId('save-menu-btn').evaluate((el) => (el as HTMLElement).click());
     await page.getByTestId('new-project-btn').evaluate((el) => (el as HTMLElement).click());
@@ -71,7 +48,7 @@ test.describe('Project Management', () => {
     await page.getByTestId('create-project-btn').evaluate((el) => (el as HTMLElement).click());
 
     // Verify error toast appears
-    await expect(page.locator('text=Please enter a project name')).toBeVisible();
+    await expect(page.locator('text=Project name is required')).toBeVisible();
 
     // Verify no project was created
     const projects = await page.evaluate(() => {
@@ -82,7 +59,7 @@ test.describe('Project Management', () => {
     expect(projects).toHaveLength(0);
   });
 
-  test('should create multiple projects with different names', async ({ page }) => {
+  test('should create multiple projects with different names', async ({ page, cleanState }) => {
     const projectNames = ['Project Alpha', 'Project Beta', 'Project Gamma'];
 
     for (const name of projectNames) {
@@ -93,7 +70,7 @@ test.describe('Project Management', () => {
       await page.getByTestId('create-project-btn').evaluate((el) => (el as HTMLElement).click());
 
       // Wait for success toast
-      await expect(page.locator(`text=Project "${name}" created!`)).toBeVisible();
+      await expect(page.locator(`text=Project created`).first()).toBeVisible();
       await page.waitForTimeout(500); // Brief pause for toast to disappear
     }
 
@@ -108,7 +85,7 @@ test.describe('Project Management', () => {
     expect(storedNames).toEqual(expect.arrayContaining(projectNames));
   });
 
-  test('should load a saved project', async ({ page }) => {
+  test('should load a saved project', async ({ page, cleanState }) => {
     // Create a test project first using JavaScript click
     const projectName = 'Load Test Project';
     await page.getByTestId('save-menu-btn').evaluate((el) => (el as HTMLElement).click());
@@ -138,10 +115,10 @@ test.describe('Project Management', () => {
     await page.click(`[data-testid="load-project-${projectId}"]`);
 
     // Verify success toast
-    await expect(page.locator(`text=Project "${projectName}" loaded successfully!`)).toBeVisible();
+    await expect(page.locator(`text=Project loaded`)).toBeVisible();
   });
 
-  test('should display project statistics in load modal', async ({ page }) => {
+  test('should display project statistics in load modal', async ({ page, cleanState }) => {
     // Create a project using JavaScript click
     await page.getByTestId('save-menu-btn').evaluate((el) => (el as HTMLElement).click());
     await page.getByTestId('new-project-btn').evaluate((el) => (el as HTMLElement).click());
@@ -159,7 +136,7 @@ test.describe('Project Management', () => {
     await expect(page.locator('text=Points: 0')).toBeVisible();
   });
 
-  test('should delete a project', async ({ page }) => {
+  test('should delete a project', async ({ page, cleanState }) => {
     // Create a test project using JavaScript click
     const projectName = 'Delete Test Project';
     await page.getByTestId('save-menu-btn').evaluate((el) => (el as HTMLElement).click());
@@ -181,7 +158,7 @@ test.describe('Project Management', () => {
 
     // Setup dialog handler to confirm deletion
     page.on('dialog', (dialog) => {
-      expect(dialog.message()).toContain(`Are you sure you want to delete "${projectName}"`);
+      expect(dialog.message()).toContain(`Delete "${projectName}"?`);
       dialog.accept();
     });
 
@@ -200,7 +177,7 @@ test.describe('Project Management', () => {
     expect(projects).toHaveLength(0);
   });
 
-  test('should cancel project deletion when dialog is dismissed', async ({ page }) => {
+  test('should cancel project deletion when dialog is dismissed', async ({ page, cleanState }) => {
     // Create a test project using JavaScript click
     const projectName = 'Persist Test Project';
     await page.getByTestId('save-menu-btn').evaluate((el) => (el as HTMLElement).click());
@@ -238,17 +215,17 @@ test.describe('Project Management', () => {
     expect(projects[0].name).toBe(projectName);
   });
 
-  test('should show "No saved projects" when no projects exist', async ({ page }) => {
+  test('should show "No projects" when no projects exist', async ({ page, cleanState }) => {
     // Open load modal using JavaScript click
     await page.getByTestId('save-menu-btn').evaluate((el) => (el as HTMLElement).click());
     await page.getByTestId('load-project-btn').evaluate((el) => (el as HTMLElement).click());
 
     // Verify empty state message
-    await expect(page.locator('text=No saved projects')).toBeVisible();
+    await expect(page.locator('text=No projects')).toBeVisible();
     await expect(page.locator('[data-testid="projects-list"]')).not.toBeVisible();
   });
 
-  test('should close new project modal with cancel button', async ({ page }) => {
+  test('should close new project modal with cancel button', async ({ page, cleanState }) => {
     // Open new project modal using JavaScript click
     await page.getByTestId('save-menu-btn').evaluate((el) => (el as HTMLElement).click());
     await page.getByTestId('new-project-btn').evaluate((el) => (el as HTMLElement).click());
@@ -263,7 +240,7 @@ test.describe('Project Management', () => {
     await expect(page.locator('text=New Project').first()).not.toBeVisible();
   });
 
-  test('should close load project modal with close button', async ({ page }) => {
+  test('should close load project modal with close button', async ({ page, cleanState }) => {
     // Create a project first using JavaScript click
     await page.getByTestId('save-menu-btn').evaluate((el) => (el as HTMLElement).click());
     await page.getByTestId('new-project-btn').evaluate((el) => (el as HTMLElement).click());
@@ -285,7 +262,7 @@ test.describe('Project Management', () => {
     await expect(page.getByTestId('close-load-modal-btn')).not.toBeVisible();
   });
 
-  test('should persist projects across page reloads', async ({ page }) => {
+  test('should persist projects across page reloads', async ({ page, cleanState }) => {
     // Create a project using JavaScript click
     const projectName = 'Persistence Test';
     await page.getByTestId('save-menu-btn').evaluate((el) => (el as HTMLElement).click());

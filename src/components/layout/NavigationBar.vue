@@ -5,11 +5,13 @@
       <div class="navigation-instructions">
         <span class="navigation-icon">🧭</span>
         <span class="navigation-text">
-          Use <strong>← →</strong> arrow keys to navigate • Press <strong>ESC</strong> to exit
+          {{ $t('navigation.useArrowKeys') }} <strong>← →</strong>
+          {{ $t('navigation.arrowKeysToNavigate') }} • {{ $t('navigation.pressEsc') }}
+          <strong>ESC</strong> {{ $t('navigation.toExit') }}
         </span>
       </div>
       <button class="navigation-exit-btn" type="button" @click="handleExitNavigation">
-        Exit Navigation
+        {{ $t('navigation.exitNavigation') }}
       </button>
     </div>
   </div>
@@ -20,17 +22,21 @@
       <div class="navigation-instructions">
         <span class="navigation-icon">✏️</span>
         <span class="navigation-text">
-          <template v-if="!uiStore.freeHandDrawing.startCoord"> Click to set start point </template>
-          <template v-else> Move mouse to set endpoint • Click to confirm </template>
-          <template v-if="uiStore.freeHandDrawing.azimuth === undefined">
-            • Hold <strong>ALT</strong> to lock azimuth • Hold <strong>CTRL</strong> to lock
-            distance
+          <template v-if="!uiStore.freeHandDrawing.startCoord">
+            {{ $t('freehand.clickToSetStart') }}
           </template>
-          • Press <strong>ESC</strong> to cancel
+          <template v-else>
+            {{ $t('freehand.moveToSetEndpoint') }} • {{ $t('freehand.clickToConfirm') }}
+          </template>
+          <template v-if="uiStore.freeHandDrawing.azimuth === undefined">
+            • {{ $t('freehand.holdAlt') }} <strong>ALT</strong> {{ $t('freehand.toLockAzimuth') }} •
+            {{ $t('freehand.holdCtrl') }} <strong>CTRL</strong> {{ $t('freehand.toLockDistance') }}
+          </template>
+          • {{ $t('freehand.pressEsc') }} <strong>ESC</strong> {{ $t('freehand.toCancel') }}
         </span>
       </div>
       <button class="navigation-exit-btn" type="button" @click="handleExitFreeHand">
-        Cancel Drawing
+        {{ $t('freehand.cancelDrawing') }}
       </button>
     </div>
   </div>

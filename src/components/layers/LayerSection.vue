@@ -2,7 +2,8 @@
   <div v-if="items.length > 0">
     <div class="layers-section-header" @click="$emit('toggle')">
       <span class="layers-section-title"
-        >{{ title }} ({{ items.length }}{{ searchQuery ? ` of ${totalCount}` : '' }})</span
+        >{{ title }} ({{ items.length
+        }}{{ searchQuery ? ` ${$t('common.of')} ${totalCount}` : '' }})</span
       >
       <span class="collapse-icon">{{ isExpanded ? '▼' : '▶' }}</span>
     </div>

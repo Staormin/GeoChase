@@ -7,14 +7,14 @@
     @keydown.esc="closeModal"
   >
     <v-card>
-      <v-card-title>{{ isEditing ? 'Edit Point' : 'Add Point' }}</v-card-title>
+      <v-card-title>{{ isEditing ? $t('point.editTitle') : $t('point.title') }}</v-card-title>
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
             v-model="form.name"
             class="mb-4"
             density="compact"
-            label="Point Name"
+            :label="$t('point.name')"
             variant="outlined"
           />
 
@@ -26,7 +26,7 @@
                 append-inner-icon="mdi-map-marker"
                 class="mb-4"
                 density="compact"
-                label="Coordinates"
+                :label="$t('common.coordinates')"
                 placeholder="48.8566, 2.3522"
                 variant="outlined"
                 v-bind="props"
@@ -35,7 +35,9 @@
             </template>
             <v-list>
               <v-list-item v-if="coordinatesStore.sortedCoordinates.length === 0" disabled>
-                <v-list-item-title class="text-caption"> No saved coordinates </v-list-item-title>
+                <v-list-item-title class="text-caption">{{
+                  $t('sidebar.noCoordinates')
+                }}</v-list-item-title>
               </v-list-item>
               <v-list-item
                 v-for="coord in coordinatesStore.sortedCoordinates"
@@ -54,11 +56,11 @@
         </v-form>
       </v-card-text>
 
-      <v-card-actions>
+      <v-card-actions class="px-4 pb-4">
         <v-spacer />
-        <v-btn text @click="closeModal">Cancel</v-btn>
-        <v-btn color="primary" @click="submitForm">{{
-          isEditing ? 'Update Point' : 'Add Point'
+        <v-btn variant="text" @click="closeModal">{{ $t('common.cancel') }}</v-btn>
+        <v-btn color="primary" variant="flat" @click="submitForm">{{
+          isEditing ? $t('common.save') : $t('common.add')
         }}</v-btn>
       </v-card-actions>
     </v-card>
@@ -68,6 +70,7 @@
 <script lang="ts" setup>
 import type { SavedCoordinate } from '@/services/storage';
 import { computed, inject, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -77,6 +80,7 @@ const layersStore = useLayersStore();
 const coordinatesStore = useCoordinatesStore();
 inject('mapContainer');
 const drawing = inject('drawing') as any;
+const { t } = useI18n();
 
 const form = ref({
   name: '',
@@ -122,26 +126,26 @@ function submitForm() {
   // Parse coordinates
   const parts = form.value.coordinates.split(',').map((s) => Number.parseFloat(s.trim()));
   if (parts.length !== 2 || parts.some((p) => Number.isNaN(p))) {
-    uiStore.addToast('Invalid coordinates format. Use: lat, lon (e.g., 48.8566, 2.3522)', 'error');
+    uiStore.addToast(t('point.errors.invalidCoordinates'), 'error');
     return;
   }
 
   const [lat, lon] = parts;
 
   // Autogenerate name if empty (matches POC behavior)
-  const name = form.value.name.trim() || `Point ${layersStore.pointCount + 1}`;
+  const name = form.value.name.trim() || `${t('common.point')} ${layersStore.pointCount + 1}`;
 
   if (isEditing.value && uiStore.editingElement) {
     // Note: Point update not yet implemented in useDrawing
     // For now, delete and recreate
     drawing.deleteElement('point', uiStore.editingElement.id);
     drawing.drawPoint(lat, lon, name);
-    uiStore.addToast('Point updated successfully!', 'success');
+    uiStore.addToast(t('point.updated'), 'success');
     uiStore.stopEditing();
   } else {
     // Add new point
     drawing.drawPoint(lat, lon, name);
-    uiStore.addToast('Point added successfully!', 'success');
+    uiStore.addToast(t('point.created'), 'success');
   }
   closeModal();
   resetForm();

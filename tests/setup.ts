@@ -1,8 +1,11 @@
 import { config } from '@vue/test-utils';
 import { vi } from 'vitest';
+import { createI18n } from 'vue-i18n';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
+import en from '../src/locales/en.json';
+import fr from '../src/locales/fr.json';
 
 // Mock visual Viewport for happy-dom
 if (globalThis.visualViewport === undefined) {
@@ -64,7 +67,17 @@ const vuetify = createVuetify({
   ssr: true,
 });
 
-config.global.plugins = [vuetify];
+// Create and configure Vue I18n for tests
+const i18n = createI18n({
+  legacy: false,
+  locale: 'en',
+  messages: {
+    en,
+    fr,
+  },
+});
+
+config.global.plugins = [vuetify, i18n];
 
 // Mock OpenLayers classes that will be used in composables
 vi.mock('ol/Map', () => {
