@@ -77,7 +77,8 @@
     "title": "GeoChase",
     "subtitle": "Résolveur de chasse au trésor géographique",
     "collapseTopBar": "Réduire la barre supérieure",
-    "expandTopBar": "Développer la barre supérieure"
+    "expandTopBar": "Développer la barre supérieure",
+    "github": "GitHub"
   },
   "sidebar": {
     "drawings": "Dessins",

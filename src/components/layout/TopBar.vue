@@ -157,7 +157,6 @@
 
         <!-- Help button -->
         <v-btn
-          class="mr-2"
           color="surface-bright"
           icon="mdi-help-circle"
           variant="elevated"
@@ -165,6 +164,19 @@
         >
           <v-icon>mdi-help-circle</v-icon>
           <v-tooltip activator="parent" location="bottom">{{ $t('tutorial.title') }}</v-tooltip>
+        </v-btn>
+
+        <!-- GitHub link -->
+        <v-btn
+          class="mr-2"
+          color="surface-bright"
+          href="https://github.com/Staormin/GeoChase"
+          icon="mdi-github"
+          target="_blank"
+          variant="elevated"
+        >
+          <v-icon>mdi-github</v-icon>
+          <v-tooltip activator="parent" location="bottom">{{ $t('topbar.github') }}</v-tooltip>
         </v-btn>
 
         <!-- Drawing tools - absolutely centered -->
