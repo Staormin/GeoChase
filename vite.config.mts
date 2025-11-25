@@ -9,6 +9,7 @@ import VueRouter from 'unplugin-vue-router/vite';
 // Utilities
 import { defineConfig } from 'vite';
 
+import istanbul from 'vite-plugin-istanbul';
 import Layouts from 'vite-plugin-vue-layouts-next';
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
 
@@ -59,6 +60,13 @@ export default defineConfig({
         ],
       },
     }),
+    istanbul({
+      include: 'src/*',
+      exclude: ['node_modules', 'tests'],
+      extension: ['.ts', '.vue'],
+      requireEnv: true, // Only instrument when VITE_COVERAGE=true
+      forceBuildInstrument: true, // Also instrument in build mode
+    }),
   ],
   optimizeDeps: {
     exclude: [
@@ -70,6 +78,9 @@ export default defineConfig({
     ],
   },
   define: { 'process.env': {} },
+  build: {
+    sourcemap: true,
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('src', import.meta.url)),

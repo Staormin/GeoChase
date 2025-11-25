@@ -1,3 +1,6 @@
+import type { Page } from '@playwright/test';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { test as base } from '@playwright/test';
 
 /**
@@ -77,37 +80,29 @@ export const test = base.extend<ProjectFixtures>({
    * Clean state fixture - completely clears localStorage
    * Use this when you want to test from a completely empty state
    */
-  cleanState: async ({ page }, use) => {
-    // Navigate to the app
-    await page.goto('/', { waitUntil: 'networkidle' });
-    await page.waitForSelector('#map', { state: 'visible', timeout: 60_000 });
-    await page.waitForTimeout(300);
-
-    // Clear localStorage and set language to prevent language modal
-    await page.evaluate(() => {
-      localStorage.clear();
-      localStorage.setItem('gpxCircle_language', 'en');
+  cleanState: async ({ page }, use, testInfo) => {
+    // Use sessionStorage flag to only init on first load (not reloads)
+    await page.addInitScript(() => {
+      if (!sessionStorage.getItem('__fixture_init__')) {
+        sessionStorage.setItem('__fixture_init__', '1');
+        localStorage.clear();
+        localStorage.setItem('gpxCircle_language', 'en');
+      }
     });
 
-    // Reload to apply cleared storage
-    await page.reload({ waitUntil: 'networkidle' });
-    await page.waitForSelector('#map', { state: 'visible', timeout: 60_000 });
-    await page.waitForTimeout(300);
+    await page.goto('/');
+    await page.waitForSelector('#map', { state: 'visible' });
 
     await use();
+
+    await collectCoverage(page, testInfo.title);
   },
 
   /**
    * Blank project fixture - sets up a fresh empty project with some saved coordinates
    * Use this when you want to test features that require a project to exist
    */
-  blankProject: async ({ page }, use) => {
-    // Navigate to the app
-    await page.goto('/', { waitUntil: 'networkidle' });
-    await page.waitForSelector('#map', { state: 'visible', timeout: 60_000 });
-    await page.waitForTimeout(300);
-
-    // Create blank project with saved coordinates
+  blankProject: async ({ page }, use, testInfo) => {
     const project = createBlankProject({
       data: {
         circles: [],
@@ -123,21 +118,25 @@ export const test = base.extend<ProjectFixtures>({
       },
     });
 
-    await page.evaluate(
+    // Use sessionStorage flag to only init on first load (not reloads)
+    await page.addInitScript(
       (data) => {
-        localStorage.setItem('geochase_projects', JSON.stringify([data.project]));
-        localStorage.setItem('geochase_activeProjectId', data.project.id);
-        localStorage.setItem('gpxCircle_language', 'en');
+        if (!sessionStorage.getItem('__fixture_init__')) {
+          sessionStorage.setItem('__fixture_init__', '1');
+          localStorage.setItem('geochase_projects', JSON.stringify([data.project]));
+          localStorage.setItem('geochase_activeProjectId', data.project.id);
+          localStorage.setItem('gpxCircle_language', 'en');
+        }
       },
       { project }
     );
 
-    // Reload to apply the project
-    await page.reload({ waitUntil: 'networkidle' });
-    await page.waitForSelector('#map', { state: 'visible', timeout: 60_000 });
-    await page.waitForTimeout(300);
+    await page.goto('/');
+    await page.waitForSelector('#map', { state: 'visible' });
 
     await use(project);
+
+    await collectCoverage(page, testInfo.title);
   },
 
   /**
@@ -174,3 +173,36 @@ export const test = base.extend<ProjectFixtures>({
  * Re-export expect from Playwright
  */
 export { expect } from '@playwright/test';
+
+/**
+ * Coverage collection helper
+ */
+async function collectCoverage(page: Page, testName: string): Promise<void> {
+  if (process.env.VITE_COVERAGE !== 'true') return;
+
+  const coverage = await page.evaluate(() => {
+    return (window as any).__coverage__;
+  });
+
+  if (coverage) {
+    const coverageDir = path.join(process.cwd(), '.nyc_output');
+    if (!fs.existsSync(coverageDir)) {
+      fs.mkdirSync(coverageDir, { recursive: true });
+    }
+
+    const timestamp = Date.now();
+    const sanitizedName = testName.replace(/[^a-zA-Z0-9]/g, '_');
+    const filename = `coverage-${sanitizedName}-${timestamp}.json`;
+    fs.writeFileSync(path.join(coverageDir, filename), JSON.stringify(coverage));
+  }
+}
+
+/**
+ * Test with automatic coverage collection (for tests not using fixtures)
+ */
+export const testWithCoverage = base.extend({
+  page: async ({ page }, use, testInfo) => {
+    await use(page);
+    await collectCoverage(page, testInfo.title);
+  },
+});
