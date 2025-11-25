@@ -6,13 +6,25 @@ import { test as base } from '@playwright/test';
 interface ProjectData {
   id: string;
   name: string;
-  circles: any[];
-  lineSegments: any[];
-  points: any[];
-  polygons: any[];
-  notes: any[];
-  createdAt: string;
-  modifiedAt: string;
+  data: {
+    circles: any[];
+    lineSegments: any[];
+    points: any[];
+    polygons: any[];
+    savedCoordinates: any[];
+    notes: any[];
+  };
+  viewData?: {
+    topPanelOpen: boolean;
+    sidePanelOpen: boolean;
+    mapView?: {
+      lat: number;
+      lon: number;
+      zoom: number;
+    };
+  };
+  createdAt: number;
+  updatedAt: number;
 }
 
 /**
@@ -39,17 +51,21 @@ interface ProjectFixtures {
  * Default blank project template
  */
 function createBlankProject(overrides: Partial<ProjectData> = {}): ProjectData {
-  const now = new Date().toISOString();
+  const now = Date.now();
   return {
-    id: overrides.id || 'test-project-' + Date.now(),
+    id: overrides.id || 'test-project-' + now,
     name: overrides.name || 'Test Project',
-    circles: overrides.circles || [],
-    lineSegments: overrides.lineSegments || [],
-    points: overrides.points || [],
-    polygons: overrides.polygons || [],
-    notes: overrides.notes || [],
+    data: overrides.data || {
+      circles: [],
+      lineSegments: [],
+      points: [],
+      polygons: [],
+      savedCoordinates: [],
+      notes: [],
+    },
+    viewData: overrides.viewData,
     createdAt: overrides.createdAt || now,
-    modifiedAt: overrides.modifiedAt || now,
+    updatedAt: overrides.updatedAt || now,
   };
 }
 
@@ -82,7 +98,7 @@ export const test = base.extend<ProjectFixtures>({
   },
 
   /**
-   * Blank project fixture - sets up a fresh empty project
+   * Blank project fixture - sets up a fresh empty project with some saved coordinates
    * Use this when you want to test features that require a project to exist
    */
   blankProject: async ({ page }, use) => {
@@ -91,12 +107,30 @@ export const test = base.extend<ProjectFixtures>({
     await page.waitForSelector('#map', { state: 'visible', timeout: 60_000 });
     await page.waitForTimeout(300);
 
-    // Create and set blank project in localStorage, and set language to prevent modal
-    const project = createBlankProject();
-    await page.evaluate((proj) => {
-      localStorage.setItem('geochase_projects', JSON.stringify([proj]));
-      localStorage.setItem('gpxCircle_language', 'en');
-    }, project);
+    // Create blank project with saved coordinates
+    const project = createBlankProject({
+      data: {
+        circles: [],
+        lineSegments: [],
+        points: [],
+        polygons: [],
+        savedCoordinates: [
+          { id: 'coord-1', name: 'Paris', lat: 48.8566, lon: 2.3522, timestamp: Date.now() },
+          { id: 'coord-2', name: 'London', lat: 51.5074, lon: -0.1278, timestamp: Date.now() },
+          { id: 'coord-3', name: 'Berlin', lat: 52.52, lon: 13.405, timestamp: Date.now() },
+        ],
+        notes: [],
+      },
+    });
+
+    await page.evaluate(
+      (data) => {
+        localStorage.setItem('geochase_projects', JSON.stringify([data.project]));
+        localStorage.setItem('geochase_activeProjectId', data.project.id);
+        localStorage.setItem('gpxCircle_language', 'en');
+      },
+      { project }
+    );
 
     // Reload to apply the project
     await page.reload({ waitUntil: 'networkidle' });

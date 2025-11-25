@@ -19,8 +19,11 @@ export default defineConfig({
   /* Optimize workers for speed: use 6 workers locally (8 cores - 2 for system/dev server) */
   workers: process.env.CI ? 1 : 6,
 
-  /* Reporter to use */
-  reporter: 'html',
+  /* Reporter to use - 'list' for fast console output, 'html' for detailed reports */
+  reporter: process.env.CI ? 'html' : 'list',
+
+  /* Shorter timeout for faster failure detection */
+  timeout: 15_000,
 
   /* Shared settings for all the projects below */
   use: {
@@ -35,6 +38,9 @@ export default defineConfig({
 
     /* Disable video recording for speed (screenshots are sufficient) */
     video: 'off',
+
+    /* Faster action timeout */
+    actionTimeout: 10_000,
   },
 
   /* Configure projects for major browsers */

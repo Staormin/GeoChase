@@ -51,6 +51,7 @@
         <v-btn-group density="compact">
           <v-btn
             color="surface-bright"
+            data-testid="coordinates-btn"
             icon="mdi-book-open-variant"
             variant="elevated"
             @click="uiStore.openModal('coordinatesModal')"
@@ -134,6 +135,7 @@
         <!-- Animation button -->
         <v-btn
           color="surface-bright"
+          data-testid="animation-btn"
           :icon="uiStore.animationState.isPlaying ? 'mdi-stop' : 'mdi-play'"
           variant="elevated"
           @click="handleAnimationToggle"
@@ -190,6 +192,7 @@
           >
             <v-btn
               color="surface-bright"
+              data-testid="draw-circle-btn"
               icon="mdi-circle-outline"
               variant="elevated"
               @click="uiStore.openModal('circleModal')"
@@ -200,6 +203,7 @@
 
             <v-btn
               color="surface-bright"
+              data-testid="draw-line-btn"
               icon="mdi-vector-line"
               variant="elevated"
               @click="uiStore.openModal('twoPointsLineModal')"
@@ -273,6 +277,7 @@
 
             <v-btn
               color="surface-bright"
+              data-testid="draw-point-btn"
               icon="mdi-map-marker"
               variant="elevated"
               @click="uiStore.openModal('pointModal')"
