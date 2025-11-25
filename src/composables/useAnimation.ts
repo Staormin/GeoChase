@@ -44,8 +44,9 @@ export function useAnimation(
       return;
     }
 
-    let lat: number;
-    let lon: number;
+    // Initialize with center position (will be overwritten by each case)
+    let lat = 0;
+    let lon = 0;
     let zoom = 15;
 
     switch (element.type) {
@@ -104,10 +105,7 @@ export function useAnimation(
 
         break;
       }
-      default: {
-        onComplete?.();
-        return;
-      }
+      // No default - getAllElementsSorted only returns known types
     }
 
     // Speed affects flyTo duration: speed 1 = 3.7s, speed 10 = 1s
@@ -122,11 +120,10 @@ export function useAnimation(
       });
 
       // Call onComplete after animation duration
-      if (onComplete) {
-        setTimeout(() => {
-          onComplete();
-        }, flyDuration + 100);
-      }
+      // onComplete is always provided by animateStartToFinish
+      setTimeout(() => {
+        onComplete?.();
+      }, flyDuration + 100);
     } else {
       onComplete?.();
     }
@@ -290,54 +287,51 @@ export function useAnimation(
       }
 
       if (currentIndex < visibleElements.length) {
-        const element = visibleElements[currentIndex];
-        if (element) {
-          uiStore.setAnimationIndex(currentIndex);
+        // element is guaranteed to exist since currentIndex < visibleElements.length
+        const element = visibleElements[currentIndex]!;
+        uiStore.setAnimationIndex(currentIndex);
 
-          // If disableZoomOnElement is enabled, skip navigation
-          if (config.disableZoomOnElement) {
-            // Show element immediately without navigation
+        // If disableZoomOnElement is enabled, skip navigation
+        if (config.disableZoomOnElement) {
+          // Show element immediately without navigation
+          uiStore.setElementVisibility(element.type, element.id, true);
+          if (drawing) {
+            // Animate line segments as they appear
+            const animate = element.type === 'lineSegment';
+            drawing.updateElementVisibility(element.type, element.id, true, animate).then(() => {
+              currentIndex++;
+              // No pause between elements in this mode
+              setTimeout(showNextElement, waitTimeMs);
+            });
+          } else {
+            currentIndex++;
+            setTimeout(showNextElement, waitTimeMs);
+          }
+        } else {
+          // Original behavior: Navigate to element with smooth transition
+          navigateToElement(element, () => {
+            // Then: Show element after camera has arrived (callback after flyTo completes)
+            if (!uiStore.animationState.isPlaying) {
+              // Animation was stopped during flight - restore original visibility
+              restoreOriginalVisibility();
+              return;
+            }
+
             uiStore.setElementVisibility(element.type, element.id, true);
             if (drawing) {
               // Animate line segments as they appear
               const animate = element.type === 'lineSegment';
               drawing.updateElementVisibility(element.type, element.id, true, animate).then(() => {
                 currentIndex++;
-                // No pause between elements in this mode
+
+                // Wait a moment to appreciate the element before moving to next
                 setTimeout(showNextElement, waitTimeMs);
               });
             } else {
               currentIndex++;
               setTimeout(showNextElement, waitTimeMs);
             }
-          } else {
-            // Original behavior: Navigate to element with smooth transition
-            navigateToElement(element, () => {
-              // Then: Show element after camera has arrived (callback after flyTo completes)
-              if (!uiStore.animationState.isPlaying) {
-                // Animation was stopped during flight - restore original visibility
-                restoreOriginalVisibility();
-                return;
-              }
-
-              uiStore.setElementVisibility(element.type, element.id, true);
-              if (drawing) {
-                // Animate line segments as they appear
-                const animate = element.type === 'lineSegment';
-                drawing
-                  .updateElementVisibility(element.type, element.id, true, animate)
-                  .then(() => {
-                    currentIndex++;
-
-                    // Wait a moment to appreciate the element before moving to next
-                    setTimeout(showNextElement, waitTimeMs);
-                  });
-              } else {
-                currentIndex++;
-                setTimeout(showNextElement, waitTimeMs);
-              }
-            });
-          }
+          });
         }
       } else {
         // Animation complete - elements are already shown, no need to restore

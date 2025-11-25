@@ -316,13 +316,11 @@ export function useLineDrawing(mapRef: any) {
       let pointName = endpointName?.trim();
       if (!pointName) {
         // Auto-generate name based on context
-        if (mode === 'azimuth') {
-          pointName = `Point at ${azimuth}° from ${name || 'line'}`;
-        } else if (mode === 'intersection') {
-          pointName = `Endpoint of ${name || 'line'}`;
-        } else {
-          pointName = `Point ${layersStore.pointCount + 1}`;
-        }
+        // Note: mode is guaranteed to be 'azimuth' or 'intersection' by the outer condition
+        pointName =
+          mode === 'azimuth'
+            ? `Point at ${azimuth}° from ${name || 'line'}`
+            : `Endpoint of ${name || 'line'}`;
       }
 
       // Draw the point on the map (this also adds it to the store and creates the label)
