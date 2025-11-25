@@ -25,7 +25,7 @@
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
-    "ci": "run-s type-check lint test:unit:run test:e2e:run format:check"
+    "ci": "run-s type-check lint format:check test:unit:run test:e2e:run"
   },
   "dependencies": {
     "@fontsource/roboto": "5.2.7",
