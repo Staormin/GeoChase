@@ -241,9 +241,8 @@ export function useDrawing(mapRef: any) {
               // If polygon will drop below 3 points, it will be cascade-deleted
               if (remainingPoints < 3) {
                 polygonsToCleanup.push(polygonId);
-              }
-              // If polygon will have 3+ points remaining, it needs to be redrawn
-              else if (remainingPoints >= 3) {
+              } else {
+                // Polygon will have 3+ points remaining, so it needs to be redrawn
                 polygonsToRedraw.push(polygonId);
               }
             }

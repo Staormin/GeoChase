@@ -31,10 +31,6 @@ export function useKeyboardNavigation(
     }
 
     // Navigation mode keyboard handling
-    if (!uiStore.navigatingElement) {
-      return;
-    }
-
     const { navigatingElement } = uiStore;
     if (!navigatingElement) {
       return;
