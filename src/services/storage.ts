@@ -15,7 +15,10 @@ export interface SavedCoordinate {
 export interface ViewData {
   topPanelOpen: boolean;
   sidePanelOpen: boolean;
+  pdfPanelOpen?: boolean;
   pdfPanelWidth?: number;
+  pdfCurrentPage?: number;
+  pdfZoomLevel?: number;
   mapView?: {
     lat: number;
     lon: number;

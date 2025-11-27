@@ -138,6 +138,8 @@ export const useUIStore = defineStore('ui', () => {
   >('geoportail');
   const pdfPanelOpen = ref(false);
   const pdfPanelWidth = ref(500); // Default width
+  const pdfCurrentPage = ref(1); // Current page in PDF viewer
+  const pdfZoomLevel = ref(1); // Zoom level in PDF viewer (1 = 100%)
 
   // Computed
   const isModalOpen = computed(() => (modalId: string) => openModals.value.has(modalId));
@@ -439,6 +441,15 @@ export const useUIStore = defineStore('ui', () => {
     pdfPanelWidth.value = Math.max(300, Math.min(900, width));
   }
 
+  function setPdfCurrentPage(page: number): void {
+    pdfCurrentPage.value = Math.max(1, page);
+  }
+
+  function setPdfZoomLevel(zoom: number): void {
+    // Clamp zoom between 0.5 (50%) and 3 (300%)
+    pdfZoomLevel.value = Math.max(0.5, Math.min(3, zoom));
+  }
+
   return {
     // State
     openModals,
@@ -468,6 +479,8 @@ export const useUIStore = defineStore('ui', () => {
     mapProvider,
     pdfPanelOpen,
     pdfPanelWidth,
+    pdfCurrentPage,
+    pdfZoomLevel,
 
     // Computed
     isModalOpen,
@@ -528,5 +541,7 @@ export const useUIStore = defineStore('ui', () => {
     togglePdfPanel,
     setPdfPanelOpen,
     setPdfPanelWidth,
+    setPdfCurrentPage,
+    setPdfZoomLevel,
   };
 });
