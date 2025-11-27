@@ -380,11 +380,11 @@
     "step4Content": "Create presentations of your treasure hunt solution with animations.",
     "coordinates": "Coordinates",
     "drawingTools": "Drawing Tools",
-    "elevationData": "Elevation Data",
     "gettingStarted": "Getting Started",
     "layers": "Layers",
     "navigation": "Navigation",
     "notes": "Notes",
+    "pdf": "PDF Documents",
     "projects": "Projects",
     "searchExplore": "Search & Explore",
     "tipsTricks": "Tips & Tricks",
@@ -602,31 +602,37 @@
         "gpxExport": "Export as GPX to use your drawings in other mapping applications"
       }
     },
-    "elevationSection": {
-      "heading": "⛰️ Elevation Data",
-      "intro": "GeoChase automatically fetches elevation information for all locations:",
-      "whereAvailable": {
-        "title": "Where Elevation Data is Available",
-        "addressSearch": "Address search results - Shows elevation for each location",
-        "alongPath": "Search along path results - Includes elevation in location details",
-        "coordinates": "Saved coordinates - Elevation data displayed in the coordinates panel",
-        "filters": "Search filters - Filter locations by altitude range (min/max elevation)"
+    "pdfSection": {
+      "heading": "📄 PDF Documents",
+      "intro": "Attach PDF documents to your projects for reference while working on the map:",
+      "uploading": {
+        "title": "Uploading a PDF",
+        "step1": "Click the PDF icon in the top bar (next to the tutorial button)",
+        "step2": "If no PDF is attached, a file picker will open",
+        "step3": "Select a PDF file (up to 50MB)",
+        "step4": "The PDF will be stored with your project"
       },
-      "usingInSearch": {
-        "title": "📊 Using Elevation in Search",
-        "description": "When searching along paths, you can filter by altitude:",
-        "step1": "Open the search results panel for a path",
-        "step2": "Use the Altitude Range slider to set min/max elevation",
-        "step3": "Results will be filtered to match your altitude range",
-        "step4": "The slider shows the actual min/max elevation of all results",
-        "step5": "Combine with distance filter for powerful location analysis"
+      "viewing": {
+        "title": "Viewing PDFs",
+        "openPanel": "Click the PDF icon when a PDF is attached to open the viewer panel",
+        "resize": "Drag the left edge of the panel to resize it",
+        "navigate": "Use the page navigation controls to browse through pages",
+        "zoom": "Use zoom controls or pinch to zoom in/out on the document"
       },
-      "tips": {
-        "title": "💡 Tips",
-        "measurement": "Elevation is measured in meters above sea level",
-        "source": "Data comes from the Open-Elevation API (globally available)",
-        "filtering": "Use altitude filtering to find locations at specific elevations",
-        "combine": "Combine search distance + altitude for advanced location discovery"
+      "passwordProtected": {
+        "title": "Password-Protected PDFs",
+        "description": "If your PDF is password-protected:",
+        "step1": "Enter the password when prompted",
+        "step2": "The password is saved so you don't need to re-enter it on reload",
+        "step3": "The password is stored locally and never sent to any server"
+      },
+      "features": {
+        "title": "Features",
+        "storage": "PDFs are stored in your browser's IndexedDB (separate from project data)",
+        "perProject": "Each project can have its own PDF document",
+        "persistent": "PDFs persist across browser sessions",
+        "delete": "Delete a PDF by clicking the trash icon in the panel header",
+        "notExported": "Note: PDFs are NOT included in JSON exports (to keep file sizes manageable)"
       }
     },
     "tipsSection": {
@@ -895,5 +901,20 @@
     "jsonImported": "JSON imported successfully",
     "lineAdded": "Line added",
     "lineUpdated": "Line updated"
+  },
+  "pdf": {
+    "title": "PDF Document",
+    "noProject": "Please select or create a project first",
+    "uploaded": "PDF uploaded successfully",
+    "uploadError": "Error uploading PDF",
+    "tooLarge": "PDF file is too large (max 10MB)",
+    "delete": "Delete PDF",
+    "deleted": "PDF deleted successfully",
+    "passwordRequired": "Password Required",
+    "enterPassword": "Enter PDF password",
+    "incorrectPassword": "Incorrect password. Please try again.",
+    "passwordCancelled": "PDF opening cancelled",
+    "loadError": "Error loading PDF",
+    "fitToWidth": "Fit to width"
   }
 }

@@ -6,6 +6,7 @@ import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import en from '../../src/locales/en.json';
 import fr from '../../src/locales/fr.json';
+import 'fake-indexeddb/auto';
 
 // Mock visual Viewport for happy-dom
 if (globalThis.visualViewport === undefined) {
