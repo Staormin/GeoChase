@@ -25,6 +25,9 @@ export default defineConfig({
   /* Shorter timeout for faster failure detection */
   timeout: 15_000,
 
+  /* Stop immediately on first failure */
+  maxFailures: 1,
+
   /* Shared settings for all the projects below */
   use: {
     /* Base URL to use in actions like `await page.goto('/')` */

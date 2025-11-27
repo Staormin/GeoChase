@@ -56,10 +56,10 @@
             {{ $t('tutorial.projects') }}
           </v-tab>
 
-          <!-- Elevation Tab -->
-          <v-tab value="elevation">
-            <v-icon class="me-2" icon="mdi-mountain" />
-            {{ $t('tutorial.elevationData') }}
+          <!-- PDF Tab -->
+          <v-tab value="pdf">
+            <v-icon class="me-2" icon="mdi-file-pdf-box" />
+            {{ $t('tutorial.pdf') }}
           </v-tab>
 
           <!-- Tips Tab -->
@@ -436,41 +436,50 @@
             </div>
           </v-window-item>
 
-          <!-- Elevation Data -->
-          <v-window-item value="elevation">
+          <!-- PDF Documents -->
+          <v-window-item value="pdf">
             <div class="tutorial-section">
-              <h3 class="mb-3">{{ $t('tutorial.elevationSection.heading') }}</h3>
-              <p class="mb-3">{{ $t('tutorial.elevationSection.intro') }}</p>
+              <h3 class="mb-3">{{ $t('tutorial.pdfSection.heading') }}</h3>
+              <p class="mb-3">{{ $t('tutorial.pdfSection.intro') }}</p>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">{{ $t('tutorial.elevationSection.whereAvailable.title') }}</h4>
+                <h4 class="mb-2">{{ $t('tutorial.pdfSection.uploading.title') }}</h4>
+                <ol class="tutorial-list">
+                  <li>{{ $t('tutorial.pdfSection.uploading.step1') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.uploading.step2') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.uploading.step3') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.uploading.step4') }}</li>
+                </ol>
+              </div>
+
+              <div class="tutorial-step mb-4">
+                <h4 class="mb-2">{{ $t('tutorial.pdfSection.viewing.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>{{ $t('tutorial.elevationSection.whereAvailable.addressSearch') }}</li>
-                  <li>{{ $t('tutorial.elevationSection.whereAvailable.alongPath') }}</li>
-                  <li>{{ $t('tutorial.elevationSection.whereAvailable.coordinates') }}</li>
-                  <li>{{ $t('tutorial.elevationSection.whereAvailable.filters') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.viewing.openPanel') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.viewing.resize') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.viewing.navigate') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.viewing.zoom') }}</li>
                 </ul>
               </div>
 
               <div class="tutorial-step mb-4">
-                <h4 class="mb-2">{{ $t('tutorial.elevationSection.usingInSearch.title') }}</h4>
-                <p class="mb-2">{{ $t('tutorial.elevationSection.usingInSearch.description') }}</p>
+                <h4 class="mb-2">{{ $t('tutorial.pdfSection.passwordProtected.title') }}</h4>
+                <p class="mb-2">{{ $t('tutorial.pdfSection.passwordProtected.description') }}</p>
                 <ol class="tutorial-list">
-                  <li>{{ $t('tutorial.elevationSection.usingInSearch.step1') }}</li>
-                  <li>{{ $t('tutorial.elevationSection.usingInSearch.step2') }}</li>
-                  <li>{{ $t('tutorial.elevationSection.usingInSearch.step3') }}</li>
-                  <li>{{ $t('tutorial.elevationSection.usingInSearch.step4') }}</li>
-                  <li>{{ $t('tutorial.elevationSection.usingInSearch.step5') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.passwordProtected.step1') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.passwordProtected.step2') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.passwordProtected.step3') }}</li>
                 </ol>
               </div>
 
               <div class="tutorial-step">
-                <h4 class="mb-2">{{ $t('tutorial.elevationSection.tips.title') }}</h4>
+                <h4 class="mb-2">{{ $t('tutorial.pdfSection.features.title') }}</h4>
                 <ul class="tutorial-list">
-                  <li>{{ $t('tutorial.elevationSection.tips.measurement') }}</li>
-                  <li>{{ $t('tutorial.elevationSection.tips.source') }}</li>
-                  <li>{{ $t('tutorial.elevationSection.tips.filtering') }}</li>
-                  <li>{{ $t('tutorial.elevationSection.tips.combine') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.features.storage') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.features.perProject') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.features.persistent') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.features.delete') }}</li>
+                  <li>{{ $t('tutorial.pdfSection.features.notExported') }}</li>
                 </ul>
               </div>
             </div>

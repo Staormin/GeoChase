@@ -380,11 +380,11 @@
     "step4Content": "Créez des présentations de votre solution de chasse au trésor avec des animations.",
     "coordinates": "Coordonnées",
     "drawingTools": "Outils de dessin",
-    "elevationData": "Données d'élévation",
     "gettingStarted": "Commencer",
     "layers": "Calques",
     "navigation": "Navigation",
     "notes": "Notes",
+    "pdf": "Documents PDF",
     "projects": "Projets",
     "searchExplore": "Rechercher et explorer",
     "tipsTricks": "Trucs et astuces",
@@ -602,31 +602,37 @@
         "gpxExport": "Exportez en GPX pour utiliser vos dessins dans d'autres applications de cartographie"
       }
     },
-    "elevationSection": {
-      "heading": "⛰️ Données d'élévation",
-      "intro": "GeoChase récupère automatiquement les informations d'élévation pour tous les emplacements :",
-      "whereAvailable": {
-        "title": "Où les données d'élévation sont disponibles",
-        "addressSearch": "Résultats de recherche d'adresse - Affiche l'élévation pour chaque emplacement",
-        "alongPath": "Résultats de recherche le long du chemin - Inclut l'élévation dans les détails de l'emplacement",
-        "coordinates": "Coordonnées enregistrées - Données d'élévation affichées dans le panneau des coordonnées",
-        "filters": "Filtres de recherche - Filtrez les emplacements par plage d'altitude (élévation min/max)"
+    "pdfSection": {
+      "heading": "📄 Documents PDF",
+      "intro": "Attachez des documents PDF à vos projets pour référence pendant que vous travaillez sur la carte :",
+      "uploading": {
+        "title": "Télécharger un PDF",
+        "step1": "Cliquez sur l'icône PDF dans la barre supérieure (à côté du bouton tutoriel)",
+        "step2": "Si aucun PDF n'est attaché, un sélecteur de fichier s'ouvrira",
+        "step3": "Sélectionnez un fichier PDF (jusqu'à 50 Mo)",
+        "step4": "Le PDF sera stocké avec votre projet"
       },
-      "usingInSearch": {
-        "title": "📊 Utiliser l'élévation dans la recherche",
-        "description": "Lors de la recherche le long de chemins, vous pouvez filtrer par altitude :",
-        "step1": "Ouvrez le panneau des résultats de recherche pour un chemin",
-        "step2": "Utilisez le curseur de plage d'altitude pour définir l'élévation min/max",
-        "step3": "Les résultats seront filtrés pour correspondre à votre plage d'altitude",
-        "step4": "Le curseur affiche l'élévation min/max réelle de tous les résultats",
-        "step5": "Combinez avec le filtre de distance pour une analyse d'emplacement puissante"
+      "viewing": {
+        "title": "Visualisation des PDF",
+        "openPanel": "Cliquez sur l'icône PDF lorsqu'un PDF est attaché pour ouvrir le panneau de visualisation",
+        "resize": "Faites glisser le bord gauche du panneau pour le redimensionner",
+        "navigate": "Utilisez les contrôles de navigation pour parcourir les pages",
+        "zoom": "Utilisez les contrôles de zoom ou pincez pour zoomer/dézoomer sur le document"
       },
-      "tips": {
-        "title": "💡 Conseils",
-        "measurement": "L'élévation est mesurée en mètres au-dessus du niveau de la mer",
-        "source": "Les données proviennent de l'API Open-Elevation (disponible mondialement)",
-        "filtering": "Utilisez le filtrage d'altitude pour trouver des emplacements à des élévations spécifiques",
-        "combine": "Combinez distance de recherche + altitude pour une découverte avancée d'emplacements"
+      "passwordProtected": {
+        "title": "PDF protégés par mot de passe",
+        "description": "Si votre PDF est protégé par un mot de passe :",
+        "step1": "Entrez le mot de passe lorsque vous y êtes invité",
+        "step2": "Le mot de passe est enregistré pour ne pas avoir à le ressaisir au rechargement",
+        "step3": "Le mot de passe est stocké localement et n'est jamais envoyé à un serveur"
+      },
+      "features": {
+        "title": "Fonctionnalités",
+        "storage": "Les PDF sont stockés dans l'IndexedDB de votre navigateur (séparément des données du projet)",
+        "perProject": "Chaque projet peut avoir son propre document PDF",
+        "persistent": "Les PDF persistent entre les sessions du navigateur",
+        "delete": "Supprimez un PDF en cliquant sur l'icône corbeille dans l'en-tête du panneau",
+        "notExported": "Note : Les PDF ne sont PAS inclus dans les exports JSON (pour garder des tailles de fichier gérables)"
       }
     },
     "tipsSection": {
@@ -895,5 +901,20 @@
     "jsonImported": "JSON importé avec succès",
     "lineAdded": "Ligne ajoutée",
     "lineUpdated": "Ligne mise à jour"
+  },
+  "pdf": {
+    "title": "Document PDF",
+    "noProject": "Veuillez sélectionner ou créer un projet d'abord",
+    "uploaded": "PDF téléchargé avec succès",
+    "uploadError": "Erreur lors du téléchargement du PDF",
+    "tooLarge": "Le fichier PDF est trop volumineux (max 10 Mo)",
+    "delete": "Supprimer le PDF",
+    "deleted": "PDF supprimé avec succès",
+    "passwordRequired": "Mot de passe requis",
+    "enterPassword": "Entrez le mot de passe du PDF",
+    "incorrectPassword": "Mot de passe incorrect. Veuillez réessayer.",
+    "passwordCancelled": "Ouverture du PDF annulée",
+    "loadError": "Erreur lors du chargement du PDF",
+    "fitToWidth": "Ajuster à la largeur"
   }
 }

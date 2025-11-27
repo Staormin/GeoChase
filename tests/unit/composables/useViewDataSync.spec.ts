@@ -67,6 +67,7 @@ describe('useViewDataSync', () => {
       expect(updateViewDataSpy).toHaveBeenCalledWith({
         topPanelOpen: true,
         sidePanelOpen: false,
+        pdfPanelWidth: 500,
         mapView: {
           lat: 48.8566,
           lon: 2.3522,
@@ -125,6 +126,27 @@ describe('useViewDataSync', () => {
         mockViewData.mapView.lat,
       ]);
       expect(mockView.setZoom).toHaveBeenCalledWith(12);
+    });
+
+    it('should restore pdfPanelWidth when present in view data', () => {
+      const setPdfPanelWidthSpy = vi.spyOn(uiStore, 'setPdfPanelWidth');
+      const mockViewData = {
+        topPanelOpen: true,
+        sidePanelOpen: false,
+        pdfPanelWidth: 700,
+        mapView: {
+          lat: 51.5074,
+          lon: -0.1278,
+          zoom: 12,
+        },
+      };
+
+      vi.spyOn(projectsStore, 'getViewData').mockReturnValue(mockViewData);
+
+      viewDataSync.restoreViewData();
+
+      // Should restore pdfPanelWidth
+      expect(setPdfPanelWidthSpy).toHaveBeenCalledWith(700);
     });
 
     it('should handle missing view data', () => {
@@ -233,6 +255,22 @@ describe('useViewDataSync', () => {
 
       // Change sidebar state
       uiStore.sidebarOpen = !uiStore.sidebarOpen;
+
+      // Wait for Vue reactivity to process the change
+      await nextTick();
+
+      // Advance timers past debounce delay (500ms)
+      vi.advanceTimersByTime(500);
+
+      expect(updateViewDataSpy).toHaveBeenCalled();
+    });
+
+    it('should trigger saveViewData on pdfPanelWidth change after debounce', async () => {
+      const updateViewDataSpy = vi.spyOn(projectsStore, 'updateViewData');
+      viewDataSync.setupWatchers();
+
+      // Change pdfPanelWidth state
+      uiStore.setPdfPanelWidth(600);
 
       // Wait for Vue reactivity to process the change
       await nextTick();

@@ -308,7 +308,7 @@ test.describe('Project Management', () => {
     });
 
     test('should allow changing map provider', async ({ page, blankProject }) => {
-      await page.locator('.v-navigation-drawer .v-select').click();
+      await page.locator('.v-navigation-drawer .v-select .v-select__menu-icon').click();
       await page.waitForTimeout(300);
 
       // Should show map provider options

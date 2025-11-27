@@ -168,6 +168,18 @@
           <v-tooltip activator="parent" location="bottom">{{ $t('tutorial.title') }}</v-tooltip>
         </v-btn>
 
+        <!-- PDF button -->
+        <v-btn
+          :color="projectsStore.hasPdf() ? 'primary' : 'surface-bright'"
+          data-testid="pdf-btn"
+          icon="mdi-file-pdf-box"
+          variant="elevated"
+          @click="handlePdfClick"
+        >
+          <v-icon>mdi-file-pdf-box</v-icon>
+          <v-tooltip activator="parent" location="bottom">{{ $t('pdf.title') }}</v-tooltip>
+        </v-btn>
+
         <!-- GitHub link -->
         <v-btn
           class="mr-2"
@@ -339,6 +351,7 @@
 </template>
 
 <script lang="ts" setup>
+import { useI18n } from 'vue-i18n';
 import SidebarAddressSearch from '@/components/sidebar/SidebarAddressSearch.vue';
 import { downloadGPX, generateCompleteGPX, getTimestamp } from '@/services/gpx';
 import { useCoordinatesStore } from '@/stores/coordinates';
@@ -346,6 +359,7 @@ import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
 
+const { t } = useI18n();
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const coordinatesStore = useCoordinatesStore();
@@ -523,6 +537,59 @@ async function handleImportJSON() {
     } catch (error) {
       uiStore.addToast(
         `Error importing project: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      );
+    }
+  });
+  input.click();
+}
+
+function handlePdfClick() {
+  // If no active project, show error
+  if (!projectsStore.activeProjectId) {
+    uiStore.addToast(t('pdf.noProject'), 'error');
+    return;
+  }
+
+  // If project has PDF, toggle the panel
+  if (projectsStore.hasPdf()) {
+    uiStore.togglePdfPanel();
+    return;
+  }
+
+  // Otherwise, open file picker to upload PDF
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/pdf';
+  input.addEventListener('change', async (e: Event) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // Check file size (limit to 50MB for IndexedDB)
+    const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+    if (file.size > MAX_SIZE) {
+      uiStore.addToast(t('pdf.tooLarge'), 'error');
+      return;
+    }
+
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.addEventListener('load', async () => {
+        const base64 = reader.result as string;
+        await projectsStore.updatePdf(base64, file.name);
+        uiStore.setPdfPanelOpen(true);
+        uiStore.addToast(t('pdf.uploaded'), 'success');
+      });
+      reader.addEventListener('error', () => {
+        uiStore.addToast(t('pdf.uploadError'), 'error');
+      });
+      reader.readAsDataURL(file);
+    } catch (error) {
+      uiStore.addToast(
+        `${t('pdf.uploadError')}: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'error'
       );
     }
