@@ -42,7 +42,10 @@ export function useViewDataSync(mapContainer: MapContainer) {
     return {
       topPanelOpen: uiStore.topBarOpen,
       sidePanelOpen: uiStore.sidebarOpen,
+      pdfPanelOpen: uiStore.pdfPanelOpen,
       pdfPanelWidth: uiStore.pdfPanelWidth,
+      pdfCurrentPage: uiStore.pdfCurrentPage,
+      pdfZoomLevel: uiStore.pdfZoomLevel,
       mapView: {
         lat: center.lat,
         lon: center.lon,
@@ -73,11 +76,20 @@ export function useViewDataSync(mapContainer: MapContainer) {
 
     const view = mapContainer.map.value.getView();
 
-    // Restore UI state FIRST (topBar, sidebar, and pdfPanelWidth)
+    // Restore UI state FIRST (topBar, sidebar, pdfPanel states)
     uiStore.topBarOpen = viewData.topPanelOpen;
     uiStore.sidebarOpen = viewData.sidePanelOpen;
+    if (viewData.pdfPanelOpen !== undefined) {
+      uiStore.setPdfPanelOpen(viewData.pdfPanelOpen);
+    }
     if (viewData.pdfPanelWidth) {
       uiStore.setPdfPanelWidth(viewData.pdfPanelWidth);
+    }
+    if (viewData.pdfCurrentPage) {
+      uiStore.setPdfCurrentPage(viewData.pdfCurrentPage);
+    }
+    if (viewData.pdfZoomLevel) {
+      uiStore.setPdfZoomLevel(viewData.pdfZoomLevel);
     }
 
     // Force map size update to account for panel states
@@ -114,9 +126,33 @@ export function useViewDataSync(mapContainer: MapContainer) {
       }
     );
 
+    // Watch PDF panel open state
+    watch(
+      () => uiStore.pdfPanelOpen,
+      () => {
+        debouncedSaveViewData();
+      }
+    );
+
     // Watch PDF panel width
     watch(
       () => uiStore.pdfPanelWidth,
+      () => {
+        debouncedSaveViewData();
+      }
+    );
+
+    // Watch PDF current page
+    watch(
+      () => uiStore.pdfCurrentPage,
+      () => {
+        debouncedSaveViewData();
+      }
+    );
+
+    // Watch PDF zoom level
+    watch(
+      () => uiStore.pdfZoomLevel,
       () => {
         debouncedSaveViewData();
       }
@@ -137,6 +173,7 @@ export function useViewDataSync(mapContainer: MapContainer) {
     }
 
     // Watch active project changes to restore view data
+    // Use immediate: true to also restore on initial load
     watch(
       () => projectsStore.activeProjectId,
       () => {
@@ -144,7 +181,8 @@ export function useViewDataSync(mapContainer: MapContainer) {
         setTimeout(() => {
           restoreViewData();
         }, 100);
-      }
+      },
+      { immediate: true }
     );
   };
 

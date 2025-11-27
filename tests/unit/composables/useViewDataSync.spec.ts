@@ -67,7 +67,10 @@ describe('useViewDataSync', () => {
       expect(updateViewDataSpy).toHaveBeenCalledWith({
         topPanelOpen: true,
         sidePanelOpen: false,
+        pdfPanelOpen: false,
         pdfPanelWidth: 500,
+        pdfCurrentPage: 1,
+        pdfZoomLevel: 1,
         mapView: {
           lat: 48.8566,
           lon: 2.3522,
@@ -128,6 +131,27 @@ describe('useViewDataSync', () => {
       expect(mockView.setZoom).toHaveBeenCalledWith(12);
     });
 
+    it('should restore pdfPanelOpen when present in view data', () => {
+      const setPdfPanelOpenSpy = vi.spyOn(uiStore, 'setPdfPanelOpen');
+      const mockViewData = {
+        topPanelOpen: true,
+        sidePanelOpen: false,
+        pdfPanelOpen: true,
+        mapView: {
+          lat: 51.5074,
+          lon: -0.1278,
+          zoom: 12,
+        },
+      };
+
+      vi.spyOn(projectsStore, 'getViewData').mockReturnValue(mockViewData);
+
+      viewDataSync.restoreViewData();
+
+      // Should restore pdfPanelOpen
+      expect(setPdfPanelOpenSpy).toHaveBeenCalledWith(true);
+    });
+
     it('should restore pdfPanelWidth when present in view data', () => {
       const setPdfPanelWidthSpy = vi.spyOn(uiStore, 'setPdfPanelWidth');
       const mockViewData = {
@@ -147,6 +171,48 @@ describe('useViewDataSync', () => {
 
       // Should restore pdfPanelWidth
       expect(setPdfPanelWidthSpy).toHaveBeenCalledWith(700);
+    });
+
+    it('should restore pdfCurrentPage when present in view data', () => {
+      const setPdfCurrentPageSpy = vi.spyOn(uiStore, 'setPdfCurrentPage');
+      const mockViewData = {
+        topPanelOpen: true,
+        sidePanelOpen: false,
+        pdfCurrentPage: 5,
+        mapView: {
+          lat: 51.5074,
+          lon: -0.1278,
+          zoom: 12,
+        },
+      };
+
+      vi.spyOn(projectsStore, 'getViewData').mockReturnValue(mockViewData);
+
+      viewDataSync.restoreViewData();
+
+      // Should restore pdfCurrentPage
+      expect(setPdfCurrentPageSpy).toHaveBeenCalledWith(5);
+    });
+
+    it('should restore pdfZoomLevel when present in view data', () => {
+      const setPdfZoomLevelSpy = vi.spyOn(uiStore, 'setPdfZoomLevel');
+      const mockViewData = {
+        topPanelOpen: true,
+        sidePanelOpen: false,
+        pdfZoomLevel: 1.5,
+        mapView: {
+          lat: 51.5074,
+          lon: -0.1278,
+          zoom: 12,
+        },
+      };
+
+      vi.spyOn(projectsStore, 'getViewData').mockReturnValue(mockViewData);
+
+      viewDataSync.restoreViewData();
+
+      // Should restore pdfZoomLevel
+      expect(setPdfZoomLevelSpy).toHaveBeenCalledWith(1.5);
     });
 
     it('should handle missing view data', () => {
@@ -265,12 +331,60 @@ describe('useViewDataSync', () => {
       expect(updateViewDataSpy).toHaveBeenCalled();
     });
 
+    it('should trigger saveViewData on pdfPanelOpen change after debounce', async () => {
+      const updateViewDataSpy = vi.spyOn(projectsStore, 'updateViewData');
+      viewDataSync.setupWatchers();
+
+      // Change pdfPanelOpen state
+      uiStore.setPdfPanelOpen(true);
+
+      // Wait for Vue reactivity to process the change
+      await nextTick();
+
+      // Advance timers past debounce delay (500ms)
+      vi.advanceTimersByTime(500);
+
+      expect(updateViewDataSpy).toHaveBeenCalled();
+    });
+
     it('should trigger saveViewData on pdfPanelWidth change after debounce', async () => {
       const updateViewDataSpy = vi.spyOn(projectsStore, 'updateViewData');
       viewDataSync.setupWatchers();
 
       // Change pdfPanelWidth state
       uiStore.setPdfPanelWidth(600);
+
+      // Wait for Vue reactivity to process the change
+      await nextTick();
+
+      // Advance timers past debounce delay (500ms)
+      vi.advanceTimersByTime(500);
+
+      expect(updateViewDataSpy).toHaveBeenCalled();
+    });
+
+    it('should trigger saveViewData on pdfCurrentPage change after debounce', async () => {
+      const updateViewDataSpy = vi.spyOn(projectsStore, 'updateViewData');
+      viewDataSync.setupWatchers();
+
+      // Change pdfCurrentPage state
+      uiStore.setPdfCurrentPage(3);
+
+      // Wait for Vue reactivity to process the change
+      await nextTick();
+
+      // Advance timers past debounce delay (500ms)
+      vi.advanceTimersByTime(500);
+
+      expect(updateViewDataSpy).toHaveBeenCalled();
+    });
+
+    it('should trigger saveViewData on pdfZoomLevel change after debounce', async () => {
+      const updateViewDataSpy = vi.spyOn(projectsStore, 'updateViewData');
+      viewDataSync.setupWatchers();
+
+      // Change pdfZoomLevel state
+      uiStore.setPdfZoomLevel(1.5);
 
       // Wait for Vue reactivity to process the change
       await nextTick();
