@@ -34,6 +34,7 @@ declare module 'vue' {
     NewProjectModal: typeof import('./components/modals/NewProjectModal.vue')['default']
     NoteModal: typeof import('./components/modals/NoteModal.vue')['default']
     ParallelLineModal: typeof import('./components/modals/ParallelLineModal.vue')['default']
+    PdfViewer: typeof import('./components/ui/PdfViewer.vue')['default']
     PointModal: typeof import('./components/modals/PointModal.vue')['default']
     PolygonModal: typeof import('./components/modals/PolygonModal.vue')['default']
     PrecisionModeIndicator: typeof import('./components/ui/PrecisionModeIndicator.vue')['default']

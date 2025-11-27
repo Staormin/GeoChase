@@ -52,9 +52,9 @@ test.describe('Map Interactions', () => {
     });
 
     test('should switch to OpenStreetMap', async ({ page, blankProject }) => {
-      // Find and click map provider selector
-      const providerSelect = page.locator('.v-select').first();
-      await providerSelect.click();
+      // Find and click map provider selector menu icon
+      const providerSelectIcon = page.locator('.v-select .v-select__menu-icon').first();
+      await providerSelectIcon.click();
       await page.waitForTimeout(300);
 
       // Select OSM from dropdown
@@ -69,9 +69,9 @@ test.describe('Map Interactions', () => {
     });
 
     test('should switch to Google Maps', async ({ page, blankProject }) => {
-      // Find and click map provider selector
-      const providerSelect = page.locator('.v-select').first();
-      await providerSelect.click();
+      // Find and click map provider selector menu icon
+      const providerSelectIcon = page.locator('.v-select .v-select__menu-icon').first();
+      await providerSelectIcon.click();
       await page.waitForTimeout(300);
 
       // Select Google Maps from dropdown (use first() to avoid strict mode violation)
@@ -100,8 +100,8 @@ test.describe('Map Interactions', () => {
       await page.waitForTimeout(500);
 
       // Switch provider
-      const providerSelect = page.locator('.v-select').first();
-      await providerSelect.click();
+      const providerSelectIcon = page.locator('.v-select .v-select__menu-icon').first();
+      await providerSelectIcon.click();
       await page.waitForTimeout(300);
 
       const osmOption = page.locator('.v-list-item').filter({ hasText: /OpenStreetMap/i });

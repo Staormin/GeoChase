@@ -15,6 +15,7 @@ export interface SavedCoordinate {
 export interface ViewData {
   topPanelOpen: boolean;
   sidePanelOpen: boolean;
+  pdfPanelWidth?: number;
   mapView?: {
     lat: number;
     lon: number;
@@ -27,6 +28,9 @@ export interface ProjectData {
   name: string;
   data: ProjectLayerData;
   viewData?: ViewData;
+  pdfData?: string; // Base64 encoded PDF data
+  pdfName?: string; // Original PDF filename
+  pdfPassword?: string; // Password for encrypted PDFs
   createdAt?: number;
   updatedAt?: number;
 }
@@ -125,11 +129,7 @@ export function getAllProjects(): ProjectData[] {
  * Save projects to localStorage
  */
 export function saveProjectsToStorage(projects: ProjectData[]): void {
-  try {
-    localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
-  } catch {
-    // Silently ignore localStorage errors
-  }
+  localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
 }
 
 /**

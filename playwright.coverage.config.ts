@@ -25,6 +25,9 @@ export default defineConfig({
   /* Shorter timeout for faster failure detection */
   timeout: 15_000,
 
+  /* Stop immediately on first failure */
+  maxFailures: 1,
+
   /* Global setup/teardown for coverage */
   globalSetup: './tests/e2e/coverage/global-setup.ts',
   globalTeardown: './tests/e2e/coverage/global-teardown.ts',

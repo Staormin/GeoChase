@@ -42,6 +42,7 @@ export function useViewDataSync(mapContainer: MapContainer) {
     return {
       topPanelOpen: uiStore.topBarOpen,
       sidePanelOpen: uiStore.sidebarOpen,
+      pdfPanelWidth: uiStore.pdfPanelWidth,
       mapView: {
         lat: center.lat,
         lon: center.lon,
@@ -72,9 +73,12 @@ export function useViewDataSync(mapContainer: MapContainer) {
 
     const view = mapContainer.map.value.getView();
 
-    // Restore UI state FIRST (topBar and sidebar)
+    // Restore UI state FIRST (topBar, sidebar, and pdfPanelWidth)
     uiStore.topBarOpen = viewData.topPanelOpen;
     uiStore.sidebarOpen = viewData.sidePanelOpen;
+    if (viewData.pdfPanelWidth) {
+      uiStore.setPdfPanelWidth(viewData.pdfPanelWidth);
+    }
 
     // Force map size update to account for panel states
     mapContainer.map.value.updateSize();
@@ -105,6 +109,14 @@ export function useViewDataSync(mapContainer: MapContainer) {
     // Watch sidebar state
     watch(
       () => uiStore.sidebarOpen,
+      () => {
+        debouncedSaveViewData();
+      }
+    );
+
+    // Watch PDF panel width
+    watch(
+      () => uiStore.pdfPanelWidth,
       () => {
         debouncedSaveViewData();
       }
