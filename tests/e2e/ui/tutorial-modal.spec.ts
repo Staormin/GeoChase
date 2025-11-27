@@ -191,22 +191,17 @@ test.describe('Tutorial Modal', () => {
       ).toBeVisible();
     });
 
-    test('should navigate to Elevation tab', async ({ page, blankProject }) => {
+    test('should navigate to PDF tab', async ({ page, blankProject }) => {
       // Open tutorial modal
       await page.locator('button .mdi-help-circle').locator('..').click();
       await page.waitForTimeout(300);
 
-      // Click Elevation tab
-      await page
-        .locator('.v-tab')
-        .filter({ hasText: /Elevation/i })
-        .click();
+      // Click PDF tab
+      await page.locator('.v-tab').filter({ hasText: /PDF/i }).click();
       await page.waitForTimeout(300);
 
-      // Elevation content should be visible
-      await expect(
-        page.locator('.tutorial-section h3').filter({ hasText: /Elevation/i })
-      ).toBeVisible();
+      // PDF content should be visible
+      await expect(page.locator('.tutorial-section h3').filter({ hasText: /PDF/i })).toBeVisible();
     });
 
     test('should navigate to Tips & Tricks tab', async ({ page, blankProject }) => {
@@ -241,7 +236,7 @@ test.describe('Tutorial Modal', () => {
         /Notes/i,
         /Coordinates/i,
         /Projects/i,
-        /Elevation/i,
+        /PDF/i,
         /Tips/i,
       ];
 
@@ -265,7 +260,7 @@ test.describe('Tutorial Modal', () => {
         'mdi-note-text',
         'mdi-map-marker',
         'mdi-folder',
-        'mdi-mountain',
+        'mdi-file-pdf-box',
         'mdi-lightbulb',
       ];
 

@@ -76,7 +76,7 @@ describe('useMap', () => {
 
     it('should handle initialization error silently', async () => {
       const OlMap = await import('ol/Map');
-      vi.mocked(OlMap.default).mockImplementationOnce(() => {
+      vi.mocked(OlMap.default).mockImplementationOnce(function () {
         throw new Error('Map creation failed');
       });
 

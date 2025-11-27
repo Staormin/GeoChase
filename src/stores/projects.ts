@@ -4,13 +4,44 @@
 
 import type { ProjectData, ProjectLayerData, ViewData } from '@/services/storage';
 import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import * as pdfStorage from '@/services/pdfStorage';
 import * as storage from '@/services/storage';
 
 export const useProjectsStore = defineStore('projects', () => {
   // State
   const projects = ref<ProjectData[]>([]);
   const activeProjectId = ref<string | null>(null);
+
+  // PDF state (stored in IndexedDB, loaded into memory for current project)
+  const currentPdf = ref<{ data: string; name: string; password?: string } | null>(null);
+  const pdfLoading = ref(false);
+
+  /**
+   * Load PDF from IndexedDB for the current project
+   */
+  async function loadCurrentPdf(): Promise<void> {
+    if (!activeProjectId.value) {
+      currentPdf.value = null;
+      return;
+    }
+
+    pdfLoading.value = true;
+    try {
+      const pdf = await pdfStorage.getPdf(activeProjectId.value);
+      currentPdf.value = pdf;
+    } catch (error) {
+      console.error('Failed to load PDF from IndexedDB:', error);
+      currentPdf.value = null;
+    } finally {
+      pdfLoading.value = false;
+    }
+  }
+
+  // Watch for project changes and load PDF
+  watch(activeProjectId, () => {
+    loadCurrentPdf();
+  });
 
   // Debounce timer for view data saving
   let viewDataSaveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -205,14 +236,75 @@ export const useProjectsStore = defineStore('projects', () => {
     return activeProject.value?.viewData || null;
   }
 
+  /**
+   * Update PDF for the active project (saves to IndexedDB)
+   */
+  async function updatePdf(
+    pdfData: string | null,
+    pdfName: string | null,
+    pdfPassword: string | null = null
+  ): Promise<void> {
+    const projectIdAtCallTime = activeProjectId.value;
+    if (!projectIdAtCallTime) {
+      return;
+    }
+
+    if (pdfData && pdfName) {
+      // Save to IndexedDB
+      await pdfStorage.savePdf(projectIdAtCallTime, pdfData, pdfName, pdfPassword ?? undefined);
+      // Update in-memory state
+      currentPdf.value = { data: pdfData, name: pdfName, password: pdfPassword ?? undefined };
+    } else {
+      // Delete from IndexedDB
+      await pdfStorage.deletePdf(projectIdAtCallTime);
+      currentPdf.value = null;
+    }
+  }
+
+  /**
+   * Update just the PDF password for the active project (saves to IndexedDB)
+   */
+  async function updatePdfPassword(pdfPassword: string | null): Promise<void> {
+    const projectIdAtCallTime = activeProjectId.value;
+    if (!projectIdAtCallTime || !currentPdf.value) {
+      return;
+    }
+
+    // Update in IndexedDB
+    await pdfStorage.updatePdfPassword(projectIdAtCallTime, pdfPassword);
+
+    // Update in-memory state
+    currentPdf.value = {
+      ...currentPdf.value,
+      password: pdfPassword ?? undefined,
+    };
+  }
+
+  /**
+   * Get PDF data for the active project (from in-memory state)
+   */
+  function getPdfData(): { data: string; name: string; password?: string } | null {
+    return currentPdf.value;
+  }
+
+  /**
+   * Check if active project has a PDF (from in-memory state)
+   */
+  function hasPdf(): boolean {
+    return currentPdf.value !== null;
+  }
+
   // Initialize on store creation
   loadProjects();
   loadActiveProject();
+  // Load PDF for active project (async, will update currentPdf when done)
+  loadCurrentPdf();
 
   return {
     // State
     projects,
     activeProjectId,
+    pdfLoading,
 
     // Computed
     projectCount,
@@ -235,5 +327,10 @@ export const useProjectsStore = defineStore('projects', () => {
     renameProject,
     updateViewData,
     getViewData,
+    updatePdf,
+    updatePdfPassword,
+    getPdfData,
+    hasPdf,
+    loadCurrentPdf,
   };
 });

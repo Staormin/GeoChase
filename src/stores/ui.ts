@@ -136,6 +136,8 @@ export const useUIStore = defineStore('ui', () => {
   const mapProvider = ref<
     'geoportail' | 'osm' | 'google-plan' | 'google-satellite' | 'google-relief'
   >('geoportail');
+  const pdfPanelOpen = ref(false);
+  const pdfPanelWidth = ref(500); // Default width
 
   // Computed
   const isModalOpen = computed(() => (modalId: string) => openModals.value.has(modalId));
@@ -424,6 +426,19 @@ export const useUIStore = defineStore('ui', () => {
     mapProvider.value = provider;
   }
 
+  function togglePdfPanel(): void {
+    pdfPanelOpen.value = !pdfPanelOpen.value;
+  }
+
+  function setPdfPanelOpen(open: boolean): void {
+    pdfPanelOpen.value = open;
+  }
+
+  function setPdfPanelWidth(width: number): void {
+    // Clamp width between 300 and 900
+    pdfPanelWidth.value = Math.max(300, Math.min(900, width));
+  }
+
   return {
     // State
     openModals,
@@ -451,6 +466,8 @@ export const useUIStore = defineStore('ui', () => {
     animationConfig,
     viewCaptureState,
     mapProvider,
+    pdfPanelOpen,
+    pdfPanelWidth,
 
     // Computed
     isModalOpen,
@@ -508,5 +525,8 @@ export const useUIStore = defineStore('ui', () => {
     stopViewCapture,
     captureView,
     setMapProvider,
+    togglePdfPanel,
+    setPdfPanelOpen,
+    setPdfPanelWidth,
   };
 });
