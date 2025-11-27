@@ -175,16 +175,17 @@ export function endpointFromIntersection(
     return { lat: pEnd.lat, lon: pEnd.lon };
   }
 
-  // Bisection to solve f(s)=0
+  // Bisection to solve f(s)=0 - always returns within loop
   let a = sLow,
     b = sHigh;
   let _fa = fLow,
     _fb = fHigh;
-  for (let i = 0; i < 60; i++) {
+  let i = 0;
+  while (true) {
     const mid = 0.5 * (a + b);
     const fm = f(mid);
-    if (Math.abs(fm) < 1e-6 || Math.abs(b - a) < 0.01) {
-      // ~1 cm in projected space
+    // Converged or max iterations reached - return result
+    if (Math.abs(fm) < 1e-6 || Math.abs(b - a) < 0.01 || i >= 59) {
       const end = endFromS(mid);
       return { lat: end.lat, lon: end.lon };
     }
@@ -195,10 +196,8 @@ export function endpointFromIntersection(
       a = mid;
       _fa = fm;
     }
+    i++;
   }
-  // Return best mid if not converged
-  const end = endFromS(0.5 * (a + b));
-  return { lat: end.lat, lon: end.lon };
 }
 
 /**

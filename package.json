@@ -28,7 +28,17 @@
     "test:e2e:report": "playwright show-report",
     "test:e2e:coverage": "VITE_COVERAGE=true playwright test --config=playwright.coverage.config.ts",
     "test:e2e:coverage:report": "npx nyc report --reporter=text --reporter=html --reporter=lcov",
-    "ci": "run-s type-check lint format:check test:unit:run test:e2e:run"
+    "ci": "run-s type-check lint format:check test:unit:run test:e2e:run",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@fontsource/roboto": "5.2.7",
@@ -60,8 +70,10 @@
     "eslint-plugin-i18n-json": "^4.0.1",
     "eslint-plugin-json": "^4.0.1",
     "happy-dom": "^20.0.10",
+    "husky": "^9.1.7",
     "json": "^11.0.0",
     "jsonc-eslint-parser": "^2.4.1",
+    "lint-staged": "^16.2.7",
     "npm-run-all2": "^8.0.4",
     "nyc": "^17.1.0",
     "prettier": "^3.6.2",

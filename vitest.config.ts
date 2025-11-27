@@ -26,7 +26,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./tests/unit/setup.ts'],
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
@@ -41,8 +41,14 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/composables/**/*.ts'],
+      include: ['src/composables/**/*.ts', 'src/services/**/*.ts'],
       exclude: ['node_modules', 'tests'],
+      thresholds: {
+        statements: 45,
+        branches: 35,
+        functions: 55,
+        lines: 45,
+      },
     },
   },
   resolve: {

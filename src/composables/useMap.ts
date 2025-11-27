@@ -154,11 +154,10 @@ export function useMap(containerId: string, uiStore?: any) {
         watch(
           () => uiStore.mapProvider,
           (newProvider) => {
-            if (tileSource.value) {
-              tileSource.value.setUrl(getMapTilesUrl(newProvider));
-              // Clear the tile cache to force reload with new provider
-              tileSource.value.clear();
-            }
+            // tileSource is always set at this point (created before watcher registration)
+            tileSource.value!.setUrl(getMapTilesUrl(newProvider));
+            // Clear the tile cache to force reload with new provider
+            tileSource.value!.clear();
           }
         );
       }

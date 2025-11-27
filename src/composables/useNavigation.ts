@@ -128,11 +128,9 @@ export function useNavigation() {
 
     navigationState.value.progress += progressDelta;
 
-    // Handle endpoints and direction reversal
+    // Handle endpoint: reflect back when exceeding 1
     if (navigationState.value.progress >= 1) {
       navigationState.value.progress = 1 - (navigationState.value.progress - 1);
-    } else if (navigationState.value.progress < 0) {
-      navigationState.value.progress = -navigationState.value.progress;
     }
   }
 
@@ -146,10 +144,8 @@ export function useNavigation() {
 
     navigationState.value.progress -= progressDelta;
 
-    // Handle endpoints and direction reversal
-    if (navigationState.value.progress >= 1) {
-      navigationState.value.progress = 1 - (navigationState.value.progress - 1);
-    } else if (navigationState.value.progress < 0) {
+    // Handle start point: reflect back when going below 0
+    if (navigationState.value.progress < 0) {
       navigationState.value.progress = -navigationState.value.progress;
     }
   }

@@ -37,10 +37,6 @@ async function fetchElevations(
 ): Promise<Map<string, number>> {
   const elevationMap = new Map<string, number>();
 
-  if (coordinates.length === 0) {
-    return elevationMap;
-  }
-
   // Create a coordinate index map for looking up input coordinates by their position
   const coordIndex: Map<string, number> = new Map();
   for (const [index, coord] of coordinates.entries()) {
@@ -236,10 +232,6 @@ export const DEFAULT_MAP_ZOOM = 12;
  * @returns bbox as "xmin,ymin,xmax,ymax" (lon,lat format)
  */
 function calculateBbox(points: Array<{ lat: number; lon: number }>, bufferKm = 0): string {
-  if (points.length === 0) {
-    return '';
-  }
-
   let minLon = points[0]!.lon;
   let maxLon = points[0]!.lon;
   let minLat = points[0]!.lat;
@@ -363,12 +355,9 @@ class RequestQueue {
       this.rejectStack.push(reject);
 
       this.queue.push(async (): Promise<Response> => {
-        const resolveItem = this.resolveStack.shift();
-        const rejectItem = this.rejectStack.shift();
-
-        if (!resolveItem || !rejectItem) {
-          throw new Error('No resolver found');
-        }
+        // Stacks are always in sync - pushed before queue callback, shifted here
+        const resolveItem = this.resolveStack.shift()!;
+        const rejectItem = this.rejectStack.shift()!;
 
         try {
           // Enforce minimum delay between requests
@@ -394,20 +383,15 @@ class RequestQueue {
   }
 
   private async processQueue(): Promise<void> {
-    if (this.isProcessing || this.queue.length === 0) {
-      return;
-    }
-
     this.isProcessing = true;
 
     while (this.queue.length > 0) {
-      const requestFn = this.queue.shift();
-      if (requestFn) {
-        try {
-          await requestFn();
-        } catch {
-          // Error already handled in the queue function
-        }
+      // shift() is safe since we checked queue.length > 0
+      const requestFn = this.queue.shift()!;
+      try {
+        await requestFn();
+      } catch {
+        // Error already handled in the queue function
       }
     }
 
@@ -601,10 +585,11 @@ export async function searchLocationsNearPath(
   // Calculate bounding box for the entire path with search distance buffer
   const fullBbox = calculateBbox(pathPoints, searchDistanceKm);
   const bboxParts = fullBbox.split(',').map(Number);
-  const minLon = bboxParts[0] ?? 0;
-  const minLat = bboxParts[1] ?? 0;
-  const maxLon = bboxParts[2] ?? 0;
-  const maxLat = bboxParts[3] ?? 0;
+  // calculateBbox always returns 4 comma-separated values
+  const minLon = bboxParts[0]!;
+  const minLat = bboxParts[1]!;
+  const maxLon = bboxParts[2]!;
+  const maxLat = bboxParts[3]!;
 
   // Build Overpass query
   // For line segments: search for elements with both name and place tag
@@ -622,40 +607,31 @@ export async function searchLocationsNearPath(
     out center;
   `;
 
-  const searchPromises = [
-    await requestQueue.add(async () => {
-      return await fetch(OVERPASS_API, {
-        method: 'POST',
-        body: overpassQuery,
-        headers: {
-          'Content-Type': 'application/osm3s',
-        },
-      });
-    }),
-  ];
+  // Fetch from Overpass API
+  const response = await requestQueue.add(async () => {
+    return await fetch(OVERPASS_API, {
+      method: 'POST',
+      body: overpassQuery,
+      headers: {
+        'Content-Type': 'application/osm3s',
+      },
+    });
+  });
 
-  // Process all segment searches
-  const responses = await Promise.allSettled(searchPromises);
+  // Process the search response
+  try {
+    const xmlText = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlText, 'text/xml');
 
-  for (const response of responses) {
-    if (response.status === 'fulfilled') {
-      try {
-        const xmlText = await response.value.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(xmlText, 'text/xml');
-
-        // Check for parsing errors
-        if (doc.documentElement.nodeName === 'parsererror') {
-          continue;
-        }
-
-        // Handle Overpass API XML response format
-        processXmlNodes(doc, results, pathPoints, searchDistanceKm, bufferPolygon);
-        processXmlWays(doc, results, pathPoints, searchDistanceKm, bufferPolygon);
-      } catch {
-        // Silently ignore XML parsing errors
-      }
+    // Check for parsing errors
+    if (doc.documentElement.nodeName !== 'parsererror') {
+      // Handle Overpass API XML response format
+      processXmlNodes(doc, results, pathPoints, searchDistanceKm, bufferPolygon);
+      processXmlWays(doc, results, pathPoints, searchDistanceKm, bufferPolygon);
     }
+  } catch {
+    // Silently ignore XML parsing errors
   }
 
   // Fetch elevation data for all results
