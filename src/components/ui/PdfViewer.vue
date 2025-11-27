@@ -96,8 +96,9 @@
 <script lang="ts" setup>
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import * as pdfjsLib from 'pdfjs-dist';
-import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useUIStore } from '@/stores/ui';
 
 // Set up the worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -117,14 +118,21 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const uiStore = useUIStore();
 
 const pdfCanvas = ref<HTMLCanvasElement | null>(null);
 const canvasContainer = ref<HTMLElement | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
-const currentPage = ref(1);
+const currentPage = computed({
+  get: () => uiStore.pdfCurrentPage,
+  set: (value: number) => uiStore.setPdfCurrentPage(value),
+});
 const totalPages = ref(0);
-const scale = ref(1);
+const scale = computed({
+  get: () => uiStore.pdfZoomLevel,
+  set: (value: number) => uiStore.setPdfZoomLevel(value),
+});
 
 const showPasswordDialog = ref(false);
 const password = ref('');
@@ -171,13 +179,17 @@ async function loadPdf() {
 
     pdfDoc = await loadingTask.promise;
     totalPages.value = pdfDoc.numPages;
-    currentPage.value = 1;
+
+    // Use stored page if valid, otherwise reset to 1
+    const storedPage = uiStore.pdfCurrentPage;
+    const validPage = storedPage >= 1 && storedPage <= pdfDoc.numPages ? storedPage : 1;
+    currentPage.value = validPage;
 
     // Set loading to false first so the canvas is rendered in the DOM
     loading.value = false;
     // Wait for Vue to update the DOM before rendering
     await nextTick();
-    await renderPage(1);
+    await renderPage(validPage);
 
     emit('loaded');
   } catch (error_) {
@@ -284,6 +296,26 @@ watch(
   () => props.pdfData,
   () => {
     loadPdf();
+  }
+);
+
+// Watch for external page changes (e.g., from viewData restore when switching projects)
+watch(
+  () => uiStore.pdfCurrentPage,
+  async (newPage) => {
+    if (pdfDoc && newPage >= 1 && newPage <= totalPages.value) {
+      await renderPage(newPage);
+    }
+  }
+);
+
+// Watch for external zoom level changes (e.g., from viewData restore when switching projects)
+watch(
+  () => uiStore.pdfZoomLevel,
+  async () => {
+    if (pdfDoc && currentPage.value >= 1 && currentPage.value <= totalPages.value) {
+      await renderPage(currentPage.value);
+    }
   }
 );
 
