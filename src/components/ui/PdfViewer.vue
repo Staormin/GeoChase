@@ -12,7 +12,33 @@
           variant="text"
           @click="prevPage"
         />
-        <span class="text-body-2"> {{ currentPage }} / {{ totalPages }} </span>
+        <!-- Clickable page number / Go to page input -->
+        <div v-if="showPageInput" class="d-flex align-center ga-1">
+          <input
+            ref="pageInputRef"
+            v-model="pageInputValue"
+            class="text-body-2 text-center bg-surface rounded border"
+            :max="totalPages"
+            min="1"
+            style="width: 40px; outline: none"
+            type="number"
+            @blur="submitPageInput"
+            @keyup.enter="submitPageInput"
+            @keyup.escape="cancelPageInput"
+          />
+          <span class="text-body-2">/ {{ totalPages }}</span>
+        </div>
+        <span
+          v-else
+          class="text-body-2 px-2 py-1 rounded cursor-pointer hover:bg-surface-variant"
+          role="button"
+          tabindex="0"
+          :title="$t('pdf.goToPage')"
+          @click="startPageInput"
+          @keyup.enter="startPageInput"
+        >
+          {{ currentPage }} / {{ totalPages }}
+        </span>
         <v-btn
           density="compact"
           :disabled="currentPage >= totalPages"
@@ -23,8 +49,8 @@
         />
       </div>
 
-      <!-- Zoom controls -->
-      <div class="d-flex align-center ga-2">
+      <!-- Zoom and action controls -->
+      <div class="d-flex align-center ga-1">
         <v-btn density="compact" icon="mdi-minus" size="small" variant="text" @click="zoomOut" />
         <span class="text-body-2" style="min-width: 50px; text-align: center">
           {{ Math.round(scale * 100) }}%
@@ -32,13 +58,69 @@
         <v-btn density="compact" icon="mdi-plus" size="small" variant="text" @click="zoomIn" />
         <v-btn
           density="compact"
-          icon="mdi-fit-to-page"
+          icon="mdi-fit-to-page-outline"
           size="small"
           variant="text"
           @click="fitToWidth"
         >
-          <v-icon>mdi-fit-to-page</v-icon>
+          <v-icon>mdi-fit-to-page-outline</v-icon>
           <v-tooltip activator="parent" location="bottom">{{ $t('pdf.fitToWidth') }}</v-tooltip>
+        </v-btn>
+        <v-btn
+          density="compact"
+          icon="mdi-fit-to-screen-outline"
+          size="small"
+          variant="text"
+          @click="fitToPage"
+        >
+          <v-icon>mdi-fit-to-screen-outline</v-icon>
+          <v-tooltip activator="parent" location="bottom">{{ $t('pdf.fitToPage') }}</v-tooltip>
+        </v-btn>
+        <v-divider class="mx-1" vertical />
+        <v-btn
+          density="compact"
+          icon="mdi-rotate-right"
+          size="small"
+          variant="text"
+          @click="rotateClockwise"
+        >
+          <v-icon>mdi-rotate-right</v-icon>
+          <v-tooltip activator="parent" location="bottom">{{
+            $t('pdf.rotateClockwise')
+          }}</v-tooltip>
+        </v-btn>
+        <v-btn
+          density="compact"
+          icon="mdi-download"
+          size="small"
+          variant="text"
+          @click="downloadPdf"
+        >
+          <v-icon>mdi-download</v-icon>
+          <v-tooltip activator="parent" location="bottom">{{ $t('pdf.download') }}</v-tooltip>
+        </v-btn>
+        <v-divider class="mx-1" vertical />
+        <v-btn
+          density="compact"
+          :icon="showThumbnails ? 'mdi-view-grid' : 'mdi-view-grid-outline'"
+          size="small"
+          variant="text"
+          @click="showThumbnails = !showThumbnails"
+        >
+          <v-icon>{{ showThumbnails ? 'mdi-view-grid' : 'mdi-view-grid-outline' }}</v-icon>
+          <v-tooltip activator="parent" location="bottom">{{ $t('pdf.thumbnails') }}</v-tooltip>
+        </v-btn>
+        <v-divider class="mx-1" vertical />
+        <v-btn
+          color="error"
+          density="compact"
+          icon="mdi-delete"
+          size="small"
+          variant="text"
+          @click="emit('delete')"
+        >
+          <v-icon>mdi-delete</v-icon>
+          <v-tooltip activator="parent" location="bottom">{{ $t('pdf.delete') }}</v-tooltip>
         </v-btn>
       </div>
     </div>
@@ -81,14 +163,48 @@
       <p class="text-body-1 text-error text-center">{{ error }}</p>
     </div>
 
-    <!-- PDF canvas container -->
-    <div
-      v-else
-      ref="canvasContainer"
-      class="flex-grow-1 overflow-auto d-flex justify-center"
-      style="background: #525659"
-    >
-      <canvas ref="pdfCanvas" class="my-4" style="box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3)" />
+    <!-- PDF content area with optional thumbnails -->
+    <div v-else class="flex-grow-1 d-flex overflow-hidden">
+      <!-- Thumbnails sidebar (collapsible) -->
+      <div
+        v-if="showThumbnails"
+        ref="thumbnailsContainer"
+        class="flex-shrink-0 overflow-y-auto bg-surface-light pa-2"
+        style="width: 120px; border-right: 1px solid rgba(0, 0, 0, 0.12)"
+      >
+        <div
+          v-for="pageNum in totalPages"
+          :key="pageNum"
+          class="mb-2 cursor-pointer rounded overflow-hidden"
+          :class="{ 'ring-2 ring-primary': pageNum === currentPage }"
+          :title="`${$t('pdf.page')} ${pageNum}`"
+          @click="goToPage(pageNum)"
+        >
+          <canvas
+            :ref="(el) => setThumbnailRef(el as HTMLCanvasElement | null, pageNum)"
+            class="block w-full"
+            style="box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2)"
+          />
+          <div class="text-center text-caption py-1 bg-surface">{{ pageNum }}</div>
+        </div>
+      </div>
+
+      <!-- PDF canvas container -->
+      <div
+        ref="canvasContainer"
+        class="flex-grow-1 overflow-auto d-flex justify-center"
+        style="background: #525659"
+        @scroll="handleScroll"
+      >
+        <div
+          ref="pageContainer"
+          class="relative my-4"
+          style="box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3)"
+          @wheel="handleWheel"
+        >
+          <canvas ref="pdfCanvas" class="block" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -109,12 +225,14 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 const props = defineProps<{
   pdfData: string;
   pdfPassword?: string;
+  pdfName?: string;
 }>();
 
 const emit = defineEmits<{
   error: [message: string];
   'password-entered': [password: string];
   loaded: [];
+  delete: [];
 }>();
 
 const { t } = useI18n();
@@ -122,6 +240,8 @@ const uiStore = useUIStore();
 
 const pdfCanvas = ref<HTMLCanvasElement | null>(null);
 const canvasContainer = ref<HTMLElement | null>(null);
+const pageContainer = ref<HTMLElement | null>(null);
+const pageInputRef = ref<HTMLInputElement | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const currentPage = computed({
@@ -133,6 +253,19 @@ const scale = computed({
   get: () => uiStore.pdfZoomLevel,
   set: (value: number) => uiStore.setPdfZoomLevel(value),
 });
+
+// Go to page input state
+const showPageInput = ref(false);
+const pageInputValue = ref('1');
+
+// Rotation state (0, 90, 180, 270 degrees)
+const rotation = ref(0);
+
+// Thumbnails state
+const showThumbnails = ref(false);
+const thumbnailsContainer = ref<HTMLElement | null>(null);
+const thumbnailRefs = ref<Map<number, HTMLCanvasElement>>(new Map());
+const thumbnailsRendered = ref(false);
 
 const showPasswordDialog = ref(false);
 const password = ref('');
@@ -191,6 +324,10 @@ async function loadPdf() {
     await nextTick();
     await renderPage(validPage);
 
+    // Restore scroll position after PDF is rendered
+    await nextTick();
+    restoreScrollPosition();
+
     emit('loaded');
   } catch (error_) {
     const errorMessage = error_ instanceof Error ? error_.message : 'Unknown error';
@@ -228,7 +365,7 @@ async function renderPage(pageNum: number) {
 
   try {
     currentPageObj = await pdfDoc.getPage(pageNum);
-    const viewport = currentPageObj.getViewport({ scale: scale.value });
+    const viewport = currentPageObj.getViewport({ scale: scale.value, rotation: rotation.value });
 
     const canvas = pdfCanvas.value;
     const context = canvas.getContext('2d');
@@ -242,6 +379,12 @@ async function renderPage(pageNum: number) {
     canvas.height = Math.floor(viewport.height * outputScale);
     canvas.style.width = Math.floor(viewport.width) + 'px';
     canvas.style.height = Math.floor(viewport.height) + 'px';
+
+    // Update page container size
+    if (pageContainer.value) {
+      pageContainer.value.style.width = Math.floor(viewport.width) + 'px';
+      pageContainer.value.style.height = Math.floor(viewport.height) + 'px';
+    }
 
     context.scale(outputScale, outputScale);
 
@@ -286,9 +429,139 @@ async function fitToWidth() {
   }
 
   const containerWidth = canvasContainer.value.clientWidth - 32; // Account for padding
-  const viewport = currentPageObj.getViewport({ scale: 1 });
-  scale.value = containerWidth / viewport.width;
+  const viewport = currentPageObj.getViewport({ scale: 1, rotation: rotation.value });
+  // For rotated views, use the appropriate dimension
+  const effectiveWidth = rotation.value % 180 === 0 ? viewport.width : viewport.height;
+  scale.value = containerWidth / effectiveWidth;
   await renderPage(currentPage.value);
+}
+
+async function fitToPage() {
+  if (!currentPageObj || !canvasContainer.value) {
+    return;
+  }
+
+  const containerWidth = canvasContainer.value.clientWidth - 32; // Account for padding
+  const containerHeight = canvasContainer.value.clientHeight - 32;
+  const viewport = currentPageObj.getViewport({ scale: 1, rotation: rotation.value });
+
+  // Calculate scale to fit both dimensions
+  const scaleX = containerWidth / viewport.width;
+  const scaleY = containerHeight / viewport.height;
+  scale.value = Math.min(scaleX, scaleY);
+  await renderPage(currentPage.value);
+}
+
+async function rotateClockwise() {
+  rotation.value = (rotation.value + 90) % 360;
+  await renderPage(currentPage.value);
+}
+
+function downloadPdf() {
+  try {
+    // Create a blob from the base64 data
+    const base64Data = props.pdfData.split(',')[1] ?? props.pdfData;
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.codePointAt(i) ?? 0;
+    }
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = props.pdfName || 'document.pdf';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error_) {
+    console.error('Error downloading PDF:', error_);
+  }
+}
+
+// Go to page input functions
+function startPageInput() {
+  pageInputValue.value = String(currentPage.value);
+  showPageInput.value = true;
+  nextTick(() => {
+    pageInputRef.value?.focus();
+    pageInputRef.value?.select();
+  });
+}
+
+async function submitPageInput() {
+  const page = Number.parseInt(pageInputValue.value, 10);
+  if (!Number.isNaN(page) && page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+    await renderPage(page);
+  }
+  showPageInput.value = false;
+}
+
+function cancelPageInput() {
+  showPageInput.value = false;
+}
+
+// Thumbnail functions
+function setThumbnailRef(el: HTMLCanvasElement | null, pageNum: number) {
+  if (el) {
+    thumbnailRefs.value.set(pageNum, el);
+    // Render thumbnail if not yet rendered
+    if (!thumbnailsRendered.value && pdfDoc) {
+      renderThumbnail(pageNum, el);
+    }
+  } else {
+    thumbnailRefs.value.delete(pageNum);
+  }
+}
+
+async function renderThumbnail(pageNum: number, canvas: HTMLCanvasElement) {
+  if (!pdfDoc) {
+    return;
+  }
+
+  try {
+    const page = await pdfDoc.getPage(pageNum);
+    const thumbnailScale = 0.2; // Small scale for thumbnails
+    const viewport = page.getViewport({ scale: thumbnailScale });
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return;
+    }
+
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({
+      canvasContext: context,
+      viewport,
+      canvas,
+    } as Parameters<typeof page.render>[0]).promise;
+  } catch (error_) {
+    console.error('Error rendering thumbnail:', error_);
+  }
+}
+
+async function renderAllThumbnails() {
+  if (!pdfDoc || thumbnailsRendered.value) {
+    return;
+  }
+
+  for (const [pageNum, canvas] of thumbnailRefs.value.entries()) {
+    await renderThumbnail(pageNum, canvas);
+  }
+  thumbnailsRendered.value = true;
+}
+
+async function goToPage(pageNum: number) {
+  if (pageNum >= 1 && pageNum <= totalPages.value) {
+    currentPage.value = pageNum;
+    await renderPage(pageNum);
+  }
 }
 
 // Watch for PDF data changes
@@ -319,6 +592,15 @@ watch(
   }
 );
 
+// Watch for thumbnail panel visibility to render thumbnails
+watch(showThumbnails, async (visible) => {
+  if (visible && pdfDoc && !thumbnailsRendered.value) {
+    // Wait for DOM to update before rendering
+    await nextTick();
+    await renderAllThumbnails();
+  }
+});
+
 // Handle window resize
 let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
 function handleResize() {
@@ -332,6 +614,79 @@ function handleResize() {
   }, 200);
 }
 
+// Handle scroll position persistence
+let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
+let isRestoringScroll = false; // Flag to prevent infinite loop between scroll handler and watcher
+function handleScroll() {
+  // Skip saving if we're currently restoring scroll position (prevents infinite loop)
+  if (isRestoringScroll) {
+    return;
+  }
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout);
+  }
+  scrollTimeout = setTimeout(() => {
+    if (canvasContainer.value) {
+      uiStore.setPdfScrollPosition({
+        x: canvasContainer.value.scrollLeft,
+        y: canvasContainer.value.scrollTop,
+      });
+    }
+  }, 200);
+}
+
+// Handle mouse wheel on page to change pages
+let wheelTimeout: ReturnType<typeof setTimeout> | null = null;
+let isWheelNavigating = false;
+function handleWheel(event: WheelEvent) {
+  event.preventDefault();
+
+  // Debounce to prevent too rapid page changes
+  if (isWheelNavigating) {
+    return;
+  }
+
+  if (event.deltaY > 0 && currentPage.value < totalPages.value) {
+    // Scroll down - next page
+    isWheelNavigating = true;
+    nextPage();
+  } else if (event.deltaY < 0 && currentPage.value > 1) {
+    // Scroll up - previous page
+    isWheelNavigating = true;
+    prevPage();
+  }
+
+  // Reset debounce after a short delay
+  if (wheelTimeout) {
+    clearTimeout(wheelTimeout);
+  }
+  wheelTimeout = setTimeout(() => {
+    isWheelNavigating = false;
+  }, 300);
+}
+
+function restoreScrollPosition() {
+  if (canvasContainer.value && uiStore.pdfScrollPosition) {
+    isRestoringScroll = true;
+    canvasContainer.value.scrollLeft = uiStore.pdfScrollPosition.x;
+    canvasContainer.value.scrollTop = uiStore.pdfScrollPosition.y;
+    // Reset flag after scroll events have been processed
+    nextTick(() => {
+      isRestoringScroll = false;
+    });
+  }
+}
+
+// Watch for external scroll position changes (e.g., from viewData restore when switching projects)
+watch(
+  () => uiStore.pdfScrollPosition,
+  () => {
+    if (pdfDoc && canvasContainer.value) {
+      restoreScrollPosition();
+    }
+  }
+);
+
 onMounted(async () => {
   window.addEventListener('resize', handleResize);
   await nextTick();
@@ -340,6 +695,16 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
+  // Clear all pending timeouts to prevent memory leaks and errors after unmount
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout);
+  }
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout);
+  }
+  if (wheelTimeout) {
+    clearTimeout(wheelTimeout);
+  }
   if (pdfDoc) {
     pdfDoc.destroy();
   }

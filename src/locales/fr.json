@@ -915,6 +915,12 @@
     "incorrectPassword": "Mot de passe incorrect. Veuillez réessayer.",
     "passwordCancelled": "Ouverture du PDF annulée",
     "loadError": "Erreur lors du chargement du PDF",
-    "fitToWidth": "Ajuster à la largeur"
+    "fitToWidth": "Ajuster à la largeur",
+    "fitToPage": "Ajuster à la page",
+    "goToPage": "Cliquer pour aller à la page",
+    "rotateClockwise": "Rotation horaire",
+    "download": "Télécharger le PDF",
+    "thumbnails": "Afficher les miniatures",
+    "page": "Page"
   }
 }
