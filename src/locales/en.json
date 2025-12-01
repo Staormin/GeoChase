@@ -915,6 +915,12 @@
     "incorrectPassword": "Incorrect password. Please try again.",
     "passwordCancelled": "PDF opening cancelled",
     "loadError": "Error loading PDF",
-    "fitToWidth": "Fit to width"
+    "fitToWidth": "Fit to width",
+    "fitToPage": "Fit to page",
+    "goToPage": "Click to go to page",
+    "rotateClockwise": "Rotate clockwise",
+    "download": "Download PDF",
+    "thumbnails": "Toggle thumbnails",
+    "page": "Page"
   }
 }

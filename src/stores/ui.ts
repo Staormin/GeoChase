@@ -140,6 +140,7 @@ export const useUIStore = defineStore('ui', () => {
   const pdfPanelWidth = ref(500); // Default width
   const pdfCurrentPage = ref(1); // Current page in PDF viewer
   const pdfZoomLevel = ref(1); // Zoom level in PDF viewer (1 = 100%)
+  const pdfScrollPosition = ref<{ x: number; y: number }>({ x: 0, y: 0 }); // Scroll position in PDF viewer
 
   // Computed
   const isModalOpen = computed(() => (modalId: string) => openModals.value.has(modalId));
@@ -450,6 +451,10 @@ export const useUIStore = defineStore('ui', () => {
     pdfZoomLevel.value = Math.max(0.5, Math.min(3, zoom));
   }
 
+  function setPdfScrollPosition(position: { x: number; y: number }): void {
+    pdfScrollPosition.value = position;
+  }
+
   return {
     // State
     openModals,
@@ -481,6 +486,7 @@ export const useUIStore = defineStore('ui', () => {
     pdfPanelWidth,
     pdfCurrentPage,
     pdfZoomLevel,
+    pdfScrollPosition,
 
     // Computed
     isModalOpen,
@@ -543,5 +549,6 @@ export const useUIStore = defineStore('ui', () => {
     setPdfPanelWidth,
     setPdfCurrentPage,
     setPdfZoomLevel,
+    setPdfScrollPosition,
   };
 });

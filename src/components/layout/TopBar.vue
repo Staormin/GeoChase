@@ -170,7 +170,7 @@
 
         <!-- PDF button -->
         <v-btn
-          :color="projectsStore.hasPdf() ? 'primary' : 'surface-bright'"
+          color="surface-bright"
           data-testid="pdf-btn"
           icon="mdi-file-pdf-box"
           variant="elevated"

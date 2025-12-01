@@ -46,6 +46,7 @@ export function useViewDataSync(mapContainer: MapContainer) {
       pdfPanelWidth: uiStore.pdfPanelWidth,
       pdfCurrentPage: uiStore.pdfCurrentPage,
       pdfZoomLevel: uiStore.pdfZoomLevel,
+      pdfScrollPosition: uiStore.pdfScrollPosition,
       mapView: {
         lat: center.lat,
         lon: center.lon,
@@ -90,6 +91,9 @@ export function useViewDataSync(mapContainer: MapContainer) {
     }
     if (viewData.pdfZoomLevel) {
       uiStore.setPdfZoomLevel(viewData.pdfZoomLevel);
+    }
+    if (viewData.pdfScrollPosition) {
+      uiStore.setPdfScrollPosition(viewData.pdfScrollPosition);
     }
 
     // Force map size update to account for panel states
@@ -156,6 +160,15 @@ export function useViewDataSync(mapContainer: MapContainer) {
       () => {
         debouncedSaveViewData();
       }
+    );
+
+    // Watch PDF scroll position
+    watch(
+      () => uiStore.pdfScrollPosition,
+      () => {
+        debouncedSaveViewData();
+      },
+      { deep: true }
     );
 
     // Watch map view changes (center and zoom)
