@@ -74,14 +74,12 @@
 <script lang="ts" setup>
 import { computed, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const coordinatesStore = useCoordinatesStore();
 const projectsStore = useProjectsStore();
 const mapContainer = inject('mapContainer') as any;
 const drawing = inject('drawing') as any;
@@ -110,13 +108,12 @@ function loadProject(projectId: string) {
       // Clear current map layers and store
       mapContainer.clearLayers();
       layersStore.clearLayers();
-      coordinatesStore.clearCoordinates();
 
-      // Load new layers from project
-      layersStore.loadLayers(project.data);
-
-      // Load coordinates from project
-      coordinatesStore.loadCoordinates(project.data.savedCoordinates || []);
+      // Load new layers from project (including migration of savedCoordinates to points)
+      layersStore.loadLayers({
+        ...project.data,
+        savedCoordinates: (project.data as any).savedCoordinates || [],
+      });
 
       // Redraw on map
       drawing.redrawAllElements();
@@ -132,7 +129,6 @@ function loadProject(projectId: string) {
       // Revert to clean state
       mapContainer.clearLayers();
       layersStore.clearLayers();
-      coordinatesStore.clearCoordinates();
     }
   }
 }

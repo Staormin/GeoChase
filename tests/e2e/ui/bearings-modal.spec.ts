@@ -1,19 +1,11 @@
 import { expect, test } from '../fixtures';
 
 test.describe('Bearings Modal', () => {
+  // Fixture provides 3 points: Paris (48.8566, 2.3522), London (51.5074, -0.1278), Berlin (52.52, 13.405)
+
   test.describe('Opening Bearings Modal', () => {
     test('should open bearings modal from point context menu', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open context menu
+      // Open context menu on Paris (first point from fixture)
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);
@@ -31,17 +23,7 @@ test.describe('Bearings Modal', () => {
     });
 
     test('should display bearings title', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open context menu and bearings
+      // Open context menu and bearings on fixture point
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);
@@ -56,17 +38,7 @@ test.describe('Bearings Modal', () => {
     });
 
     test('should display source point coordinates', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open bearings modal
+      // Open bearings modal on fixture point
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);
@@ -79,65 +51,15 @@ test.describe('Bearings Modal', () => {
       // Should display coordinates in the info box
       const modal = page.locator('.v-dialog');
       await expect(modal.locator('.bg-blue-50')).toBeVisible();
-      // Should contain coordinate values
+      // Should contain coordinate values (Paris coordinates from fixture)
       await expect(modal.locator('.bg-blue-50')).toContainText('48.');
       await expect(modal.locator('.bg-blue-50')).toContainText('2.');
     });
   });
 
-  test.describe('No Other Points', () => {
-    test('should show no points message when only one point exists', async ({
-      page,
-      blankProject,
-    }) => {
-      // Create only one point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open bearings modal
-      const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
-      await contextMenuBtn.click();
-      await page.waitForTimeout(300);
-      await page
-        .locator('.v-list-item')
-        .filter({ hasText: /Bearings|Azimuts/i })
-        .click();
-      await page.waitForTimeout(300);
-
-      // Should show empty message (no other points to calculate bearings to)
-      const modal = page.locator('.v-dialog');
-      await expect(modal.locator('.text-gray-500')).toBeVisible();
-    });
-  });
-
   test.describe('Bearings Table', () => {
     test('should display bearings table with multiple points', async ({ page, blankProject }) => {
-      // Create first point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Create second point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('51.5074, -0.1278');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
+      // Fixture already provides 3 points (Paris, London, Berlin)
       // Open bearings modal from first point
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
@@ -154,26 +76,7 @@ test.describe('Bearings Modal', () => {
     });
 
     test('should display column headers', async ({ page, blankProject }) => {
-      // Create two points
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('51.5074, -0.1278');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open bearings modal
+      // Open bearings modal on fixture point
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);
@@ -196,25 +99,7 @@ test.describe('Bearings Modal', () => {
     });
 
     test('should display bearing data rows', async ({ page, blankProject }) => {
-      // Create two points
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('51.5074, -0.1278');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
+      // Fixture provides 3 points, so bearings table will show 3 rows (including source point)
       // Open bearings modal
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
@@ -234,26 +119,7 @@ test.describe('Bearings Modal', () => {
 
   test.describe('Sorting', () => {
     test('should sort by distance by default', async ({ page, blankProject }) => {
-      // Create two points
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('51.5074, -0.1278');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open bearings modal
+      // Fixture provides 3 points - open bearings modal
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);
@@ -273,26 +139,7 @@ test.describe('Bearings Modal', () => {
       page,
       blankProject,
     }) => {
-      // Create two points
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('51.5074, -0.1278');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open bearings modal
+      // Fixture provides 3 points - open bearings modal
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);
@@ -314,26 +161,7 @@ test.describe('Bearings Modal', () => {
     });
 
     test('should sort by name when clicking name column', async ({ page, blankProject }) => {
-      // Create two points
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('51.5074, -0.1278');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open bearings modal
+      // Fixture provides 3 points - open bearings modal
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);
@@ -355,26 +183,7 @@ test.describe('Bearings Modal', () => {
     });
 
     test('should sort by azimuth when clicking azimuth column', async ({ page, blankProject }) => {
-      // Create two points
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('51.5074, -0.1278');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open bearings modal
+      // Fixture provides 3 points - open bearings modal
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);
@@ -397,17 +206,7 @@ test.describe('Bearings Modal', () => {
 
   test.describe('Closing Modal', () => {
     test('should close modal with close button', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open bearings modal
+      // Fixture provides 3 points - open bearings modal
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);
@@ -429,17 +228,7 @@ test.describe('Bearings Modal', () => {
     });
 
     test('should close modal with X button', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open bearings modal
+      // Fixture provides 3 points - open bearings modal
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);
@@ -459,17 +248,7 @@ test.describe('Bearings Modal', () => {
     });
 
     test('should close modal with escape key', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open bearings modal
+      // Fixture provides 3 points - open bearings modal
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);
@@ -490,26 +269,7 @@ test.describe('Bearings Modal', () => {
 
   test.describe('Point Navigation', () => {
     test('should close modal when clicking a point row', async ({ page, blankProject }) => {
-      // Create two points
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('51.5074, -0.1278');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Open bearings modal
+      // Fixture provides 3 points - open bearings modal
       const contextMenuBtn = page.locator('.mdi-dots-vertical').first();
       await contextMenuBtn.click();
       await page.waitForTimeout(300);

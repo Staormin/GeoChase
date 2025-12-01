@@ -80,7 +80,6 @@ export const useProjectsStore = defineStore('projects', () => {
       lineSegments: [],
       points: [],
       polygons: [],
-      savedCoordinates: [],
       notes: [],
     });
 

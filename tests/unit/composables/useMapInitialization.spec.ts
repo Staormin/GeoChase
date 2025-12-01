@@ -1,10 +1,9 @@
 import { createPinia, setActivePinia } from 'pinia';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 import { useMapInitialization } from '@/composables/useMapInitialization';
 // Mock isLanguageSet to return true by default (language is always set in tests)
 import { isLanguageSet } from '@/plugins/i18n';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 
@@ -26,7 +25,6 @@ describe('useMapInitialization', () => {
   let projectsStore: any;
   let uiStore: any;
   let layersStore: any;
-  let coordinatesStore: any;
   let mockMapContainer: any;
   let mockDrawing: any;
   let noteTooltipsRef: any;
@@ -39,7 +37,6 @@ describe('useMapInitialization', () => {
     projectsStore = useProjectsStore();
     uiStore = useUIStore();
     layersStore = useLayersStore();
-    coordinatesStore = useCoordinatesStore();
 
     // Mock map container
     mockMapContainer = {
@@ -106,7 +103,6 @@ describe('useMapInitialization', () => {
         lineSegments: [],
         points: [],
         polygons: [],
-        savedCoordinates: [],
         notes: [],
       });
       projectsStore.updateViewData(mockViewData);
@@ -124,7 +120,6 @@ describe('useMapInitialization', () => {
         lineSegments: [],
         points: [],
         polygons: [],
-        savedCoordinates: [],
         notes: [],
       });
 
@@ -138,7 +133,6 @@ describe('useMapInitialization', () => {
   describe('Project Loading', () => {
     it('should load active project with all data', async () => {
       const loadLayersSpy = vi.spyOn(layersStore, 'loadLayers');
-      const loadCoordinatesSpy = vi.spyOn(coordinatesStore, 'loadCoordinates');
 
       // Create project with data
       const projectData = {
@@ -182,7 +176,6 @@ describe('useMapInitialization', () => {
             linkedElementId: 'c1',
           },
         ],
-        savedCoordinates: [{ id: 'coord1', name: 'Coord 1', lat: 48, lon: 2 }],
       };
 
       // Manually set up the project in the store
@@ -203,10 +196,9 @@ describe('useMapInitialization', () => {
         points: projectData.points,
         polygons: projectData.polygons,
         notes: projectData.notes,
+        savedCoordinates: [],
       });
-      expect(loadCoordinatesSpy).toHaveBeenCalledWith(projectData.savedCoordinates);
       expect(mockDrawing.redrawAllElements).toHaveBeenCalled();
-      // Project loaded successfully (console logging removed)
     });
 
     it('should skip auto-fly when project has view data', async () => {
@@ -220,7 +212,6 @@ describe('useMapInitialization', () => {
           points: [],
           polygons: [],
           notes: [],
-          savedCoordinates: [],
         },
         viewData: {
           mapView: { lat: 48, lon: 2, zoom: 12 },
@@ -245,7 +236,6 @@ describe('useMapInitialization', () => {
         circles: [],
         lineSegments: [],
         points: [],
-        savedCoordinates: [],
       };
 
       // Manually set up project without polygons and notes
@@ -266,20 +256,21 @@ describe('useMapInitialization', () => {
         points: [],
         polygons: [],
         notes: [],
+        savedCoordinates: [],
       });
     });
 
-    it('should handle project without savedCoordinates (use empty array fallback)', async () => {
-      const loadCoordinatesSpy = vi.spyOn(coordinatesStore, 'loadCoordinates');
+    it('should migrate legacy savedCoordinates to points', async () => {
+      const loadLayersSpy = vi.spyOn(layersStore, 'loadLayers');
 
       const projectData = {
         circles: [],
         lineSegments: [],
         points: [],
-        // No savedCoordinates field - should use || [] fallback
+        savedCoordinates: [{ id: 'coord1', name: 'Coord 1', lat: 48, lon: 2 }],
       };
 
-      // Manually set up project without savedCoordinates
+      // Manually set up project with legacy savedCoordinates
       projectsStore.projects.push({
         id: 'test-id',
         name: 'Test Project',
@@ -291,14 +282,20 @@ describe('useMapInitialization', () => {
 
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
 
-      // Should be called with empty array due to || [] fallback
-      expect(loadCoordinatesSpy).toHaveBeenCalledWith([]);
+      // Should pass savedCoordinates for migration
+      expect(loadLayersSpy).toHaveBeenCalledWith({
+        circles: [],
+        lineSegments: [],
+        points: [],
+        polygons: [],
+        notes: [],
+        savedCoordinates: projectData.savedCoordinates,
+      });
     });
 
     it('should handle project loading error', async () => {
       const addToastSpy = vi.spyOn(uiStore, 'addToast');
       const clearLayersSpy = vi.spyOn(layersStore, 'clearLayers');
-      const clearCoordinatesSpy = vi.spyOn(coordinatesStore, 'clearCoordinates');
       const setActiveProjectSpy = vi.spyOn(projectsStore, 'setActiveProject');
 
       // Manually set up project
@@ -311,7 +308,6 @@ describe('useMapInitialization', () => {
           points: [],
           polygons: [],
           notes: [],
-          savedCoordinates: [],
         },
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -325,14 +321,13 @@ describe('useMapInitialization', () => {
 
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
 
-      // Error handling (console logging removed)
+      // Error handling
       expect(addToastSpy).toHaveBeenCalledWith(
         'Failed to load project "Test Project". Some elements may not display correctly.',
         'error',
         5000
       );
       expect(clearLayersSpy).toHaveBeenCalled();
-      expect(clearCoordinatesSpy).toHaveBeenCalled();
       expect(setActiveProjectSpy).toHaveBeenCalledWith(null);
     });
 
@@ -356,7 +351,7 @@ describe('useMapInitialization', () => {
 
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
 
-      // Fatal error handling (console logging removed)
+      // Fatal error handling
       expect(addToastSpy).toHaveBeenCalledWith(
         'Failed to initialize the application. Please refresh the page.',
         'error',
@@ -377,7 +372,6 @@ describe('useMapInitialization', () => {
           points: [],
           polygons: [],
           notes: [],
-          savedCoordinates: [],
         },
         viewData: {
           mapView: { lat: 48, lon: 2, zoom: 12 },
@@ -395,7 +389,7 @@ describe('useMapInitialization', () => {
 
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
 
-      // Fatal error handling (console logging removed)
+      // Fatal error handling
       expect(addToastSpy).toHaveBeenCalledWith(
         'Failed to initialize the application. Please refresh the page.',
         'error',

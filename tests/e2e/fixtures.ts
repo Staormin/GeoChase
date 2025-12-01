@@ -14,7 +14,6 @@ interface ProjectData {
     lineSegments: any[];
     points: any[];
     polygons: any[];
-    savedCoordinates: any[];
     notes: any[];
   };
   viewData?: {
@@ -63,7 +62,6 @@ function createBlankProject(overrides: Partial<ProjectData> = {}): ProjectData {
       lineSegments: [],
       points: [],
       polygons: [],
-      savedCoordinates: [],
       notes: [],
     },
     viewData: overrides.viewData,
@@ -99,7 +97,7 @@ export const test = base.extend<ProjectFixtures>({
   },
 
   /**
-   * Blank project fixture - sets up a fresh empty project with some saved coordinates
+   * Blank project fixture - sets up a fresh empty project with some pre-defined points
    * Use this when you want to test features that require a project to exist
    */
   blankProject: async ({ page }, use, testInfo) => {
@@ -107,13 +105,27 @@ export const test = base.extend<ProjectFixtures>({
       data: {
         circles: [],
         lineSegments: [],
-        points: [],
-        polygons: [],
-        savedCoordinates: [
-          { id: 'coord-1', name: 'Paris', lat: 48.8566, lon: 2.3522, timestamp: Date.now() },
-          { id: 'coord-2', name: 'London', lat: 51.5074, lon: -0.1278, timestamp: Date.now() },
-          { id: 'coord-3', name: 'Berlin', lat: 52.52, lon: 13.405, timestamp: Date.now() },
+        points: [
+          {
+            id: 'point-1',
+            name: 'Paris',
+            coordinates: { lat: 48.8566, lon: 2.3522 },
+            createdAt: Date.now(),
+          },
+          {
+            id: 'point-2',
+            name: 'London',
+            coordinates: { lat: 51.5074, lon: -0.1278 },
+            createdAt: Date.now(),
+          },
+          {
+            id: 'point-3',
+            name: 'Berlin',
+            coordinates: { lat: 52.52, lon: 13.405 },
+            createdAt: Date.now(),
+          },
         ],
+        polygons: [],
         notes: [],
       },
     });
