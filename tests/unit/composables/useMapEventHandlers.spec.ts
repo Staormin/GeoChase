@@ -51,107 +51,79 @@ describe('useMapEventHandlers', () => {
       mapEventHandlers.setup();
     });
 
-    it('should format coordinates and open modal on right-click', () => {
-      const setCoordinatesFormDataSpy = vi.spyOn(uiStore, 'setCoordinatesFormData');
+    it('should start creating point and open modal on right-click', () => {
+      const startCreatingSpy = vi.spyOn(uiStore, 'startCreating');
       const openModalSpy = vi.spyOn(uiStore, 'openModal');
 
       // Simulate right-click with coordinates
       mockRightClickHandler(48.856_613, 2.352_222);
 
-      // Should format coordinates to 6 decimal places
-      expect(setCoordinatesFormDataSpy).toHaveBeenCalledWith({
-        name: '',
-        coordinates: '48.856613, 2.352222',
+      // Should start creating a point with prefill
+      expect(startCreatingSpy).toHaveBeenCalledWith('point', {
+        lat: 48.856_613,
+        lon: 2.352_222,
       });
 
-      expect(openModalSpy).toHaveBeenCalledWith('coordinatesModal');
-    });
-
-    it('should handle different coordinate precisions', () => {
-      const setCoordinatesFormDataSpy = vi.spyOn(uiStore, 'setCoordinatesFormData');
-
-      // Test with many decimal places
-      mockRightClickHandler(48.123_456_789, 2.987_654_321);
-
-      expect(setCoordinatesFormDataSpy).toHaveBeenCalledWith({
-        name: '',
-        coordinates: '48.123457, 2.987654',
-      });
+      expect(openModalSpy).toHaveBeenCalledWith('pointModal');
     });
 
     it('should handle negative coordinates', () => {
-      const setCoordinatesFormDataSpy = vi.spyOn(uiStore, 'setCoordinatesFormData');
+      const startCreatingSpy = vi.spyOn(uiStore, 'startCreating');
 
       // Test with negative coordinates
       mockRightClickHandler(-33.868_82, 151.209_29);
 
-      expect(setCoordinatesFormDataSpy).toHaveBeenCalledWith({
-        name: '',
-        coordinates: '-33.868820, 151.209290',
+      expect(startCreatingSpy).toHaveBeenCalledWith('point', {
+        lat: -33.868_82,
+        lon: 151.209_29,
       });
     });
 
     it('should handle zero coordinates', () => {
-      const setCoordinatesFormDataSpy = vi.spyOn(uiStore, 'setCoordinatesFormData');
+      const startCreatingSpy = vi.spyOn(uiStore, 'startCreating');
 
       // Test with zero coordinates (Null Island)
       mockRightClickHandler(0, 0);
 
-      expect(setCoordinatesFormDataSpy).toHaveBeenCalledWith({
-        name: '',
-        coordinates: '0.000000, 0.000000',
-      });
-    });
-
-    it('should round coordinates to 6 decimal places', () => {
-      const setCoordinatesFormDataSpy = vi.spyOn(uiStore, 'setCoordinatesFormData');
-
-      // Test rounding
-      mockRightClickHandler(48.856_613_999_999_9, 2.352_222_999_999_9);
-
-      expect(setCoordinatesFormDataSpy).toHaveBeenCalledWith({
-        name: '',
-        coordinates: '48.856614, 2.352223',
+      expect(startCreatingSpy).toHaveBeenCalledWith('point', {
+        lat: 0,
+        lon: 0,
       });
     });
 
     it('should handle very large coordinates', () => {
-      const setCoordinatesFormDataSpy = vi.spyOn(uiStore, 'setCoordinatesFormData');
+      const startCreatingSpy = vi.spyOn(uiStore, 'startCreating');
 
       // Test with maximum valid latitude/longitude
       mockRightClickHandler(89.999_999, 179.999_999);
 
-      expect(setCoordinatesFormDataSpy).toHaveBeenCalledWith({
-        name: '',
-        coordinates: '89.999999, 179.999999',
+      expect(startCreatingSpy).toHaveBeenCalledWith('point', {
+        lat: 89.999_999,
+        lon: 179.999_999,
       });
     });
 
     it('should handle very small negative coordinates', () => {
-      const setCoordinatesFormDataSpy = vi.spyOn(uiStore, 'setCoordinatesFormData');
+      const startCreatingSpy = vi.spyOn(uiStore, 'startCreating');
 
       // Test with minimum valid latitude/longitude
       mockRightClickHandler(-89.999_999, -179.999_999);
 
-      expect(setCoordinatesFormDataSpy).toHaveBeenCalledWith({
-        name: '',
-        coordinates: '-89.999999, -179.999999',
+      expect(startCreatingSpy).toHaveBeenCalledWith('point', {
+        lat: -89.999_999,
+        lon: -179.999_999,
       });
     });
 
-    it('should always set empty name in form data', () => {
-      const setCoordinatesFormDataSpy = vi.spyOn(uiStore, 'setCoordinatesFormData');
+    it('should always open point modal', () => {
+      const openModalSpy = vi.spyOn(uiStore, 'openModal');
 
-      // Multiple calls should always have empty name
+      // Multiple calls should always open pointModal
       mockRightClickHandler(10, 20);
-      expect(setCoordinatesFormDataSpy).toHaveBeenLastCalledWith(
-        expect.objectContaining({ name: '' })
-      );
+      expect(openModalSpy).toHaveBeenLastCalledWith('pointModal');
 
       mockRightClickHandler(30, 40);
-      expect(setCoordinatesFormDataSpy).toHaveBeenLastCalledWith(
-        expect.objectContaining({ name: '' })
-      );
+      expect(openModalSpy).toHaveBeenLastCalledWith('pointModal');
     });
   });
 

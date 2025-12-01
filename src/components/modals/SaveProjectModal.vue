@@ -61,7 +61,6 @@ function submitForm() {
       lineSegments: layerData.lineSegments,
       points: layerData.points,
       polygons: layerData.polygons,
-      savedCoordinates: [],
       notes: layerData.notes,
     });
     uiStore.addToast(t('project.saved'), 'success');

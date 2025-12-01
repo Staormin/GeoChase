@@ -26,8 +26,10 @@
             @keyup.enter="submitPageInput"
             @keyup.escape="cancelPageInput"
           />
+          <!-- eslint-disable-next-line @intlify/vue-i18n/no-raw-text -->
           <span class="text-body-2">/ {{ totalPages }}</span>
         </div>
+        <!-- eslint-disable @intlify/vue-i18n/no-raw-text -->
         <span
           v-else
           class="text-body-2 px-2 py-1 rounded cursor-pointer hover:bg-surface-variant"
@@ -39,6 +41,7 @@
         >
           {{ currentPage }} / {{ totalPages }}
         </span>
+        <!-- eslint-enable @intlify/vue-i18n/no-raw-text -->
         <v-btn
           density="compact"
           :disabled="currentPage >= totalPages"
@@ -52,9 +55,11 @@
       <!-- Zoom and action controls -->
       <div class="d-flex align-center ga-1">
         <v-btn density="compact" icon="mdi-minus" size="small" variant="text" @click="zoomOut" />
+        <!-- eslint-disable @intlify/vue-i18n/no-raw-text -->
         <span class="text-body-2" style="min-width: 50px; text-align: center">
           {{ Math.round(scale * 100) }}%
         </span>
+        <!-- eslint-enable @intlify/vue-i18n/no-raw-text -->
         <v-btn density="compact" icon="mdi-plus" size="small" variant="text" @click="zoomIn" />
         <v-btn
           density="compact"

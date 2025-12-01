@@ -185,8 +185,8 @@ test.describe('Line Drawing', () => {
       await page.click('text=Delete');
       await page.waitForTimeout(300);
 
-      // Verify line is removed
-      await expect(page.locator('.layer-item')).toHaveCount(0);
+      // Verify line is removed (3 pre-defined points remain from fixture)
+      await expect(page.locator('.layer-item')).toHaveCount(3);
     });
 
     test('should toggle line visibility', async ({ page, blankProject }) => {

@@ -1,7 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 
 // Mock the address service
@@ -23,13 +22,11 @@ vi.mock('@/services/address', () => ({
 
 describe('useLineNameGeneration', () => {
   let pinia: any;
-  let coordinatesStore: any;
   let layersStore: any;
 
   beforeEach(() => {
     pinia = createPinia();
     setActivePinia(pinia);
-    coordinatesStore = useCoordinatesStore();
     layersStore = useLayersStore();
   });
 
@@ -73,20 +70,24 @@ describe('useLineNameGeneration', () => {
   });
 
   describe('generateParallelName', () => {
-    it('should use saved coordinate name when available', () => {
+    it('should use point name when available', () => {
       const { generateParallelName } = useLineNameGeneration();
 
-      // Add a saved coordinate
-      coordinatesStore.addCoordinate('Eiffel Tower', 48.8584, 2.2945, '1');
+      // Add a point
+      layersStore.addPoint({
+        id: '1',
+        name: 'Eiffel Tower',
+        coordinates: { lat: 48.8584, lon: 2.2945 },
+      });
 
       // Test with exact match (within tolerance)
       expect(generateParallelName(48.8584)).toBe('Parallel to Eiffel Tower');
 
       // Test with value within tolerance
-      expect(generateParallelName(48.858_45)).toBe('Parallel to Eiffel Tower');
+      expect(generateParallelName(48.8585)).toBe('Parallel to Eiffel Tower');
     });
 
-    it('should generate default name when no saved coordinate matches', () => {
+    it('should generate default name when no point matches', () => {
       const { generateParallelName } = useLineNameGeneration();
 
       expect(generateParallelName(45.123_456)).toBe('Parallel at 45.123456°');
@@ -95,17 +96,21 @@ describe('useLineNameGeneration', () => {
   });
 
   describe('getLocationName', () => {
-    it('should return saved coordinate name when available', async () => {
+    it('should return point name when available', async () => {
       const { getLocationName } = useLineNameGeneration();
 
-      // Add a saved coordinate
-      coordinatesStore.addCoordinate('Arc de Triomphe', 48.8738, 2.295, '1');
+      // Add a point
+      layersStore.addPoint({
+        id: '1',
+        name: 'Arc de Triomphe',
+        coordinates: { lat: 48.8738, lon: 2.295 },
+      });
 
       const name = await getLocationName(48.8738, 2.295);
       expect(name).toBe('Arc de Triomphe');
     });
 
-    it('should use reverse geocoding when no saved coordinate', async () => {
+    it('should use reverse geocoding when no point matches', async () => {
       const { getLocationName } = useLineNameGeneration();
 
       // Test with Paris coordinates
@@ -123,35 +128,51 @@ describe('useLineNameGeneration', () => {
   });
 
   describe('generateTwoPointsName', () => {
-    it('should use both saved coordinate names when available', async () => {
+    it('should use both point names when available', async () => {
       const { generateTwoPointsName } = useLineNameGeneration();
 
-      // Add saved coordinates
-      coordinatesStore.addCoordinate('Point A', 48.8584, 2.2945, '1');
-      coordinatesStore.addCoordinate('Point B', 48.8738, 2.295, '2');
+      // Add points
+      layersStore.addPoint({
+        id: '1',
+        name: 'Point A',
+        coordinates: { lat: 48.8584, lon: 2.2945 },
+      });
+      layersStore.addPoint({
+        id: '2',
+        name: 'Point B',
+        coordinates: { lat: 48.8738, lon: 2.295 },
+      });
 
       const name = await generateTwoPointsName(48.8584, 2.2945, 48.8738, 2.295);
       expect(name).toBe('Point A => Point B');
     });
 
-    it('should mix saved and geocoded names when only one is saved', async () => {
+    it('should mix point and geocoded names when only one is a point', async () => {
       const { generateTwoPointsName } = useLineNameGeneration();
 
-      // Add one saved coordinate
-      coordinatesStore.addCoordinate('Start Point', 48.8584, 2.2945, '1');
+      // Add one point
+      layersStore.addPoint({
+        id: '1',
+        name: 'Start Point',
+        coordinates: { lat: 48.8584, lon: 2.2945 },
+      });
 
-      // Start is saved, end will be geocoded
+      // Start is point, end will be geocoded
       const name1 = await generateTwoPointsName(48.8584, 2.2945, 48.8566, 2.3522);
       expect(name1).toBe('Start Point => Paris, France');
 
-      // Start will be geocoded, end is saved
-      coordinatesStore.addCoordinate('End Point', 51.5074, -0.1278, '2');
+      // Start will be geocoded, end is point
+      layersStore.addPoint({
+        id: '2',
+        name: 'End Point',
+        coordinates: { lat: 51.5074, lon: -0.1278 },
+      });
 
       const name2 = await generateTwoPointsName(48.8566, 2.3522, 51.5074, -0.1278);
       expect(name2).toBe('Paris, France => End Point');
     });
 
-    it('should use geocoding for both points when no saved coordinates', async () => {
+    it('should use geocoding for both points when no points match', async () => {
       const { generateTwoPointsName } = useLineNameGeneration();
 
       const name = await generateTwoPointsName(48.8566, 2.3522, 51.5074, -0.1278);
@@ -165,40 +186,52 @@ describe('useLineNameGeneration', () => {
       expect(name).toBe('12.3456, 78.9012 => 23.4567, 89.0123');
     });
 
-    it('should use coordinate fallback for end when start is saved and end geocode fails', async () => {
+    it('should use coordinate fallback for end when start is a point and end geocode fails', async () => {
       const { generateTwoPointsName } = useLineNameGeneration();
 
-      // Add saved coordinate for start point only
-      coordinatesStore.addCoordinate('My Start', 48.8584, 2.2945, '1');
+      // Add point for start point only
+      layersStore.addPoint({
+        id: '1',
+        name: 'My Start',
+        coordinates: { lat: 48.8584, lon: 2.2945 },
+      });
 
-      // Start is saved, end coordinates don't match any mock address
+      // Start is point, end coordinates don't match any mock address
       const name = await generateTwoPointsName(48.8584, 2.2945, 12.3456, 78.9012);
       expect(name).toBe('My Start => 12.3456, 78.9012');
     });
 
-    it('should use coordinate fallback for start when end is saved and start geocode fails', async () => {
+    it('should use coordinate fallback for start when end is a point and start geocode fails', async () => {
       const { generateTwoPointsName } = useLineNameGeneration();
 
-      // Add saved coordinate for end point only
-      coordinatesStore.addCoordinate('My End', 51.5074, -0.1278, '1');
+      // Add point for end point only
+      layersStore.addPoint({
+        id: '1',
+        name: 'My End',
+        coordinates: { lat: 51.5074, lon: -0.1278 },
+      });
 
-      // End is saved, start coordinates don't match any mock address
+      // End is point, start coordinates don't match any mock address
       const name = await generateTwoPointsName(12.3456, 78.9012, 51.5074, -0.1278);
       expect(name).toBe('12.3456, 78.9012 => My End');
     });
   });
 
   describe('generateAzimuthName', () => {
-    it('should use saved coordinate name when available', async () => {
+    it('should use point name when available', async () => {
       const { generateAzimuthName } = useLineNameGeneration();
 
-      coordinatesStore.addCoordinate('Observation Point', 48.8584, 2.2945, '1');
+      layersStore.addPoint({
+        id: '1',
+        name: 'Observation Point',
+        coordinates: { lat: 48.8584, lon: 2.2945 },
+      });
 
       const name = await generateAzimuthName(48.8584, 2.2945, 45);
       expect(name).toBe('From Observation Point at 45°');
     });
 
-    it('should use geocoded address when no saved coordinate', async () => {
+    it('should use geocoded address when no point matches', async () => {
       const { generateAzimuthName } = useLineNameGeneration();
 
       const name = await generateAzimuthName(48.8566, 2.3522, 90);
@@ -214,26 +247,38 @@ describe('useLineNameGeneration', () => {
   });
 
   describe('generateIntersectionName', () => {
-    it('should use saved coordinate names when available', async () => {
+    it('should use point names when available', async () => {
       const { generateIntersectionName } = useLineNameGeneration();
 
-      coordinatesStore.addCoordinate('Start Point', 48.8584, 2.2945, '1');
-      coordinatesStore.addCoordinate('Intersection Point', 48.8738, 2.295, '2');
+      layersStore.addPoint({
+        id: '1',
+        name: 'Start Point',
+        coordinates: { lat: 48.8584, lon: 2.2945 },
+      });
+      layersStore.addPoint({
+        id: '2',
+        name: 'Intersection Point',
+        coordinates: { lat: 48.8738, lon: 2.295 },
+      });
 
       const name = await generateIntersectionName(48.8584, 2.2945, 48.8738, 2.295);
       expect(name).toBe('From Start Point via Intersection Point');
     });
 
-    it('should mix saved and geocoded names', async () => {
+    it('should mix point and geocoded names', async () => {
       const { generateIntersectionName } = useLineNameGeneration();
 
-      coordinatesStore.addCoordinate('Origin', 48.8584, 2.2945, '1');
+      layersStore.addPoint({
+        id: '1',
+        name: 'Origin',
+        coordinates: { lat: 48.8584, lon: 2.2945 },
+      });
 
       const name = await generateIntersectionName(48.8584, 2.2945, 51.5074, -0.1278);
       expect(name).toBe('From Origin via London, UK');
     });
 
-    it('should use geocoding for both points when no saved coordinates', async () => {
+    it('should use geocoding for both points when no points match', async () => {
       const { generateIntersectionName } = useLineNameGeneration();
 
       const name = await generateIntersectionName(48.8566, 2.3522, 40.7128, -74.006);

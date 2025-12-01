@@ -10,7 +10,6 @@
   <AngleLineModal v-if="uiStore.isModalOpen('angleLineModal')" />
   <PolygonModal v-if="uiStore.isModalOpen('polygonModal')" />
   <AddPointOnSegmentModal v-if="uiStore.isModalOpen('addPointOnSegmentModal')" />
-  <CoordinatesModal v-if="uiStore.isModalOpen('coordinatesModal')" />
   <NewProjectModal v-if="uiStore.isModalOpen('newProjectModal')" />
   <LoadProjectModal v-if="uiStore.isModalOpen('loadProjectModal')" />
   <BearingsModal v-if="uiStore.bearingsPanel.isOpen" />
@@ -27,7 +26,6 @@ import AnimationModal from '@/components/modals/AnimationModal.vue';
 import AzimuthLineModal from '@/components/modals/AzimuthLineModal.vue';
 import BearingsModal from '@/components/modals/BearingsModal.vue';
 import CircleModal from '@/components/modals/CircleModal.vue';
-import CoordinatesModal from '@/components/modals/CoordinatesModal.vue';
 import FreeHandLineModal from '@/components/modals/FreeHandLineModal.vue';
 import IntersectionLineModal from '@/components/modals/IntersectionLineModal.vue';
 import LanguageModal from '@/components/modals/LanguageModal.vue';

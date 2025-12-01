@@ -39,7 +39,6 @@
 <script lang="ts" setup>
 import { computed, inject, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
@@ -47,7 +46,6 @@ import { useUIStore } from '@/stores/ui';
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const projectsStore = useProjectsStore();
-const coordinatesStore = useCoordinatesStore();
 const mapContainer = inject('mapContainer') as any;
 const { t } = useI18n();
 
@@ -77,7 +75,6 @@ function submitForm() {
             lineSegments: layerData.lineSegments,
             points: layerData.points,
             polygons: layerData.polygons,
-            savedCoordinates: coordinatesStore.sortedCoordinates,
             notes: layerData.notes,
           }
         );
@@ -90,13 +87,11 @@ function submitForm() {
       lineSegments: [],
       points: [],
       polygons: [],
-      savedCoordinates: [],
       notes: [],
     });
 
     // Clear the current view
     layersStore.clearLayers();
-    coordinatesStore.clearCoordinates();
 
     // Clear OpenLayers map layers
     if (mapContainer) {

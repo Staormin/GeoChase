@@ -2,7 +2,6 @@ import { createPinia, setActivePinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import { useAutoSave } from '@/composables/useAutoSave';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 
@@ -10,14 +9,12 @@ describe('useAutoSave', () => {
   let pinia: any;
   let projectsStore: any;
   let layersStore: any;
-  let coordinatesStore: any;
 
   beforeEach(() => {
     pinia = createPinia();
     setActivePinia(pinia);
     projectsStore = useProjectsStore();
     layersStore = useLayersStore();
-    coordinatesStore = useCoordinatesStore();
 
     // Reset timers
     vi.useFakeTimers();
@@ -90,7 +87,6 @@ describe('useAutoSave', () => {
       lineSegments: layersStore.lineSegments,
       points: layersStore.points,
       polygons: layersStore.polygons,
-      savedCoordinates: coordinatesStore.savedCoordinates,
       notes: layersStore.notes,
     });
   });
@@ -121,10 +117,8 @@ describe('useAutoSave', () => {
     layersStore.addPoint({
       id: '2',
       name: 'Point 1',
-      lat: 1,
-      lon: 1,
+      coordinates: { lat: 1, lon: 1 },
       color: '#00ff00',
-      visible: true,
     });
     await nextTick();
 
@@ -153,7 +147,7 @@ describe('useAutoSave', () => {
     expect(autoSaveSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should trigger on coordinate changes', async () => {
+  it('should trigger on point changes', async () => {
     const autoSaveSpy = vi.spyOn(projectsStore, 'autoSaveActiveProject');
 
     // Set an active project
@@ -162,8 +156,13 @@ describe('useAutoSave', () => {
     // Initialize auto-save
     useAutoSave();
 
-    // Add a coordinate
-    coordinatesStore.addCoordinate('Test Point', 48.8566, 2.3522);
+    // Add a point
+    layersStore.addPoint({
+      id: '1',
+      name: 'Test Point',
+      coordinates: { lat: 48.8566, lon: 2.3522 },
+      color: '#00ff00',
+    });
 
     await nextTick();
 
@@ -173,11 +172,10 @@ describe('useAutoSave', () => {
     expect(autoSaveSpy).toHaveBeenCalledTimes(1);
     expect(autoSaveSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        savedCoordinates: expect.arrayContaining([
+        points: expect.arrayContaining([
           expect.objectContaining({
             name: 'Test Point',
-            lat: 48.8566,
-            lon: 2.3522,
+            coordinates: { lat: 48.8566, lon: 2.3522 },
           }),
         ]),
       })
