@@ -36,48 +36,15 @@
   >
     <!-- Resize handle -->
     <div class="pdf-panel-resize-handle" @mousedown="startPdfPanelResize" />
-    <div class="d-flex flex-column h-100">
-      <!-- Header -->
-      <div class="d-flex align-center justify-space-between px-4 py-3 bg-surface-light">
-        <div class="d-flex align-center ga-2">
-          <v-icon>mdi-file-pdf-box</v-icon>
-          <span class="text-subtitle-1 font-weight-medium text-truncate" style="max-width: 300px">
-            {{ projectsStore.getPdfData()?.name || $t('pdf.title') }}
-          </span>
-        </div>
-        <div class="d-flex ga-1">
-          <v-btn
-            color="error"
-            density="compact"
-            icon="mdi-delete"
-            size="small"
-            variant="text"
-            @click="handleDeletePdf"
-          >
-            <v-icon>mdi-delete</v-icon>
-            <v-tooltip activator="parent" location="bottom">{{ $t('pdf.delete') }}</v-tooltip>
-          </v-btn>
-          <v-btn
-            density="compact"
-            icon="mdi-close"
-            size="small"
-            variant="text"
-            @click="uiStore.setPdfPanelOpen(false)"
-          >
-            <v-icon>mdi-close</v-icon>
-            <v-tooltip activator="parent" location="bottom">{{ $t('common.close') }}</v-tooltip>
-          </v-btn>
-        </div>
-      </div>
-      <v-divider />
-      <!-- PDF Viewer -->
-      <PdfViewer
-        v-if="projectsStore.getPdfData()?.data"
-        :pdf-data="projectsStore.getPdfData()?.data ?? ''"
-        :pdf-password="projectsStore.getPdfData()?.password"
-        @password-entered="handlePdfPasswordEntered"
-      />
-    </div>
+    <!-- PDF Viewer -->
+    <PdfViewer
+      v-if="projectsStore.getPdfData()?.data"
+      :pdf-data="projectsStore.getPdfData()?.data ?? ''"
+      :pdf-name="projectsStore.getPdfData()?.name"
+      :pdf-password="projectsStore.getPdfData()?.password"
+      @delete="handleDeletePdf"
+      @password-entered="handlePdfPasswordEntered"
+    />
   </v-navigation-drawer>
 
   <!-- Modals -->
