@@ -1,16 +1,8 @@
 /**
- * Storage service - localStorage management for projects and coordinates
+ * Storage service - localStorage management for projects
  */
 
 import { v4 as uuidv4 } from 'uuid';
-
-export interface SavedCoordinate {
-  id: string;
-  name: string;
-  lat: number;
-  lon: number;
-  timestamp?: number;
-}
 
 export interface ViewData {
   topPanelOpen: boolean;
@@ -44,7 +36,6 @@ export interface ProjectLayerData {
   lineSegments: LineSegmentElement[];
   points: PointElement[];
   polygons: PolygonElement[];
-  savedCoordinates: SavedCoordinate[];
   notes: NoteElement[];
 }
 

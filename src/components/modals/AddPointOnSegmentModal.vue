@@ -64,14 +64,12 @@ import { getDistance } from 'ol/sphere';
 import { computed, inject, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { destinationPoint } from '@/services/geometry';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 const { t } = useI18n();
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const coordinatesStore = useCoordinatesStore();
 const drawing = inject('drawing') as any;
 
 const distanceFromOptions = computed(() => [
@@ -274,24 +272,7 @@ function submitForm() {
   const name =
     form.value.name.trim() || t('common.pointName', { count: layersStore.pointCount + 1 });
 
-  // Create a simpler coordinate name (without the full line segment details)
-  let coordinateName = name;
-  if (form.value.name.trim()) {
-    if (name.includes(t('modals.addPointOnSegment.midpointSuffix'))) {
-      // For midpoint, extract just the essential part
-      coordinateName = t('modals.addPointOnSegment.midpointCoordinateName', {
-        count: layersStore.pointCount + 1,
-      });
-    }
-  } else {
-    // If auto-generated, use a simple format
-    coordinateName = t('common.pointName', { count: layersStore.pointCount + 1 });
-  }
-
-  // Save the coordinate first
-  coordinatesStore.addCoordinate(coordinateName, pointOnSegment.lat, pointOnSegment.lon);
-
-  // Then draw the point (use the full name for the point on the map)
+  // Draw the point
   const newPoint = drawing.drawPoint(pointOnSegment.lat, pointOnSegment.lon, name);
 
   // Update bidirectional relationship: line -> point and point -> line

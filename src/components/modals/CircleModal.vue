@@ -68,13 +68,11 @@
 import { computed, inject, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getReverseGeocodeAddress } from '@/services/address';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const coordinatesStore = useCoordinatesStore();
 const drawing = inject('drawing') as any;
 const { t } = useI18n();
 
@@ -85,9 +83,9 @@ const form = ref({
 });
 
 const coordinateItems = computed(() => {
-  return coordinatesStore.sortedCoordinates.map((coord) => ({
-    label: `${coord.name} (${coord.lat.toFixed(6)}, ${coord.lon.toFixed(6)})`,
-    value: `${coord.lat}, ${coord.lon}`,
+  return layersStore.sortedPoints.map((point) => ({
+    label: `${point.name} (${point.coordinates.lat.toFixed(6)}, ${point.coordinates.lon.toFixed(6)})`,
+    value: `${point.coordinates.lat}, ${point.coordinates.lon}`,
   }));
 });
 
@@ -167,13 +165,15 @@ async function submitForm() {
   // Autogenerate name if empty
   let name = form.value.name.trim();
   if (!name) {
-    // Check if coordinates match a saved coordinate
-    const savedCoord = coordinatesStore.sortedCoordinates.find(
-      (c: any) => Math.abs(c.lat - centerLat) < 0.0001 && Math.abs(c.lon - centerLon) < 0.0001
+    // Check if coordinates match a saved point
+    const matchingPoint = layersStore.sortedPoints.find(
+      (p) =>
+        Math.abs(p.coordinates.lat - centerLat) < 0.0001 &&
+        Math.abs(p.coordinates.lon - centerLon) < 0.0001
     );
 
-    if (savedCoord) {
-      name = `${t('common.circle')} ${savedCoord.name}`;
+    if (matchingPoint) {
+      name = `${t('common.circle')} ${matchingPoint.name}`;
     } else {
       // Try reverse geocoding
       const { address } = await getReverseGeocodeAddress(centerLat, centerLon);

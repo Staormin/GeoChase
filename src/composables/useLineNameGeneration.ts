@@ -1,30 +1,29 @@
 import { getReverseGeocodeAddress } from '@/services/address';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 
 /**
  * Composable for generating automatic line segment names based on mode and coordinates
  */
 export function useLineNameGeneration() {
-  const coordinatesStore = useCoordinatesStore();
   const layersStore = useLayersStore();
 
   /**
-   * Find a saved coordinate by lat/lon with tolerance
+   * Find a point by lat/lon with tolerance
    */
-  function findSavedCoordinate(lat: number, lon: number) {
-    return coordinatesStore.sortedCoordinates.find(
-      (c: any) => Math.abs(c.lat - lat) < 0.0001 && Math.abs(c.lon - lon) < 0.0001
+  function findPointAtLocation(lat: number, lon: number) {
+    return layersStore.sortedPoints.find(
+      (p) =>
+        Math.abs(p.coordinates.lat - lat) < 0.0001 && Math.abs(p.coordinates.lon - lon) < 0.0001
     );
   }
 
   /**
-   * Get a location name from saved coordinates or reverse geocoding
+   * Get a location name from points or reverse geocoding
    */
   async function getLocationName(lat: number, lon: number): Promise<string> {
-    const savedCoord = findSavedCoordinate(lat, lon);
-    if (savedCoord) {
-      return savedCoord.name;
+    const point = findPointAtLocation(lat, lon);
+    if (point) {
+      return point.name;
     }
 
     const { address } = await getReverseGeocodeAddress(lat, lon);
@@ -40,15 +39,15 @@ export function useLineNameGeneration() {
     endLat: number,
     endLon: number
   ): Promise<string> {
-    const startCoordSaved = findSavedCoordinate(startLat, startLon);
-    const endCoordSaved = findSavedCoordinate(endLat, endLon);
+    const startPoint = findPointAtLocation(startLat, startLon);
+    const endPoint = findPointAtLocation(endLat, endLon);
 
-    if (startCoordSaved && endCoordSaved) {
-      return `${startCoordSaved.name} => ${endCoordSaved.name}`;
-    } else if (startCoordSaved || endCoordSaved) {
-      // One coordinate is saved, try reverse geocoding for the other
-      const startName = startCoordSaved?.name;
-      const endName = endCoordSaved?.name;
+    if (startPoint && endPoint) {
+      return `${startPoint.name} => ${endPoint.name}`;
+    } else if (startPoint || endPoint) {
+      // One point exists, try reverse geocoding for the other
+      const startName = startPoint?.name;
+      const endName = endPoint?.name;
 
       if (startName) {
         const { address } = await getReverseGeocodeAddress(endLat, endLon);
@@ -60,7 +59,7 @@ export function useLineNameGeneration() {
         return `${generatedStartName} => ${endName}`;
       }
     } else {
-      // Neither coordinate is saved, try reverse geocoding for both
+      // Neither point exists, try reverse geocoding for both
       const [startResult, endResult] = await Promise.all([
         getReverseGeocodeAddress(startLat, startLon),
         getReverseGeocodeAddress(endLat, endLon),
@@ -80,10 +79,10 @@ export function useLineNameGeneration() {
     startLon: number,
     azimuth: number
   ): Promise<string> {
-    const startCoordSaved = findSavedCoordinate(startLat, startLon);
+    const startPoint = findPointAtLocation(startLat, startLon);
 
-    if (startCoordSaved) {
-      return `From ${startCoordSaved.name} at ${azimuth}°`;
+    if (startPoint) {
+      return `From ${startPoint.name} at ${azimuth}°`;
     } else {
       const { address } = await getReverseGeocodeAddress(startLat, startLon);
       const startName = address || `${startLat.toFixed(4)}, ${startLon.toFixed(4)}`;
@@ -100,15 +99,15 @@ export function useLineNameGeneration() {
     intersectLat: number,
     intersectLon: number
   ): Promise<string> {
-    const startCoordSaved = findSavedCoordinate(startLat, startLon);
-    const intersectCoordSaved = findSavedCoordinate(intersectLat, intersectLon);
+    const startPoint = findPointAtLocation(startLat, startLon);
+    const intersectPoint = findPointAtLocation(intersectLat, intersectLon);
 
     const startName =
-      startCoordSaved?.name ||
+      startPoint?.name ||
       (await getReverseGeocodeAddress(startLat, startLon)).address ||
       `${startLat.toFixed(4)}, ${startLon.toFixed(4)}`;
     const intersectName =
-      intersectCoordSaved?.name ||
+      intersectPoint?.name ||
       (await getReverseGeocodeAddress(intersectLat, intersectLon)).address ||
       `${intersectLat.toFixed(4)}, ${intersectLon.toFixed(4)}`;
 
@@ -119,12 +118,12 @@ export function useLineNameGeneration() {
    * Generate name for parallel mode line
    */
   function generateParallelName(latitude: number): string {
-    const savedCoord = coordinatesStore.sortedCoordinates.find(
-      (c: any) => Math.abs(c.lat - latitude) < 0.0001
+    const point = layersStore.sortedPoints.find(
+      (p) => Math.abs(p.coordinates.lat - latitude) < 0.0001
     );
 
-    if (savedCoord) {
-      return `Parallel to ${savedCoord.name}`;
+    if (point) {
+      return `Parallel to ${point.name}`;
     }
 
     return `Parallel at ${latitude.toFixed(6)}°`;

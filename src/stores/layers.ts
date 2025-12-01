@@ -171,6 +171,11 @@ export const useLayersStore = defineStore('layers', () => {
       point.createdAt = Date.now();
     }
     points.value.push(point);
+
+    // Update line references for this point (check if it lies on any existing line)
+    if (point.id) {
+      updatePointLineReference(point.id);
+    }
   }
 
   function updatePoint(id: string | undefined, point: Partial<PointElement>): void {
@@ -479,12 +484,69 @@ export const useLayersStore = defineStore('layers', () => {
     );
   }
 
+  // Helper to migrate legacy savedCoordinates to points
+  function migrateSavedCoordinatesToPoints(
+    savedCoordinates: Array<{
+      id: string;
+      name: string;
+      lat: number;
+      lon: number;
+      timestamp?: number;
+    }>,
+    validPoints: PointElement[]
+  ): void {
+    for (const coord of savedCoordinates) {
+      if (
+        !coord ||
+        typeof coord.id !== 'string' ||
+        typeof coord.name !== 'string' ||
+        typeof coord.lat !== 'number' ||
+        typeof coord.lon !== 'number' ||
+        Number.isNaN(coord.lat) ||
+        Number.isNaN(coord.lon)
+      ) {
+        continue;
+      }
+
+      // Check if a point with this ID or at these coordinates already exists
+      const existingPoint = validPoints.find((p) => p.id === coord.id);
+      if (existingPoint) {
+        continue;
+      }
+
+      const pointAtCoords = validPoints.find(
+        (p) =>
+          Math.abs(p.coordinates.lat - coord.lat) < 0.000_001 &&
+          Math.abs(p.coordinates.lon - coord.lon) < 0.000_001
+      );
+      if (pointAtCoords) {
+        continue;
+      }
+
+      // Convert coordinate to point
+      validPoints.push({
+        id: coord.id,
+        name: coord.name,
+        coordinates: { lat: coord.lat, lon: coord.lon },
+        createdAt: coord.timestamp || Date.now(),
+      });
+    }
+  }
+
   function loadLayers(data: {
     circles: CircleElement[];
     lineSegments: LineSegmentElement[];
     points: PointElement[];
     polygons?: PolygonElement[];
     notes?: NoteElement[];
+    // Legacy field - savedCoordinates are migrated to points
+    savedCoordinates?: Array<{
+      id: string;
+      name: string;
+      lat: number;
+      lon: number;
+      timestamp?: number;
+    }>;
   }): void {
     clearLayers();
 
@@ -500,6 +562,11 @@ export const useLayersStore = defineStore('layers', () => {
     const validPoints = (data.points || []).filter((point) => {
       return validatePoint(point);
     });
+
+    // Migrate legacy savedCoordinates to points
+    if (data.savedCoordinates && Array.isArray(data.savedCoordinates)) {
+      migrateSavedCoordinatesToPoints(data.savedCoordinates, validPoints);
+    }
 
     // Migrate old polygon format (coordinates) to new format (point IDs)
     const validPolygons = (data.polygons || [])
@@ -684,6 +751,43 @@ export const useLayersStore = defineStore('layers', () => {
       const point = points.value.find((p) => p.id === pointId);
       if (point) {
         point.lineId = lineId;
+      }
+    }
+  }
+
+  // Helper function to update a point's line reference when the point is created
+  // Checks if the point lies on any existing line (at start, end, or along the line)
+  function updatePointLineReference(pointId: string) {
+    const pointIndex = points.value.findIndex((p) => p.id === pointId);
+    if (pointIndex === -1) return;
+
+    const point = points.value[pointIndex];
+    if (!point) return;
+
+    const tolerance = 0.0001;
+
+    for (const line of lineSegments.value) {
+      // Check if point is at line start
+      if (
+        Math.abs(point.coordinates.lat - line.center.lat) < tolerance &&
+        Math.abs(point.coordinates.lon - line.center.lon) < tolerance
+      ) {
+        // Use array replacement to ensure Vue reactivity detects the change
+        points.value[pointIndex] = { ...point, lineId: line.id };
+        line.startPointId = pointId;
+        return;
+      }
+
+      // Check if point is at line end
+      if (
+        line.endpoint &&
+        Math.abs(point.coordinates.lat - line.endpoint.lat) < tolerance &&
+        Math.abs(point.coordinates.lon - line.endpoint.lon) < tolerance
+      ) {
+        // Use array replacement to ensure Vue reactivity detects the change
+        points.value[pointIndex] = { ...point, lineId: line.id };
+        line.endPointId = pointId;
+        return;
       }
     }
   }

@@ -63,11 +63,11 @@
 <script lang="ts" setup>
 import { computed, reactive, watch } from 'vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
-import { useCoordinatesStore } from '@/stores/coordinates';
+import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
-const coordinatesStore = useCoordinatesStore();
+const layersStore = useLayersStore();
 
 const isOpen = computed(() => uiStore.isModalOpen('freeHandLineModal'));
 
@@ -78,9 +78,9 @@ const form = reactive({
 });
 
 const coordinateItems = computed(() => {
-  return coordinatesStore.savedCoordinates.map((coord) => ({
-    label: `${coord.name} (${coord.lat.toFixed(6)}, ${coord.lon.toFixed(6)})`,
-    value: `${coord.lat},${coord.lon}`,
+  return layersStore.sortedPoints.map((point) => ({
+    label: `${point.name} (${point.coordinates.lat.toFixed(6)}, ${point.coordinates.lon.toFixed(6)})`,
+    value: `${point.coordinates.lat},${point.coordinates.lon}`,
   }));
 });
 

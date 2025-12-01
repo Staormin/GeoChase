@@ -85,15 +85,18 @@ test.describe('Points and Polygons', () => {
     });
 
     test('should delete a point', async ({ page, blankProject }) => {
-      // Create a point first
+      // Create a point first (fixture already has 3 points)
       await page.locator('.v-btn-group').last().locator('button').nth(6).click();
       const dialog = page.locator('[role="dialog"]');
       await dialog.locator('input[placeholder="48.8566, 2.3522"]').fill('48.8566, 2.3522');
       await page.click('button:has-text("Add")');
       await page.waitForTimeout(500);
 
-      // Find and click the context menu button
-      const contextMenuBtn = page.locator('.layer-item').locator('button').last();
+      // Verify we now have 4 points (3 from fixture + 1 new)
+      await expect(page.locator('.layer-item')).toHaveCount(4);
+
+      // Find and click the context menu button on the newly created point (last one)
+      const contextMenuBtn = page.locator('.layer-item').last().locator('button').last();
       await contextMenuBtn.click();
       await page.waitForTimeout(200);
 
@@ -102,8 +105,8 @@ test.describe('Points and Polygons', () => {
       await page.click('text=Delete');
       await page.waitForTimeout(300);
 
-      // Verify point is removed
-      await expect(page.locator('.layer-item')).toHaveCount(0);
+      // Verify point is removed (back to 3 from fixture)
+      await expect(page.locator('.layer-item')).toHaveCount(3);
     });
 
     test('should create multiple points', async ({ page, blankProject }) => {
@@ -252,18 +255,10 @@ test.describe('Points and Polygons', () => {
 
   test.describe('Layer Visibility', () => {
     test('should hide all points', async ({ page, blankProject }) => {
-      // Create two points
-      await page.locator('.v-btn-group').last().locator('button').nth(6).click();
-      let dialog = page.locator('[role="dialog"]');
-      await dialog.locator('input[placeholder="48.8566, 2.3522"]').fill('48.8566, 2.3522');
-      await page.click('button:has-text("Add")');
-      await page.waitForTimeout(300);
-
-      await page.locator('.v-btn-group').last().locator('button').nth(6).click();
-      dialog = page.locator('[role="dialog"]');
-      await dialog.locator('input[placeholder="48.8566, 2.3522"]').fill('51.5074, -0.1278');
-      await page.click('button:has-text("Add")');
-      await page.waitForTimeout(300);
+      // Fixture already provides 3 points (Paris, London, Berlin)
+      // Verify initial state
+      const initialPointCount = await page.locator('.layer-item').count();
+      expect(initialPointCount).toBe(3);
 
       // Click "Hide all points" button
       const hideAllBtn = page.locator('button').filter({ hasText: /Hide.*points/i });
@@ -272,24 +267,13 @@ test.describe('Points and Polygons', () => {
         await page.waitForTimeout(200);
       }
 
-      // Points should still be in the list
+      // Points should still be in the list (just hidden on map)
       const pointCount = await page.locator('.layer-item').count();
-      expect(pointCount).toBe(2);
+      expect(pointCount).toBe(3);
     });
 
     test('should show all points after hiding', async ({ page, blankProject }) => {
-      // Create two points
-      await page.locator('.v-btn-group').last().locator('button').nth(6).click();
-      let dialog = page.locator('[role="dialog"]');
-      await dialog.locator('input[placeholder="48.8566, 2.3522"]').fill('48.8566, 2.3522');
-      await page.click('button:has-text("Add")');
-      await page.waitForTimeout(300);
-
-      await page.locator('.v-btn-group').last().locator('button').nth(6).click();
-      dialog = page.locator('[role="dialog"]');
-      await dialog.locator('input[placeholder="48.8566, 2.3522"]').fill('51.5074, -0.1278');
-      await page.click('button:has-text("Add")');
-      await page.waitForTimeout(300);
+      // Fixture already provides 3 points (Paris, London, Berlin)
 
       // Hide all points
       const hideAllBtn = page.locator('button').filter({ hasText: /Hide.*points/i });
@@ -305,9 +289,9 @@ test.describe('Points and Polygons', () => {
         }
       }
 
-      // Points should be visible
+      // Points should be visible (3 from fixture)
       const pointCount = await page.locator('.layer-item').count();
-      expect(pointCount).toBe(2);
+      expect(pointCount).toBe(3);
     });
   });
 });

@@ -19,65 +19,30 @@ test.describe('Sidebar UI', () => {
   });
 
   test.describe('Layers Panel', () => {
+    // Fixture provides 3 points: Paris, London, Berlin
+
     test('should display layers title', async ({ page, blankProject }) => {
       await expect(page.locator('.layers-panel-title')).toBeVisible();
     });
 
-    test('should show empty state when no elements exist', async ({ page, blankProject }) => {
-      // Empty state should be shown
-      await expect(page.locator('.layers-empty')).toBeVisible();
-    });
-
     test('should show search filter when elements exist', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Search filter should be visible
+      // Fixture provides 3 points, search filter should be visible
       await expect(page.locator('.layers-search input')).toBeVisible();
     });
 
     test('should filter elements by name', async ({ page, blankProject }) => {
-      // Create first point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      const nameInput = page.locator('.v-dialog input[type="text"]').first();
-      await nameInput.fill('Paris Point');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Create second point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('51.5074, -0.1278');
-      const nameInput2 = page.locator('.v-dialog input[type="text"]').first();
-      await nameInput2.fill('London Point');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
+      // Fixture provides Paris, London, Berlin points
       // Type in search filter
       await page.locator('.layers-search input').fill('Paris');
       await page.waitForTimeout(300);
 
-      // Should show Paris Point but not London Point
+      // Should show Paris but not London or Berlin
+      await expect(page.locator('.layer-item-name').filter({ hasText: 'Paris' })).toBeVisible();
       await expect(
-        page.locator('.layer-item-name').filter({ hasText: 'Paris Point' })
-      ).toBeVisible();
+        page.locator('.layer-item-name').filter({ hasText: 'London' })
+      ).not.toBeVisible();
       await expect(
-        page.locator('.layer-item-name').filter({ hasText: 'London Point' })
+        page.locator('.layer-item-name').filter({ hasText: 'Berlin' })
       ).not.toBeVisible();
     });
 
@@ -85,17 +50,7 @@ test.describe('Sidebar UI', () => {
       page,
       blankProject,
     }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Type in search filter that matches nothing
+      // Fixture provides points, type a filter that matches nothing
       await page.locator('.layers-search input').fill('xyz123nonexistent');
       await page.waitForTimeout(300);
 
@@ -104,17 +59,7 @@ test.describe('Sidebar UI', () => {
     });
 
     test('should clear search filter', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Type in search filter
+      // Fixture provides points, type a filter that hides them
       await page.locator('.layers-search input').fill('xyz123');
       await page.waitForTimeout(300);
 
@@ -122,51 +67,33 @@ test.describe('Sidebar UI', () => {
       await page.locator('.layers-search .mdi-close-circle').click();
       await page.waitForTimeout(300);
 
-      // Point should be visible again
-      await expect(page.locator('.layer-item')).toBeVisible();
+      // Points should be visible again
+      await expect(page.locator('.layer-item').first()).toBeVisible();
     });
   });
 
   test.describe('Collapsible Sections', () => {
-    test('should collapse points section', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
+    // Fixture provides 3 points: Paris, London, Berlin
 
-      // Section should be expanded by default
+    test('should collapse points section', async ({ page, blankProject }) => {
+      // Fixture provides points, section should be expanded by default
       await expect(page.locator('.layer-items .layer-item').first()).toBeVisible();
 
-      // Click collapse icon
-      await page.locator('.layers-section-header .collapse-icon').click();
+      // Click collapse icon (the ▼ chevron)
+      await page.locator('.layers-section-header').locator('text=▼').click();
       await page.waitForTimeout(300);
 
-      // Section should be collapsed
-      await expect(page.locator('.layer-items .layer-item')).not.toBeVisible();
+      // Section should be collapsed - items not visible
+      await expect(page.locator('.layer-items .layer-item').first()).not.toBeVisible();
     });
 
     test('should expand collapsed section', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Collapse section
-      await page.locator('.layers-section-header .collapse-icon').click();
+      // Fixture provides points, collapse section first
+      await page.locator('.layers-section-header').locator('text=▼').click();
       await page.waitForTimeout(300);
 
-      // Expand section
-      await page.locator('.layers-section-header .collapse-icon').click();
+      // Expand section (chevron changes to ▶)
+      await page.locator('.layers-section-header').locator('text=▶').click();
       await page.waitForTimeout(300);
 
       // Section should be expanded again
@@ -220,18 +147,10 @@ test.describe('Sidebar UI', () => {
   });
 
   test.describe('Layer Item Actions', () => {
-    test('should show context menu on layer item', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
+    // Fixture provides 3 points: Paris, London, Berlin
 
-      // Click context menu button
+    test('should show context menu on layer item', async ({ page, blankProject }) => {
+      // Click context menu button on fixture point
       await page.locator('.layer-item .mdi-dots-vertical').first().click();
       await page.waitForTimeout(300);
 
@@ -240,17 +159,7 @@ test.describe('Sidebar UI', () => {
     });
 
     test('should navigate to layer item on click', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Click on layer item info
+      // Click on layer item info (using fixture point)
       await page.locator('.layer-item-info').first().click();
       await page.waitForTimeout(500);
 
@@ -260,17 +169,9 @@ test.describe('Sidebar UI', () => {
   });
 
   test.describe('Bulk Visibility Toggle', () => {
-    test('should show hide all button for points section', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
+    // Fixture provides 3 points: Paris, London, Berlin
 
+    test('should show hide all button for points section', async ({ page, blankProject }) => {
       // Hide all button should be visible (eye icon in section header)
       await expect(
         page.locator('.layers-section-header .mdi-eye, .layers-section-header .mdi-eye-off')
@@ -278,17 +179,7 @@ test.describe('Sidebar UI', () => {
     });
 
     test('should toggle all points visibility', async ({ page, blankProject }) => {
-      // Create a point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
-
-      // Click hide all button
+      // Click hide all button (fixture provides points)
       await page
         .locator('.layers-section-header')
         .locator('.mdi-eye, .mdi-eye-off')
@@ -302,23 +193,11 @@ test.describe('Sidebar UI', () => {
   });
 
   test.describe('Layer Item Info', () => {
-    test('should display point name', async ({ page, blankProject }) => {
-      // Create a point with custom name
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      const nameInput = page.locator('.v-dialog input[type="text"]').first();
-      await nameInput.fill('Test Point Name');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
+    // Fixture provides 3 points: Paris, London, Berlin
 
-      // Point name should be visible in sidebar
-      await expect(
-        page.locator('.layer-item-name').filter({ hasText: 'Test Point Name' })
-      ).toBeVisible();
+    test('should display point name', async ({ page, blankProject }) => {
+      // Fixture point name should be visible in sidebar
+      await expect(page.locator('.layer-item-name').filter({ hasText: 'Paris' })).toBeVisible();
     });
 
     test('should display circle radius', async ({ page, blankProject }) => {

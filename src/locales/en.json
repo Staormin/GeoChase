@@ -89,6 +89,7 @@
     "noElements": "No elements",
     "noProjects": "No projects",
     "noCoordinates": "No coordinates saved",
+    "noPoints": "No points saved",
     "coords": "Coords",
     "exportJSON": "Export JSON",
     "gpx": "GPX",
