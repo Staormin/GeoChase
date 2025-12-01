@@ -19,6 +19,7 @@ export interface ViewData {
   pdfPanelWidth?: number;
   pdfCurrentPage?: number;
   pdfZoomLevel?: number;
+  pdfScrollPosition?: { x: number; y: number };
   mapView?: {
     lat: number;
     lon: number;

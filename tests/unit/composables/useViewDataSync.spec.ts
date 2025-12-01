@@ -71,6 +71,7 @@ describe('useViewDataSync', () => {
         pdfPanelWidth: 500,
         pdfCurrentPage: 1,
         pdfZoomLevel: 1,
+        pdfScrollPosition: { x: 0, y: 0 },
         mapView: {
           lat: 48.8566,
           lon: 2.3522,
@@ -213,6 +214,27 @@ describe('useViewDataSync', () => {
 
       // Should restore pdfZoomLevel
       expect(setPdfZoomLevelSpy).toHaveBeenCalledWith(1.5);
+    });
+
+    it('should restore pdfScrollPosition when present in view data', () => {
+      const setPdfScrollPositionSpy = vi.spyOn(uiStore, 'setPdfScrollPosition');
+      const mockViewData = {
+        topPanelOpen: true,
+        sidePanelOpen: false,
+        pdfScrollPosition: { x: 150, y: 300 },
+        mapView: {
+          lat: 51.5074,
+          lon: -0.1278,
+          zoom: 12,
+        },
+      };
+
+      vi.spyOn(projectsStore, 'getViewData').mockReturnValue(mockViewData);
+
+      viewDataSync.restoreViewData();
+
+      // Should restore pdfScrollPosition
+      expect(setPdfScrollPositionSpy).toHaveBeenCalledWith({ x: 150, y: 300 });
     });
 
     it('should handle missing view data', () => {
@@ -385,6 +407,22 @@ describe('useViewDataSync', () => {
 
       // Change pdfZoomLevel state
       uiStore.setPdfZoomLevel(1.5);
+
+      // Wait for Vue reactivity to process the change
+      await nextTick();
+
+      // Advance timers past debounce delay (500ms)
+      vi.advanceTimersByTime(500);
+
+      expect(updateViewDataSpy).toHaveBeenCalled();
+    });
+
+    it('should trigger saveViewData on pdfScrollPosition change after debounce', async () => {
+      const updateViewDataSpy = vi.spyOn(projectsStore, 'updateViewData');
+      viewDataSync.setupWatchers();
+
+      // Change pdfScrollPosition state
+      uiStore.setPdfScrollPosition({ x: 100, y: 200 });
 
       // Wait for Vue reactivity to process the change
       await nextTick();
