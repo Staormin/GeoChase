@@ -102,8 +102,8 @@ test.describe('Search Functionality', () => {
 
   test.describe('Search Input Features', () => {
     test('should have magnify icon', async ({ page, blankProject }) => {
-      // Check for search icon
-      const searchIcon = page.locator('.v-text-field .mdi-magnify');
+      // Check for search icon (use first() as there may be multiple search inputs)
+      const searchIcon = page.locator('.v-text-field .mdi-magnify').first();
       await expect(searchIcon).toBeVisible();
     });
 
@@ -113,8 +113,8 @@ test.describe('Search Functionality', () => {
       await searchInput.fill('test');
       await page.waitForTimeout(300);
 
-      // Check if clear button appears
-      const clearBtn = page.locator('.v-text-field .v-field__clearable');
+      // Check if clear button appears (use first() as there may be multiple search inputs)
+      const clearBtn = page.locator('.v-text-field .v-field__clearable').first();
       if ((await clearBtn.count()) > 0) {
         await expect(clearBtn).toBeVisible();
       }

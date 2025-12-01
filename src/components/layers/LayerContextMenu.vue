@@ -56,17 +56,6 @@
         <v-list-item-title>{{ $t('contextMenu.bearings') }}</v-list-item-title>
       </v-list-item>
 
-      <!-- Add as coordinate (only for points without existing coordinate) -->
-      <v-list-item
-        v-if="elementType === 'point' && !hasCoordinateAtLocation"
-        @click="handleAddAsCoordinate"
-      >
-        <template #prepend>
-          <v-icon icon="mdi-plus" size="small" />
-        </template>
-        <v-list-item-title>{{ $t('contextMenu.addAsCoordinate') }}</v-list-item-title>
-      </v-list-item>
-
       <!-- Add center as point (only for polygons) -->
       <v-list-item v-if="elementType === 'polygon'" @click="handleAddCenterAsPoint">
         <template #prepend>
@@ -113,7 +102,6 @@ import type {
 } from '@/services/storage';
 import { computed, inject, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -131,24 +119,10 @@ const emit = defineEmits<{
 const isOpen = ref(false);
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const coordinatesStore = useCoordinatesStore();
 const drawing = inject('drawing') as any;
 const { t } = useI18n();
 
 const isVisible = computed(() => uiStore.isElementVisible(props.elementType, props.elementId));
-
-const hasCoordinateAtLocation = computed(() => {
-  if (props.elementType !== 'point') {
-    return false;
-  }
-  const point = layersStore.points.find((p) => p.id === props.elementId);
-  if (!point) {
-    return false;
-  }
-  return coordinatesStore.savedCoordinates.some(
-    (c) => c.lat === point.coordinates.lat && c.lon === point.coordinates.lon
-  );
-});
 
 const hasNote = computed(() => {
   const element = getElement();
@@ -213,22 +187,6 @@ function handleAddPointOnSegment() {
   isOpen.value = false;
 }
 
-function handleAddAsCoordinate() {
-  if (props.elementType !== 'point') {
-    return;
-  }
-
-  const point = layersStore.points.find((p) => p.id === props.elementId);
-  if (!point) {
-    uiStore.addToast(t('errors.pointNotFound'), 'error');
-    return;
-  }
-
-  coordinatesStore.addCoordinate(point.name, point.coordinates.lat, point.coordinates.lon);
-  uiStore.addToast(t('toasts.coordinateAdded', { name: point.name }), 'success');
-  isOpen.value = false;
-}
-
 function handleEdit() {
   const element = getElement();
   if (!element) {
@@ -269,10 +227,6 @@ function handleAddCenterAsPoint() {
   if (drawing) {
     const pointName = t('polygon.centerPointName', { name: polygon.name });
     drawing.drawPoint(centerLat, centerLon, pointName);
-
-    // Also save as coordinate
-    coordinatesStore.addCoordinate(pointName, centerLat, centerLon);
-
     uiStore.addToast(t('toasts.centerAddedAsPoint'), 'success');
   }
 

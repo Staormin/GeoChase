@@ -22,11 +22,8 @@
     </span>
   </div>
 
-  <!-- All three buttons in a row with equal width -->
+  <!-- Action buttons -->
   <div class="action-buttons">
-    <!-- Coords Button -->
-    <button class="btn-action" @click="openCoordinatesModal">🗂️ {{ $t('sidebar.coords') }}</button>
-
     <!-- Save/Load Menu (relative positioning for dropdown) -->
     <div class="save-menu-wrapper">
       <button class="btn-action" data-testid="save-menu-btn" @click="saveMenuOpen = !saveMenuOpen">
@@ -57,10 +54,10 @@
 </template>
 
 <script lang="ts" setup>
+import { v4 as uuidv4 } from 'uuid';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { downloadGPX, generateCompleteGPX, getTimestamp } from '@/services/gpx';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
@@ -68,7 +65,6 @@ import { useUIStore } from '@/stores/ui';
 const { t } = useI18n();
 const layersStore = useLayersStore();
 const uiStore = useUIStore();
-const coordinatesStore = useCoordinatesStore();
 const projectsStore = useProjectsStore();
 
 const saveMenuOpen = ref(false);
@@ -80,11 +76,6 @@ const totalElements = computed(
     layersStore.pointCount +
     layersStore.polygonCount
 );
-
-function openCoordinatesModal() {
-  saveMenuOpen.value = false;
-  uiStore.openModal('coordinatesModal');
-}
 
 function openNewProjectModal() {
   saveMenuOpen.value = false;
@@ -127,7 +118,6 @@ function exportAsJSON() {
     points: layersStore.points,
     polygons: layersStore.polygons,
     notes: layersStore.notes,
-    coordinates: coordinatesStore.savedCoordinates,
     exportedAt: new Date().toISOString(),
   };
 
@@ -164,7 +154,6 @@ async function importFromJSON() {
 
       // Clear existing data
       layersStore.clearLayers();
-      coordinatesStore.clearCoordinates();
 
       // Restore circles
       if (projectData.circles && Array.isArray(projectData.circles)) {
@@ -240,10 +229,18 @@ async function importFromJSON() {
         }
       }
 
-      // Restore coordinates
+      // Migrate legacy coordinates to points
       if (projectData.coordinates && Array.isArray(projectData.coordinates)) {
         for (const coord of projectData.coordinates) {
-          coordinatesStore.addCoordinate(coord.name, coord.lat, coord.lon);
+          // Check if point already exists at these coordinates
+          const existingPoint = layersStore.findPointAtCoordinates(coord.lat, coord.lon);
+          if (!existingPoint) {
+            layersStore.addPoint({
+              id: uuidv4(),
+              name: coord.name,
+              coordinates: { lat: coord.lat, lon: coord.lon },
+            });
+          }
         }
       }
 

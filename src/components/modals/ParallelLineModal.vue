@@ -33,9 +33,7 @@
       >
         <template #no-data>
           <v-list-item>
-            <v-list-item-title class="text-caption">{{
-              $t('sidebar.noCoordinates')
-            }}</v-list-item-title>
+            <v-list-item-title class="text-caption">{{ $t('sidebar.noPoints') }}</v-list-item-title>
           </v-list-item>
         </template>
       </v-select>
@@ -48,14 +46,12 @@ import { computed, inject, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 const { t } = useI18n();
 
 const uiStore = useUIStore();
-const coordinatesStore = useCoordinatesStore();
 const layersStore = useLayersStore();
 const { generateParallelName } = useLineNameGeneration();
 const drawing = inject('drawing') as any;
@@ -69,9 +65,9 @@ const form = reactive({
 });
 
 const latitudeItems = computed(() => {
-  return coordinatesStore.savedCoordinates.map((coord) => ({
-    label: `${coord.name} (${coord.lat.toFixed(6)})`,
-    value: coord.lat,
+  return layersStore.sortedPoints.map((point) => ({
+    label: `${point.name} (${point.coordinates.lat.toFixed(6)})`,
+    value: point.coordinates.lat,
   }));
 });
 

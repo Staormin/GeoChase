@@ -34,21 +34,21 @@
               />
             </template>
             <v-list>
-              <v-list-item v-if="coordinatesStore.sortedCoordinates.length === 0" disabled>
+              <v-list-item v-if="layersStore.sortedPoints.length === 0" disabled>
                 <v-list-item-title class="text-caption">{{
-                  $t('sidebar.noCoordinates')
+                  $t('sidebar.noPoints')
                 }}</v-list-item-title>
               </v-list-item>
               <v-list-item
-                v-for="coord in coordinatesStore.sortedCoordinates"
-                :key="coord.id"
-                @click="selectCoordinate(coord)"
+                v-for="point in layersStore.sortedPoints"
+                :key="point.id"
+                @click="selectPoint(point)"
               >
                 <v-list-item-title class="text-sm">
-                  {{ coord.name }}
+                  {{ point.name }}
                 </v-list-item-title>
                 <v-list-item-subtitle class="text-xs">
-                  {{ coord.lat.toFixed(6) }}, {{ coord.lon.toFixed(6) }}
+                  {{ point.coordinates.lat.toFixed(6) }}, {{ point.coordinates.lon.toFixed(6) }}
                 </v-list-item-subtitle>
               </v-list-item>
             </v-list>
@@ -68,16 +68,14 @@
 </template>
 
 <script lang="ts" setup>
-import type { SavedCoordinate } from '@/services/storage';
+import type { PointElement } from '@/services/storage';
 import { computed, inject, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const coordinatesStore = useCoordinatesStore();
 inject('mapContainer');
 const drawing = inject('drawing') as any;
 const { t } = useI18n();
@@ -117,9 +115,30 @@ watch(
   { immediate: true }
 );
 
-function selectCoordinate(coord: SavedCoordinate) {
-  form.value.coordinates = `${coord.lat}, ${coord.lon}`;
-  form.value.name = coord.name;
+// Watch for creating state changes with pre-fill values (e.g., from right-click)
+watch(
+  () => uiStore.creatingElement,
+  (newValue) => {
+    if (newValue?.type === 'point') {
+      // Reset form to defaults
+      form.value = {
+        name: '',
+        coordinates: '48.8566, 2.3522',
+      };
+
+      // Apply pre-fill values if they exist
+      if (newValue.prefill) {
+        const prefill = newValue.prefill as { lat: number; lon: number };
+        form.value.coordinates = `${prefill.lat.toFixed(6)}, ${prefill.lon.toFixed(6)}`;
+      }
+    }
+  },
+  { immediate: true }
+);
+
+function selectPoint(point: PointElement) {
+  form.value.coordinates = `${point.coordinates.lat}, ${point.coordinates.lon}`;
+  form.value.name = point.name;
 }
 
 function submitForm() {
@@ -154,6 +173,7 @@ function submitForm() {
 function closeModal() {
   uiStore.closeModal('pointModal');
   uiStore.stopEditing();
+  uiStore.stopCreating();
 }
 
 function resetForm() {

@@ -22,6 +22,7 @@ export interface EditingElement {
 
 export interface CreatingElement {
   type: 'circle' | 'lineSegment' | 'point';
+  prefill?: { lat: number; lon: number };
 }
 
 export interface NavigatingElement {
@@ -91,7 +92,6 @@ export const useUIStore = defineStore('ui', () => {
   const topBarOpen = ref(true);
   const sidebarOpen = ref(true);
   const leftSidebarOpen = ref(false);
-  const coordinatesFormData = ref<{ name: string; coordinates: string } | null>(null);
   const elementVisibility = ref<Record<string, boolean>>({});
   const editingElement = ref<EditingElement | null>(null);
   const selectedSegmentForPointCreation = ref<string | null>(null);
@@ -232,10 +232,6 @@ export const useUIStore = defineStore('ui', () => {
     leftSidebarOpen.value = open;
   }
 
-  function setCoordinatesFormData(data: { name: string; coordinates: string } | null): void {
-    coordinatesFormData.value = data;
-  }
-
   function toggleElementVisibility(elementType: string, elementId: string): void {
     const key = `${elementType}_${elementId}`;
     elementVisibility.value[key] = !isElementVisible(elementType, elementId);
@@ -268,8 +264,11 @@ export const useUIStore = defineStore('ui', () => {
     selectedSegmentForPointCreation.value = segmentId;
   }
 
-  function startCreating(type: 'circle' | 'lineSegment' | 'point'): void {
-    creatingElement.value = { type };
+  function startCreating(
+    type: 'circle' | 'lineSegment' | 'point',
+    prefill?: { lat: number; lon: number }
+  ): void {
+    creatingElement.value = { type, prefill };
   }
 
   function stopCreating(): void {
@@ -465,7 +464,6 @@ export const useUIStore = defineStore('ui', () => {
     topBarOpen,
     sidebarOpen,
     leftSidebarOpen,
-    coordinatesFormData,
     elementVisibility,
     editingElement,
     selectedSegmentForPointCreation,
@@ -510,7 +508,6 @@ export const useUIStore = defineStore('ui', () => {
     setSidebarOpen,
     toggleLeftSidebar,
     setLeftSidebarOpen,
-    setCoordinatesFormData,
     toggleElementVisibility,
     isElementVisible,
     setElementVisibility,

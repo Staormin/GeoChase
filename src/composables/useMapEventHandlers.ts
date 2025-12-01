@@ -8,17 +8,11 @@ export function useMapEventHandlers(mapContainer: ReturnType<typeof useMap>) {
   const uiStore = useUIStore();
 
   const setup = () => {
-    // Setup right-click to open coordinates modal with pre-filled coordinates
+    // Setup right-click to open point modal with pre-filled coordinates
     return mapContainer.onMapRightClick((lat, lon) => {
-      // Pre-fill the coordinates field in the modal
-      const coordinatesModalForm = {
-        name: '',
-        coordinates: `${lat.toFixed(6)}, ${lon.toFixed(6)}`,
-      };
-
-      // Store form data and open modal
-      uiStore.setCoordinatesFormData(coordinatesModalForm);
-      uiStore.openModal('coordinatesModal');
+      // Pre-fill the coordinates and start creating a point
+      uiStore.startCreating('point', { lat, lon });
+      uiStore.openModal('pointModal');
     });
   };
 

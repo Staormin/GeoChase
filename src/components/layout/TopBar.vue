@@ -51,19 +51,6 @@
         <v-btn-group density="compact">
           <v-btn
             color="surface-bright"
-            data-testid="coordinates-btn"
-            icon="mdi-book-open-variant"
-            variant="elevated"
-            @click="uiStore.openModal('coordinatesModal')"
-          >
-            <v-icon>mdi-book-open-variant</v-icon>
-            <v-tooltip activator="parent" location="bottom">{{
-              $t('coordinates.title')
-            }}</v-tooltip>
-          </v-btn>
-
-          <v-btn
-            color="surface-bright"
             data-testid="create-note-btn"
             icon="mdi-note-text"
             variant="elevated"
@@ -351,10 +338,10 @@
 </template>
 
 <script lang="ts" setup>
+import { v4 as uuidv4 } from 'uuid';
 import { useI18n } from 'vue-i18n';
 import SidebarAddressSearch from '@/components/sidebar/SidebarAddressSearch.vue';
 import { downloadGPX, generateCompleteGPX, getTimestamp } from '@/services/gpx';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
@@ -362,7 +349,6 @@ import { useUIStore } from '@/stores/ui';
 const { t } = useI18n();
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const coordinatesStore = useCoordinatesStore();
 const projectsStore = useProjectsStore();
 
 const mapProviders = [
@@ -422,7 +408,6 @@ function handleExportJSON() {
     points: layersStore.points,
     polygons: layersStore.polygons,
     notes: layersStore.notes,
-    coordinates: coordinatesStore.savedCoordinates,
     exportedAt: new Date().toISOString(),
   };
 
@@ -456,7 +441,6 @@ async function handleImportJSON() {
       const projectData = JSON.parse(content);
 
       layersStore.clearLayers();
-      coordinatesStore.clearCoordinates();
 
       if (projectData.circles && Array.isArray(projectData.circles)) {
         for (const circle of projectData.circles) {
@@ -527,9 +511,18 @@ async function handleImportJSON() {
         }
       }
 
+      // Migrate legacy coordinates to points
       if (projectData.coordinates && Array.isArray(projectData.coordinates)) {
         for (const coord of projectData.coordinates) {
-          coordinatesStore.addCoordinate(coord.name, coord.lat, coord.lon);
+          // Check if point already exists at these coordinates
+          const existingPoint = layersStore.findPointAtCoordinates(coord.lat, coord.lon);
+          if (!existingPoint) {
+            layersStore.addPoint({
+              id: uuidv4(),
+              name: coord.name,
+              coordinates: { lat: coord.lat, lon: coord.lon },
+            });
+          }
         }
       }
 

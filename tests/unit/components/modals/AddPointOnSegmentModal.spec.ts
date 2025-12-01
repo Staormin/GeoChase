@@ -2,7 +2,6 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AddPointOnSegmentModal from '@/components/modals/AddPointOnSegmentModal.vue';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -10,7 +9,6 @@ describe('AddPointOnSegmentModal.vue', () => {
   let wrapper: any;
   let uiStore: any;
   let layersStore: any;
-  let coordinatesStore: any;
   let pinia: any;
   let mockDrawing: any;
 
@@ -20,7 +18,6 @@ describe('AddPointOnSegmentModal.vue', () => {
 
     uiStore = useUIStore();
     layersStore = useLayersStore();
-    coordinatesStore = useCoordinatesStore();
 
     // Mock drawing composable that also adds point to store
     mockDrawing = {
@@ -230,17 +227,6 @@ describe('AddPointOnSegmentModal.vue', () => {
   });
 
   describe('Modal behavior', () => {
-    it('saves coordinate when point is added', async () => {
-      const addCoordinateSpy = vi.spyOn(coordinatesStore, 'addCoordinate');
-
-      (wrapper.vm as any).form.distance = 0.2;
-      (wrapper.vm as any).form.name = 'Test Point';
-
-      await (wrapper.vm as any).submitForm();
-
-      expect(addCoordinateSpy).toHaveBeenCalled();
-    });
-
     it('closes modal after successful submission', async () => {
       const closeModalSpy = vi.spyOn(uiStore, 'closeModal');
 

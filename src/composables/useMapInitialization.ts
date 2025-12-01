@@ -3,7 +3,6 @@ import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
 import { useNoteTooltips } from '@/composables/useNoteTooltips';
 import { isLanguageSet } from '@/plugins/i18n';
-import { useCoordinatesStore } from '@/stores/coordinates';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
@@ -19,7 +18,6 @@ export async function useMapInitialization(
   const uiStore = useUIStore();
   const projectsStore = useProjectsStore();
   const layersStore = useLayersStore();
-  const coordinatesStore = useCoordinatesStore();
 
   try {
     // Set initial view data from saved project before initializing map
@@ -53,14 +51,15 @@ export async function useMapInitialization(
       if (activeProject) {
         try {
           // Load project data into stores (preserves IDs)
+          // Pass savedCoordinates for migration to points (legacy support)
           layersStore.loadLayers({
             circles: activeProject.data.circles,
             lineSegments: activeProject.data.lineSegments,
             points: activeProject.data.points,
             polygons: activeProject.data.polygons || [],
             notes: activeProject.data.notes || [],
+            savedCoordinates: (activeProject.data as any).savedCoordinates || [],
           });
-          coordinatesStore.loadCoordinates(activeProject.data.savedCoordinates || []);
 
           // Redraw all elements on the map
           // Skip auto-fly if we have saved view data (will be restored later)
@@ -82,7 +81,6 @@ export async function useMapInitialization(
 
           // Clear failed project data to avoid corrupted state
           layersStore.clearLayers();
-          coordinatesStore.clearCoordinates();
           projectsStore.setActiveProject(null);
         }
       }

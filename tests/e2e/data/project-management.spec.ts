@@ -249,27 +249,6 @@ test.describe('Project Management', () => {
     });
   });
 
-  test.describe('Coordinates Modal', () => {
-    test('should display coordinates button', async ({ page, blankProject }) => {
-      await expect(page.locator('[data-testid="coordinates-btn"]')).toBeVisible();
-    });
-
-    test('should open coordinates modal', async ({ page, blankProject }) => {
-      await page.locator('[data-testid="coordinates-btn"]').click();
-      await page.waitForTimeout(300);
-
-      await expect(page.locator('.v-dialog')).toBeVisible();
-    });
-
-    test('should display saved coordinates from fixture', async ({ page, blankProject }) => {
-      await page.locator('[data-testid="coordinates-btn"]').click();
-      await page.waitForTimeout(300);
-
-      // blankProject fixture has Paris, London, Berlin coordinates
-      await expect(page.locator('.v-dialog').locator('text=Paris')).toBeVisible();
-    });
-  });
-
   test.describe('Note Creation', () => {
     test('should display create note button', async ({ page, blankProject }) => {
       await expect(page.locator('[data-testid="create-note-btn"]')).toBeVisible();
