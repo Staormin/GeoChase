@@ -155,21 +155,21 @@ test.describe('Tutorial Modal', () => {
       ).toBeVisible();
     });
 
-    test('should navigate to Coordinates tab', async ({ page, blankProject }) => {
+    test('should navigate to Points tab', async ({ page, blankProject }) => {
       // Open tutorial modal
       await page.locator('button .mdi-help-circle').locator('..').click();
       await page.waitForTimeout(300);
 
-      // Click Coordinates tab
+      // Click Points tab
       await page
         .locator('.v-tab')
-        .filter({ hasText: /Coordinates/i })
+        .filter({ hasText: /Points/i })
         .click();
       await page.waitForTimeout(300);
 
-      // Coordinates content should be visible
+      // Points content should be visible
       await expect(
-        page.locator('.tutorial-section h3').filter({ hasText: /Coordinates/i })
+        page.locator('.tutorial-section h3').filter({ hasText: /Points/i })
       ).toBeVisible();
     });
 
@@ -234,7 +234,7 @@ test.describe('Tutorial Modal', () => {
         /Navigation/i,
         /Layers/i,
         /Notes/i,
-        /Coordinates/i,
+        /Points/i,
         /Projects/i,
         /PDF/i,
         /Tips/i,
