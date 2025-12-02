@@ -14,9 +14,7 @@
   >
     <template #no-data>
       <v-list-item>
-        <v-list-item-title class="text-caption">{{
-          $t('sidebar.noCoordinates')
-        }}</v-list-item-title>
+        <v-list-item-title class="text-caption">{{ $t('sidebar.noPoints') }}</v-list-item-title>
       </v-list-item>
     </template>
   </v-select>

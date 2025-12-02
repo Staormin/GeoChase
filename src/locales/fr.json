@@ -70,8 +70,8 @@
     "zoomOut": "Dézoomer",
     "resetView": "Réinitialiser la vue",
     "currentLocation": "Position actuelle",
-    "coordinatesSaved": "Coordonnées enregistrées",
-    "rightClickToSave": "Clic droit sur la carte pour enregistrer les coordonnées"
+    "pointCreated": "Point créé",
+    "rightClickToSave": "Clic droit sur la carte pour créer un point"
   },
   "topbar": {
     "title": "GeoChase",
@@ -96,7 +96,7 @@
     "importJSON": "Importer JSON",
     "loadProject": "Charger un projet",
     "newProject": "Nouveau projet",
-    "rightClickHint": "Clic droit sur la carte pour enregistrer les coordonnées",
+    "rightClickHint": "Clic droit sur la carte pour créer un point",
     "save": "Enregistrer",
     "savedCoordinates": "Coordonnées enregistrées",
     "layers": "Éléments"
@@ -397,8 +397,8 @@
         "drawShapes": "Dessiner des cercles, lignes, points et polygones sur une carte interactive",
         "searchLocations": "Rechercher des lieux par adresse et explorer les endroits à proximité",
         "findAlongPaths": "Trouver des lieux le long de chemins avec des filtres de distance et d'altitude",
-        "viewElevation": "Voir les données d'élévation pour les coordonnées et les résultats de recherche",
-        "saveCoordinates": "Enregistrer des coordonnées pour un accès rapide dans tous les projets",
+        "viewElevation": "Voir les données d'élévation pour les points et les résultats de recherche",
+        "savePoints": "Créer et réutiliser des points pour un accès rapide dans tous les dessins",
         "manageProjects": "Créer et gérer des projets avec plusieurs dessins",
         "navigate": "Naviguer autour de vos formes avec les touches fléchées",
         "exportGPX": "Exporter en GPX pour une utilisation dans d'autres applications de cartographie"
@@ -417,13 +417,13 @@
         "title": "🔵 Cercle",
         "description": "Dessinez un cercle sur la carte en spécifiant :",
         "name": "Nom : Donnez un nom à votre cercle (optionnel, généré automatiquement si vide)",
-        "center": "Coordonnées du centre : Sélectionnez parmi vos coordonnées enregistrées",
+        "center": "Centre : Sélectionnez parmi vos points enregistrés ou entrez les coordonnées manuellement",
         "radius": "Rayon : Taille en kilomètres"
       },
       "line": {
         "title": "➖ Ligne",
         "description": "Dessinez une ligne avec plusieurs modes :",
-        "twoPoints": "Deux points : Connectez deux coordonnées enregistrées",
+        "twoPoints": "Deux points : Connectez deux points enregistrés",
         "azimuth": "Mode azimut : Créez une ligne avec un angle spécifique (azimut) et une distance",
         "intersection": "Mode intersection : Tracez une ligne passant par un point à une distance spécifique",
         "parallel": "Mode parallèle : Tracez une ligne parallèle (latitude) sur toute la carte",
@@ -432,14 +432,14 @@
       },
       "point": {
         "title": "📍 Point",
-        "description": "Marquez des emplacements spécifiques sur la carte. Les points peuvent être enregistrés comme coordonnées pour être réutilisés."
+        "description": "Marquez des emplacements spécifiques sur la carte. Les points peuvent être réutilisés comme centres pour les cercles ou comme points de départ/arrivée pour les lignes."
       },
       "polygon": {
         "title": "⬟ Polygone",
         "description": "Créez une zone en connectant plusieurs points :",
         "selectPoints": "Sélectionner des points : Choisissez au moins 3 points existants sur la carte",
         "visual": "Visuel : Les polygones sont affichés en vert clair avec un remplissage semi-transparent",
-        "extractCenter": "Extraire le centre : Menu clic droit pour ajouter le centre du polygone comme point et coordonnée",
+        "extractCenter": "Extraire le centre : Menu clic droit pour ajouter le centre du polygone comme nouveau point",
         "useCase": "Cas d'utilisation : Définir des zones de recherche, marquer des zones d'intérêt ou visualiser des limites"
       }
     },
@@ -512,7 +512,7 @@
         "navigate": "🧭 Naviguer : Utiliser les touches fléchées pour se déplacer autour de la forme (cercles et lignes)",
         "bearings": "🧭 Relèvements : Voir les distances et azimuts vers tous les autres points (points uniquement)",
         "createWith": "➕ Créer avec : Créer de nouvelles formes à partir d'un point",
-        "addCenter": "⬟ Ajouter le centre comme point : Extraire le centre du polygone comme point et coordonnée (polygones uniquement)"
+        "addCenter": "⬟ Ajouter le centre comme point : Extraire le centre du polygone comme nouveau point (polygones uniquement)"
       },
       "dragDrop": {
         "title": "Glisser-déposer",
@@ -551,31 +551,31 @@
         "reminders": "Ajouter des rappels ou des prochaines étapes pour votre enquête de chasse au trésor"
       }
     },
-    "coordinatesSection": {
-      "heading": "📌 Coordonnées enregistrées",
-      "intro": "Enregistrez les emplacements fréquemment utilisés pour un accès rapide :",
-      "howToSave": {
-        "title": "Comment enregistrer des coordonnées",
-        "step1": "Faites un clic droit sur la carte pour enregistrer un emplacement",
-        "step2": "Une modale s'ouvrira avec les coordonnées pré-remplies",
-        "step3": "Entrez un nom pour la coordonnée (ou laissez vide pour une adresse auto-générée)",
-        "step4": "Cliquez sur Enregistrer pour l'ajouter à votre bibliothèque de coordonnées",
-        "step5": "Cliquez sur Enregistrer et créer un point pour enregistrer et créer un point sur la carte"
+    "pointsSection": {
+      "heading": "📍 Points",
+      "intro": "Créez et gérez des marqueurs d'emplacement sur la carte :",
+      "howToCreate": {
+        "title": "Comment créer des points",
+        "step1": "Faites un clic droit sur la carte pour créer un point à cet emplacement",
+        "step2": "Ou cliquez sur le bouton Point dans la barre supérieure",
+        "step3": "Entrez un nom (ou laissez vide pour un nom auto-généré)",
+        "step4": "Entrez les coordonnées manuellement ou sélectionnez parmi les points existants",
+        "step5": "Cliquez sur Ajouter pour créer le point sur la carte"
       },
       "managing": {
-        "title": "Gérer les coordonnées",
-        "access": "Accédez à la modale des coordonnées depuis la barre supérieure (icône de livre)",
-        "view": "Consultez toutes les coordonnées enregistrées avec leurs valeurs lat/lon",
-        "edit": "Modifiez les coordonnées existantes en cliquant sur l'icône crayon",
-        "delete": "Supprimez les coordonnées en cliquant sur l'icône de corbeille",
-        "sorted": "Les coordonnées sont triées par date de création (les plus récentes en premier)"
+        "title": "Gérer les points",
+        "access": "Consultez tous les points dans le panneau Calques (barre latérale gauche)",
+        "view": "Les points affichent leur nom et leurs coordonnées",
+        "edit": "Modifiez les points via le menu ⋮ → Modifier",
+        "delete": "Supprimez les points via le menu ⋮ → Supprimer",
+        "sorted": "Les points sont triés par date de création (les plus récents en premier)"
       },
       "useCases": {
         "title": "💡 Cas d'utilisation",
-        "saveFirst": "Enregistrez les emplacements avant de dessiner - toutes les formes nécessitent des coordonnées enregistrées",
-        "library": "Créez une bibliothèque de lieux importants pour votre chasse au trésor",
-        "quickReference": "Points de référence rapides pour plusieurs projets",
-        "reuse": "Réutilisez les coordonnées dans différents dessins sans les ressaisir",
+        "circleCenter": "Utilisez les points comme centres de cercles",
+        "lineEndpoints": "Utilisez les points comme points de départ et d'arrivée des lignes",
+        "polygonVertices": "Combinez des points pour créer des polygones",
+        "quickReference": "Marquez des emplacements importants pour votre chasse au trésor",
         "autoGenerated": "Les noms auto-générés utilisent le géocodage inversé pour trouver les adresses"
       }
     },
@@ -597,7 +597,7 @@
       },
       "features": {
         "title": "Fonctionnalités",
-        "storage": "Chaque projet stocke tous vos dessins et coordonnées séparément",
+        "storage": "Chaque projet stocke tous vos dessins séparément",
         "autoSave": "Les projets sont enregistrés automatiquement dans le stockage local de votre navigateur",
         "renameDelete": "Renommez ou supprimez des projets depuis la modale Charger un projet",
         "gpxExport": "Exportez en GPX pour utiliser vos dessins dans d'autres applications de cartographie"
@@ -643,7 +643,7 @@
         "arrows": "Touches fléchées (← →) - Naviguez le long des cercles/lignes en mode navigation",
         "z": "Z - Basculez le mode précision (vue loupe agrandie)",
         "esc": "Échap - Quittez le mode navigation, le mode précision ou annulez le dessin main levée",
-        "rightClick": "Clic droit sur la carte - Enregistrez les coordonnées à cet emplacement (ferme également le mode précision)",
+        "rightClick": "Clic droit sur la carte - Créez un point à cet emplacement (ferme également le mode précision)",
         "alt": "ALT - Maintenez pendant le dessin main levée pour verrouiller l'azimut (uniquement sans azimut prédéfini)",
         "ctrl": "Ctrl - Maintenez pendant le dessin main levée pour verrouiller la distance"
       },
@@ -668,7 +668,7 @@
       },
       "drawingTips": {
         "title": "🎯 Conseils de dessin",
-        "saveFirst": "Enregistrez d'abord les coordonnées - Faites un clic droit sur la carte pour enregistrer des emplacements avant de dessiner des formes",
+        "saveFirst": "Créez d'abord des points - Faites un clic droit sur la carte pour marquer des emplacements avant de dessiner des formes",
         "quickLine": "Création rapide de ligne - Faites glisser un point vers un autre point dans le panneau des calques pour créer instantanément une ligne",
         "freeHandMode": {
           "title": "Mode main levée - Dessinez des lignes de manière interactive en cliquant sur les points de début et de fin :",
@@ -815,7 +815,10 @@
       "midpointName": "Point milieu de {segment}",
       "midpointSuffix": " (point milieu)",
       "segmentNotFound": "Ligne introuvable",
-      "success": "Point ajouté avec succès"
+      "success": "Point ajouté avec succès",
+      "startOfLine": "Début de {line}",
+      "endOfLine": "Fin de {line}",
+      "pointAtDistance": "{line} à {distance} km"
     },
     "angleLine": {
       "title": "Ligne à un angle",
@@ -828,10 +831,10 @@
       "lineName": "Nom de la ligne",
       "lineNamePlaceholder": "Entrez le nom de la ligne",
       "pointOnLine": "Point sur la ligne",
-      "onLine": "sur",
+      "onLine": "sur {line}",
       "bearingError": "Erreur de calcul du relèvement",
-      "generatedEndpointName": "Point d'arrivée à {angle}° depuis {point}",
-      "generatedName": "Ligne à {angle}° depuis {point}",
+      "generatedEndpointName": "Point d'arrivée à {angle}° depuis {pointName}",
+      "generatedName": "Ligne à {angle}° depuis {pointName}",
       "pointNotFoundError": "Point introuvable",
       "selectPointError": "Veuillez sélectionner un point sur la ligne",
       "success": "Ligne créée avec succès"
@@ -872,11 +875,11 @@
       "distance": "Distance",
       "endpointName": "Nom du point d'arrivée",
       "endpointPlaceholder": "Laisser vide pour génération automatique",
-      "intersectionCoordinates": "Coordonnées d'intersection",
-      "selectCoordinate": "Sélectionner une coordonnée",
-      "startCoordinates": "Coordonnées de départ",
+      "intersectionPoint": "Point d'intersection",
+      "selectPoint": "Sélectionner un point",
+      "startPoint": "Point de départ",
       "distanceError": "La distance doit être supérieure à 0",
-      "selectBothCoordinates": "Veuillez sélectionner les coordonnées de départ et d'intersection"
+      "selectBothPoints": "Veuillez sélectionner les points de départ et d'intersection"
     }
   },
   "confirm": {

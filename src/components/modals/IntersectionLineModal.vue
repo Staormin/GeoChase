@@ -20,15 +20,15 @@
       <CoordinateSelector
         v-model="form.startCoord"
         :items="coordinateItems"
-        :label="$t('modals.intersectionLine.startCoordinates')"
-        :placeholder="$t('modals.intersectionLine.selectCoordinate')"
+        :label="$t('modals.intersectionLine.startPoint')"
+        :placeholder="$t('modals.intersectionLine.selectPoint')"
       />
 
       <CoordinateSelector
         v-model="form.intersectCoord"
         :items="coordinateItems"
-        :label="$t('modals.intersectionLine.intersectionCoordinates')"
-        :placeholder="$t('modals.intersectionLine.selectCoordinate')"
+        :label="$t('modals.intersectionLine.intersectionPoint')"
+        :placeholder="$t('modals.intersectionLine.selectPoint')"
       />
 
       <v-text-field
@@ -127,7 +127,7 @@ function closeModal() {
 
 async function submitForm() {
   if (!form.startCoord || !form.intersectCoord) {
-    uiStore.addToast(t('modals.intersectionLine.selectBothCoordinates'), 'error');
+    uiStore.addToast(t('modals.intersectionLine.selectBothPoints'), 'error');
     return;
   }
 
