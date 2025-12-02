@@ -269,8 +269,31 @@ function submitForm() {
     }
   }
 
-  const name =
-    form.value.name.trim() || t('common.pointName', { count: layersStore.pointCount + 1 });
+  // Auto-generate clever name based on position
+  let name = form.value.name.trim();
+  if (!name) {
+    const tolerance = 0.001; // 1 meter tolerance for detecting start/end
+    const isAtStart =
+      (form.value.distanceFrom === 'start' && form.value.distance < tolerance) ||
+      (form.value.distanceFrom === 'end' &&
+        Math.abs(form.value.distance - segmentLength) < tolerance);
+    const isAtEnd =
+      (form.value.distanceFrom === 'end' && form.value.distance < tolerance) ||
+      (form.value.distanceFrom === 'start' &&
+        Math.abs(form.value.distance - segmentLength) < tolerance);
+
+    if (isAtStart) {
+      name = t('modals.addPointOnSegment.startOfLine', { line: segment.name });
+    } else if (isAtEnd) {
+      name = t('modals.addPointOnSegment.endOfLine', { line: segment.name });
+    } else {
+      // Default: include distance info
+      name = t('modals.addPointOnSegment.pointAtDistance', {
+        line: segment.name,
+        distance: form.value.distance.toFixed(2),
+      });
+    }
+  }
 
   // Draw the point
   const newPoint = drawing.drawPoint(pointOnSegment.lat, pointOnSegment.lon, name);

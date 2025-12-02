@@ -70,8 +70,8 @@
     "zoomOut": "Zoom out",
     "resetView": "Reset view",
     "currentLocation": "Current location",
-    "coordinatesSaved": "Coordinates saved",
-    "rightClickToSave": "Right-click on the map to save coordinates"
+    "pointCreated": "Point created",
+    "rightClickToSave": "Right-click on the map to create a point"
   },
   "topbar": {
     "title": "GeoChase",
@@ -96,7 +96,7 @@
     "importJSON": "Import JSON",
     "loadProject": "Load Project",
     "newProject": "New Project",
-    "rightClickHint": "Right-click on map to save coordinates",
+    "rightClickHint": "Right-click on map to create a point",
     "save": "Save",
     "savedCoordinates": "Saved Coordinates",
     "layers": "Elements"
@@ -397,8 +397,8 @@
         "drawShapes": "Draw circles, lines, points, and polygons on an interactive map",
         "searchLocations": "Search for locations by address and explore nearby places",
         "findAlongPaths": "Find locations along paths with distance and altitude filters",
-        "viewElevation": "View elevation data for coordinates and search results",
-        "saveCoordinates": "Save coordinates for quick access across projects",
+        "viewElevation": "View elevation data for points and search results",
+        "savePoints": "Create and reuse points for quick access across drawings",
         "manageProjects": "Create and manage projects with multiple drawings",
         "navigate": "Navigate around your shapes using arrow keys",
         "exportGPX": "Export as GPX for use in other mapping applications"
@@ -417,13 +417,13 @@
         "title": "🔵 Circle",
         "description": "Draw a circle on the map by specifying:",
         "name": "Name: Give your circle a name (optional, auto-generated if empty)",
-        "center": "Center Coordinates: Select from your saved coordinates",
+        "center": "Center: Select from your saved points or enter coordinates manually",
         "radius": "Radius: Size in kilometers"
       },
       "line": {
         "title": "➖ Line",
         "description": "Draw a line with multiple modes:",
-        "twoPoints": "Two Points: Connect two saved coordinates",
+        "twoPoints": "Two Points: Connect two saved points",
         "azimuth": "Azimuth Mode: Create a line at a specific angle (azimuth) and distance",
         "intersection": "Intersection Mode: Draw a line passing through a point at a specific distance",
         "parallel": "Parallel Mode: Draw a parallel line (latitude) across the map",
@@ -432,14 +432,14 @@
       },
       "point": {
         "title": "📍 Point",
-        "description": "Mark specific locations on the map. Points can be saved as coordinates for reuse."
+        "description": "Mark specific locations on the map. Points can be reused as centers for circles or start/end points for lines."
       },
       "polygon": {
         "title": "⬟ Polygon",
         "description": "Create an area by connecting multiple points:",
         "selectPoints": "Select Points: Choose at least 3 existing points from the map",
         "visual": "Visual: Polygons are displayed in light green with semi-transparent fill",
-        "extractCenter": "Extract Center: Right-click menu to add the polygon's center as a point and coordinate",
+        "extractCenter": "Extract Center: Right-click menu to add the polygon's center as a new point",
         "useCase": "Use Case: Define search areas, mark zones of interest, or visualize boundaries"
       }
     },
@@ -512,7 +512,7 @@
         "navigate": "🧭 Navigate: Use arrow keys to move around the shape (circles and lines)",
         "bearings": "🧭 Bearings: View distances and azimuths to all other points (points only)",
         "createWith": "➕ Create with: Create new shapes from a point",
-        "addCenter": "⬟ Add center as point: Extract polygon center as a point and coordinate (polygons only)"
+        "addCenter": "⬟ Add center as point: Extract polygon center as a new point (polygons only)"
       },
       "dragDrop": {
         "title": "Drag & Drop",
@@ -551,31 +551,31 @@
         "reminders": "Add reminders or next steps for your treasure hunt investigation"
       }
     },
-    "coordinatesSection": {
-      "heading": "📌 Saved Coordinates",
-      "intro": "Save frequently-used locations for quick access:",
-      "howToSave": {
-        "title": "How to Save Coordinates",
-        "step1": "Right-click on the map to save a location",
-        "step2": "A modal will open with the coordinates pre-filled",
-        "step3": "Enter a name for the coordinate (or leave empty for auto-generated address)",
-        "step4": "Click Save to add it to your coordinates library",
-        "step5": "Click Save & Point to save and create a point on the map"
+    "pointsSection": {
+      "heading": "📍 Points",
+      "intro": "Create and manage location markers on the map:",
+      "howToCreate": {
+        "title": "How to Create Points",
+        "step1": "Right-click on the map to create a point at that location",
+        "step2": "Or click the Point button in the top bar",
+        "step3": "Enter a name (or leave empty for auto-generated name)",
+        "step4": "Enter coordinates manually or select from existing points",
+        "step5": "Click Add to create the point on the map"
       },
       "managing": {
-        "title": "Managing Coordinates",
-        "access": "Access the coordinates modal from the top bar (book icon)",
-        "view": "View all saved coordinates with their lat/lon values",
-        "edit": "Edit existing coordinates by clicking the pencil icon",
-        "delete": "Delete coordinates by clicking the trash icon",
-        "sorted": "Coordinates are sorted by creation date (newest first)"
+        "title": "Managing Points",
+        "access": "View all points in the Layers panel (left sidebar)",
+        "view": "Points show their name and coordinates",
+        "edit": "Edit points via the ⋮ menu → Edit",
+        "delete": "Delete points via the ⋮ menu → Delete",
+        "sorted": "Points are sorted by creation date (newest first)"
       },
       "useCases": {
         "title": "💡 Use Cases",
-        "saveFirst": "Save locations before drawing - all shapes require saved coordinates",
-        "library": "Build a library of important locations for your treasure hunt",
-        "quickReference": "Quick reference points for multiple projects",
-        "reuse": "Reuse coordinates across different drawings without re-entering them",
+        "circleCenter": "Use points as circle centers",
+        "lineEndpoints": "Use points as line start and end points",
+        "polygonVertices": "Combine points to create polygons",
+        "quickReference": "Mark important locations for your treasure hunt",
         "autoGenerated": "Auto-generated names use reverse geocoding to find addresses"
       }
     },
@@ -597,7 +597,7 @@
       },
       "features": {
         "title": "Features",
-        "storage": "Each project stores all your drawings and coordinates separately",
+        "storage": "Each project stores all your drawings separately",
         "autoSave": "Projects are saved automatically to your browser's local storage",
         "renameDelete": "Rename or delete projects from the Load Project modal",
         "gpxExport": "Export as GPX to use your drawings in other mapping applications"
@@ -643,7 +643,7 @@
         "arrows": "Arrow Keys (← →) - Navigate along circles/lines during navigation mode",
         "z": "Z - Toggle precision mode (magnified lens view)",
         "esc": "ESC - Exit navigation mode, precision mode, or cancel free hand drawing",
-        "rightClick": "Right-click on map - Save coordinates at that location (also closes precision mode)",
+        "rightClick": "Right-click on map - Create a point at that location (also closes precision mode)",
         "alt": "ALT - Hold during free hand drawing to lock azimuth (only when no predefined azimuth)",
         "ctrl": "CTRL - Hold during free hand drawing to lock distance"
       },
@@ -668,7 +668,7 @@
       },
       "drawingTips": {
         "title": "🎯 Drawing Tips",
-        "saveFirst": "Save coordinates first - Right-click on the map to save locations before drawing shapes",
+        "saveFirst": "Create points first - Right-click on the map to mark locations before drawing shapes",
         "quickLine": "Quick line creation - Drag a point to another point in the layers panel to instantly create a line",
         "freeHandMode": {
           "title": "Free Hand Mode - Draw lines interactively by clicking start and end points:",
@@ -815,7 +815,10 @@
       "midpointName": "Midpoint of {segment}",
       "midpointSuffix": " (midpoint)",
       "segmentNotFound": "Line not found",
-      "success": "Point added successfully"
+      "success": "Point added successfully",
+      "startOfLine": "Start of {line}",
+      "endOfLine": "End of {line}",
+      "pointAtDistance": "{line} at {distance} km"
     },
     "angleLine": {
       "title": "Line at Angle",
@@ -828,10 +831,10 @@
       "lineName": "Line Name",
       "lineNamePlaceholder": "Enter line name",
       "pointOnLine": "Point on Line",
-      "onLine": "on",
+      "onLine": "on {line}",
       "bearingError": "Error calculating bearing",
-      "generatedEndpointName": "Endpoint at {angle}° from {point}",
-      "generatedName": "Line at {angle}° from {point}",
+      "generatedEndpointName": "Endpoint at {angle}° from {pointName}",
+      "generatedName": "Line at {angle}° from {pointName}",
       "pointNotFoundError": "Point not found",
       "selectPointError": "Please select a point on the line",
       "success": "Line created successfully"
@@ -872,11 +875,11 @@
       "distance": "Distance",
       "endpointName": "Endpoint Name",
       "endpointPlaceholder": "Leave empty for auto-generated name",
-      "intersectionCoordinates": "Intersection Coordinates",
-      "selectCoordinate": "Select Coordinate",
-      "startCoordinates": "Start Coordinates",
+      "intersectionPoint": "Intersection Point",
+      "selectPoint": "Select a point",
+      "startPoint": "Start Point",
       "distanceError": "Distance must be greater than 0",
-      "selectBothCoordinates": "Please select both start and intersection coordinates"
+      "selectBothPoints": "Please select both start and intersection points"
     }
   },
   "confirm": {

@@ -181,8 +181,8 @@ describe('AddPointOnSegmentModal.vue', () => {
       const [lat, lon, name] = mockDrawing.drawPoint.mock.calls[0];
       expect(typeof lat).toBe('number');
       expect(typeof lon).toBe('number');
-      // Name uses i18n translation: "Point Name" (default when form.name is empty)
-      expect(name).toBe('Point Name');
+      // Name uses auto-generated format: "{line} at {distance} km"
+      expect(name).toBe('Test Line at 0.10 km');
     });
 
     it('draws point using binary search from end', async () => {

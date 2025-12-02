@@ -18,7 +18,7 @@
             variant="outlined"
           />
 
-          <!-- Center Coordinates selector -->
+          <!-- Center Point selector -->
           <v-select
             v-model="form.centerCoord"
             class="mb-4"
@@ -27,14 +27,14 @@
             item-title="label"
             item-value="value"
             :items="coordinateItems"
-            :label="$t('common.coordinates')"
-            :placeholder="$t('coordinates.save')"
+            :label="$t('common.center')"
+            :placeholder="$t('line.selectPoint')"
             variant="outlined"
           >
             <template #no-data>
               <v-list-item>
                 <v-list-item-title class="text-caption">{{
-                  $t('sidebar.noCoordinates')
+                  $t('sidebar.noPoints')
                 }}</v-list-item-title>
               </v-list-item>
             </template>

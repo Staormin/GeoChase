@@ -22,8 +22,8 @@
       <CoordinateSelector
         v-model="form.startCoord"
         :items="coordinateItems"
-        :label="$t('common.start') + ' ' + $t('common.coordinates')"
-        :placeholder="$t('coordinates.selectFromPoint')"
+        :label="$t('common.start') + ' ' + $t('common.point')"
+        :placeholder="$t('line.selectPoint')"
       />
 
       <v-text-field
