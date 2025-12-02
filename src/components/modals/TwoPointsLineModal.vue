@@ -22,15 +22,15 @@
       <CoordinateSelector
         v-model="form.startCoord"
         :items="coordinateItems"
-        :label="$t('line.startLat') + ' / ' + $t('line.startLon')"
-        :placeholder="$t('coordinates.selectFromPoint')"
+        :label="$t('common.start') + ' ' + $t('common.point')"
+        :placeholder="$t('line.selectPoint')"
       />
 
       <CoordinateSelector
         v-model="form.endCoord"
         :items="coordinateItems"
-        :label="$t('line.endLat') + ' / ' + $t('line.endLon')"
-        :placeholder="$t('coordinates.selectFromPoint')"
+        :label="$t('common.end') + ' ' + $t('common.point')"
+        :placeholder="$t('line.selectPoint')"
       />
     </v-form>
   </BaseModal>

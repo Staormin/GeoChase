@@ -28,7 +28,7 @@
         item-value="value"
         :items="latitudeItems"
         :label="$t('common.latitude')"
-        :placeholder="$t('coordinates.selectFromPoint')"
+        :placeholder="$t('line.selectPoint')"
         variant="outlined"
       >
         <template #no-data>
