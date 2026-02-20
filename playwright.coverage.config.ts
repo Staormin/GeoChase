@@ -1,4 +1,7 @@
+import { os } from 'node:os';
 import { defineConfig, devices } from '@playwright/test';
+
+const cpus = os.availableParallelism?.() ?? os.cpus().length;
 
 /**
  * Playwright configuration for E2E testing with coverage
@@ -16,14 +19,14 @@ export default defineConfig({
   /* No retries for coverage runs */
   retries: 0,
 
-  /* Use fewer workers to ensure coverage is collected properly */
-  workers: process.env.CI ? 1 : 4,
+  /* Reserve 2 cores for system/dev server, minimum 1 worker */
+  workers: Math.max(1, cpus - 2),
 
   /* Reporter */
   reporter: 'list',
 
   /* Shorter timeout for faster failure detection */
-  timeout: 15_000,
+  timeout: 100,
 
   /* Stop immediately on first failure */
   maxFailures: 1,
@@ -47,7 +50,7 @@ export default defineConfig({
     video: 'off',
 
     /* Faster action timeout */
-    actionTimeout: 10_000,
+    actionTimeout: 100,
   },
 
   /* Configure projects for major browsers */
