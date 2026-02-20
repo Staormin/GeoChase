@@ -1,4 +1,7 @@
+import os from 'node:os';
 import { defineConfig, devices } from '@playwright/test';
+
+const cpus = os.availableParallelism?.() ?? os.cpus().length;
 
 /**
  * Playwright configuration for E2E testing
@@ -16,8 +19,8 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
 
-  /* Optimize workers for speed: use 6 workers locally (8 cores - 2 for system/dev server) */
-  workers: process.env.CI ? 1 : 6,
+  /* Reserve 2 cores for system/dev server, minimum 1 worker */
+  workers: Math.max(1, cpus - 2),
 
   /* Reporter to use - 'list' for fast console output, 'html' for detailed reports */
   reporter: process.env.CI ? 'html' : 'list',
