@@ -1,0 +1,23 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+      target: dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - '${DEV_PORT:-3000}:3000'
+    environment:
+      - NODE_ENV=development
+
+  e2e:
+    build:
+      context: .
+      dockerfile: docker/e2e/Dockerfile
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - CI=true
