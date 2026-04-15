@@ -54,7 +54,6 @@ import { useUIStore } from '@/stores/ui';
 const uiStore = useUIStore();
 const mapContainer = inject<MapContainer>('mapContainer');
 
-const selectedAddress = ref<any>(null);
 const addressSearchResults = ref<AddressSearchResult[]>([]);
 const addressSearchLoading = ref(false);
 const addressSearchInput = ref<string>('');
@@ -90,10 +89,6 @@ async function onAddressSearch(query: string) {
 function onAddressSelect(coordinates: any) {
   if (coordinates && coordinates.lat && coordinates.lon && mapContainer) {
     mapContainer.setCenter(coordinates.lat, coordinates.lon, 13);
-    selectedAddress.value = null;
-    addressSearchResults.value = [];
-    showResults.value = false;
-    addressSearchInput.value = '';
   }
 }
 watch(addressSearchInput, (newVal) => {
