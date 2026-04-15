@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 import { useAppSetup } from '@/composables/useAppSetup';
-
 // Import mocked modules
 import { useFreeHandDrawing } from '@/composables/useFreeHandDrawing';
 import { useKeyboardNavigation } from '@/composables/useKeyboardNavigation';

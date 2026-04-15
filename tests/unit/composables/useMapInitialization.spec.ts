@@ -6,7 +6,6 @@ import { useMapInitialization } from '@/composables/useMapInitialization';
 import { isLanguageSet } from '@/plugins/i18n';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
-
 import { useUIStore } from '@/stores/ui';
 
 // Mock useNoteTooltips
