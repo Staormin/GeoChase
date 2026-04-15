@@ -88,7 +88,7 @@ test.describe('Address Search', () => {
   });
 
   test.describe('Address Selection', () => {
-    test('should clear input after selecting address', async ({ page, blankProject }) => {
+    test('should keep results visible after selecting address', async ({ page, blankProject }) => {
       const searchInput = page.locator('.v-navigation-drawer input[type="text"]').first();
       await searchInput.fill('Paris France');
 
@@ -101,12 +101,18 @@ test.describe('Address Search', () => {
         await firstResult.click();
         await page.waitForTimeout(500);
 
-        // Input should be cleared after selection
-        await expect(searchInput).toHaveValue('');
+        // Input should still contain the search text
+        await expect(searchInput).toHaveValue('Paris France');
+
+        // Results should still be visible for quick navigation
+        await expect(page.locator('.v-menu .v-card')).toBeVisible();
       }
     });
 
-    test('should close dropdown after selecting address', async ({ page, blankProject }) => {
+    test('should close dropdown when clearing input after selection', async ({
+      page,
+      blankProject,
+    }) => {
       const searchInput = page.locator('.v-navigation-drawer input[type="text"]').first();
       await searchInput.fill('Lyon France');
 
@@ -119,8 +125,22 @@ test.describe('Address Search', () => {
         await firstResult.click();
         await page.waitForTimeout(500);
 
-        // Dropdown should be closed
-        await expect(page.locator('.v-menu .v-card')).not.toBeVisible();
+        // Results should still be visible
+        await expect(page.locator('.v-menu .v-card')).toBeVisible();
+
+        // Clear the input via the clear button
+        const clearBtn = page
+          .locator(
+            '.v-navigation-drawer .mdi-close-circle, .v-navigation-drawer .v-field__clearable'
+          )
+          .first();
+        if (await clearBtn.isVisible()) {
+          await clearBtn.click();
+          await page.waitForTimeout(500);
+
+          // Dropdown should now be closed
+          await expect(page.locator('.v-menu .v-card')).not.toBeVisible();
+        }
       }
     });
   });

@@ -1,6 +1,5 @@
 import XYZ from 'ol/source/XYZ';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { ref } from 'vue';
 import { usePrecisionLens } from '@/composables/usePrecisionLens';
 
