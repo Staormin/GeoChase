@@ -172,6 +172,14 @@ export function useAnimation(
 
   // Store original visibility state before animation
   const originalVisibilityState = new Map<string, boolean>();
+  let countdownIntervalId: ReturnType<typeof setInterval> | null = null;
+
+  function clearCountdown() {
+    if (countdownIntervalId !== null) {
+      clearInterval(countdownIntervalId);
+      countdownIntervalId = null;
+    }
+  }
 
   // Start to finish animation - navigate to each element one by one
   function animateStartToFinish() {
@@ -393,12 +401,13 @@ export function useAnimation(
       }
 
       // Countdown then start zoom animation
-      const countdownInterval = setInterval(() => {
+      clearCountdown();
+      countdownIntervalId = setInterval(() => {
         countdownValue--;
         if (countdownValue > 0) {
           uiStore.setAnimationCountdown(countdownValue);
         } else {
-          clearInterval(countdownInterval);
+          clearCountdown();
           uiStore.setAnimationCountdown(0);
           // Start smooth zoom out after countdown
           animateSmoothZoomOut();
@@ -414,12 +423,13 @@ export function useAnimation(
       }
 
       // Countdown then start showing elements one by one
-      const countdownInterval = setInterval(() => {
+      clearCountdown();
+      countdownIntervalId = setInterval(() => {
         countdownValue--;
         if (countdownValue > 0) {
           uiStore.setAnimationCountdown(countdownValue);
         } else {
-          clearInterval(countdownInterval);
+          clearCountdown();
           uiStore.setAnimationCountdown(0);
           // Start showing elements after countdown
           animateStartToFinish();
@@ -463,6 +473,9 @@ export function useAnimation(
         setLabelsAndNotesVisibility(false);
         startAnimationSequence();
       } else {
+        // Cancel any pending countdown so it can't fire the animation after cancel
+        clearCountdown();
+        uiStore.setAnimationCountdown(0);
         // Restore labels and notes when animation stops
         setLabelsAndNotesVisibility(true);
         // Keep sidebars closed after animation
