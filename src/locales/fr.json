@@ -80,6 +80,11 @@
     "expandTopBar": "Développer la barre supérieure",
     "github": "GitHub"
   },
+  "tools": {
+    "toggle": "Outils",
+    "ruler": "Règle",
+    "rulerHint": "Cliquez pour définir le point de départ, cliquez à nouveau pour mesurer, Échap pour annuler"
+  },
   "sidebar": {
     "drawings": "Dessins",
     "search": "Recherche",
@@ -389,6 +394,7 @@
     "projects": "Projets",
     "searchExplore": "Rechercher et explorer",
     "tipsTricks": "Trucs et astuces",
+    "tools": "Outils",
     "gettingStartedSection": {
       "heading": "🎯 Bienvenue sur GeoChase",
       "intro": "GeoChase est un puissant résolveur de chasse au trésor conçu pour vous aider à découvrir des lieux, analyser des indices et trouver des trésors cachés en utilisant des outils avancés de cartographie géographique et de recherche de localisation.",
@@ -490,6 +496,24 @@
         "speedAdjust": "La vitesse s'ajuste automatiquement en fonction du niveau de zoom",
         "zoomBehavior": "Zoom élevé = petits mouvements, zoom faible = grands mouvements",
         "sidebarHide": "La barre latérale se cache pendant la navigation pour une vue plus claire"
+      }
+    },
+    "toolsSection": {
+      "heading": "🛠️ Outils",
+      "intro": "Les outils sont des utilitaires rapides et éphémères utilisables sur la carte sans rien enregistrer dans votre projet.",
+      "accessing": {
+        "title": "Ouvrir la barre d'outils",
+        "location": "Cliquez sur le bouton rond en bas à droite de la carte",
+        "toggle": "Cliquez à nouveau pour fermer la barre, ou choisissez un outil pour l'activer"
+      },
+      "ruler": {
+        "title": "📏 Règle",
+        "description": "Mesurez une distance et un azimut entre deux points sans ajouter de ligne à votre projet.",
+        "step1": "Ouvrez la barre d'outils et cliquez sur la règle",
+        "step2": "Cliquez sur la carte pour placer le point de départ",
+        "step3": "Déplacez le curseur : la distance et l'azimut s'affichent en temps réel à côté",
+        "step4": "Cliquez à nouveau pour figer la mesure ; tout clic suivant quitte l'outil (le déplacement de la carte non)",
+        "notSaved": "Appuyez sur Échap à tout moment pour annuler. La règle n'enregistre jamais de ligne dans vos calques."
       }
     },
     "layersSection": {

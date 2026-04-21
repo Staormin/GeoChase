@@ -1,11 +1,12 @@
-import type { Ref } from 'vue';
 import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
 import type { useNoteTooltips } from '@/composables/useNoteTooltips';
+import type { Ref } from 'vue';
 import { useFreeHandDrawing } from '@/composables/useFreeHandDrawing';
 import { useKeyboardNavigation } from '@/composables/useKeyboardNavigation';
 import { useMapEventHandlers } from '@/composables/useMapEventHandlers';
 import { useMapInitialization } from '@/composables/useMapInitialization';
+import { useRuler } from '@/composables/useRuler';
 import { useViewCapture } from '@/composables/useViewCapture';
 
 interface CursorTooltipData {
@@ -27,7 +28,12 @@ export function useAppSetup(
 ) {
   // Initialize sub-composables
   const freeHandDrawing = useFreeHandDrawing(mapContainer, drawing, cursorTooltip);
-  const keyboardNavigation = useKeyboardNavigation(mapContainer, freeHandDrawing.handleEscape);
+  const ruler = useRuler(mapContainer, cursorTooltip);
+  const keyboardNavigation = useKeyboardNavigation(
+    mapContainer,
+    freeHandDrawing.handleEscape,
+    ruler.handleEscape
+  );
   const mapEventHandlers = useMapEventHandlers(mapContainer);
   const viewCapture = useViewCapture(mapContainer);
 
@@ -39,6 +45,7 @@ export function useAppSetup(
     const unsubscribeRightClick = mapEventHandlers.setup();
     const unsubscribeViewCapture = viewCapture.setup();
     freeHandDrawing.setup();
+    ruler.setup();
     keyboardNavigation.setup();
 
     // Cleanup on unmount
@@ -46,6 +53,7 @@ export function useAppSetup(
       unsubscribeRightClick();
       unsubscribeViewCapture();
       freeHandDrawing.cleanup();
+      ruler.cleanup();
       keyboardNavigation.cleanup();
       mapContainer.destroyMap();
     };

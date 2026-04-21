@@ -109,12 +109,15 @@ async function submitForm() {
   }
 
   if (isEditing.value && uiStore.editingElement) {
-    layersStore.updateLineSegment(uiStore.editingElement.id, {
+    drawing.updateLineSegment(
+      uiStore.editingElement.id,
+      startLat,
+      startLon,
+      endLat,
+      endLon,
       name,
-      center: { lat: startLat, lon: startLon },
-      endpoint: { lat: endLat, lon: endLon },
-      mode: 'coordinate',
-    });
+      'coordinate'
+    );
     uiStore.addToast(t('line.updated'), 'success');
   } else {
     // Create new two-points line
