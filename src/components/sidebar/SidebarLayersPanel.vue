@@ -314,7 +314,7 @@ import { getDistance } from 'ol/sphere';
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import LayerContextMenu from '@/components/layers/LayerContextMenu.vue';
-import { calculateBearing, destinationPoint } from '@/services/geometry';
+import { calculateBearing } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -449,20 +449,27 @@ function getLineInfo(line: LineSegmentElement) {
     return `parallel • ${line.longitude}°`;
   }
 
-  // Calculate segment length using haversine formula for display
   if (!line.endpoint) {
     return `${line.mode} • (incomplete)`;
   }
 
-  let endpoint = line.endpoint;
-  if (line.mode === 'azimuth' && line.distance && line.azimuth !== undefined) {
-    endpoint = destinationPoint(line.center.lat, line.center.lon, line.distance, line.azimuth);
+  let azimuth: number;
+  let segmentLength: number;
+  if (line.mode === 'azimuth' && line.distance !== undefined && line.azimuth !== undefined) {
+    azimuth = line.azimuth;
+    segmentLength = line.distance;
+  } else {
+    // getDistance returns meters, convert to km
+    segmentLength =
+      getDistance([line.center.lon, line.center.lat], [line.endpoint.lon, line.endpoint.lat]) /
+      1000;
+    azimuth = calculateBearing(
+      line.center.lat,
+      line.center.lon,
+      line.endpoint.lat,
+      line.endpoint.lon
+    );
   }
-
-  // getDistance returns meters, convert to km
-  const segmentLength =
-    getDistance([line.center.lon, line.center.lat], [endpoint.lon, endpoint.lat]) / 1000;
-  const azimuth = calculateBearing(line.center.lat, line.center.lon, endpoint.lat, endpoint.lon);
   const inverseAzimuth = (azimuth + 180) % 360;
   const modeLabel =
     line.mode === 'coordinate'

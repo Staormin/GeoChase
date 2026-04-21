@@ -79,6 +79,26 @@ export const useLayersStore = defineStore('layers', () => {
     });
   });
 
+  // Id → element indexes so cascading updates avoid O(n²) array scans.
+  // These are derived from the reactive arrays; mutating an element in place
+  // (e.g. pushing to point.polygonIds) still works because the Map holds the
+  // same object reference.
+  const pointsById = computed(() => {
+    const map = new Map<string, PointElement>();
+    for (const p of points.value) {
+      if (p.id) map.set(p.id, p);
+    }
+    return map;
+  });
+
+  const polygonsById = computed(() => {
+    const map = new Map<string, PolygonElement>();
+    for (const p of polygons.value) {
+      if (p.id) map.set(p.id, p);
+    }
+    return map;
+  });
+
   const noteCount = computed(() => notes.value.length);
 
   const sortedNotes = computed(() => {
@@ -202,8 +222,9 @@ export const useLayersStore = defineStore('layers', () => {
       if (id && point && point.polygonIds) {
         const polygonsToDelete: string[] = [];
 
+        const polygonIndex = polygonsById.value;
         for (const polygonId of point.polygonIds) {
-          const polygon = polygons.value.find((p) => p.id === polygonId);
+          const polygon = polygonIndex.get(polygonId);
           if (polygon) {
             // Remove this point from polygon's pointIds
             polygon.pointIds = polygon.pointIds.filter((pid) => pid !== id);
@@ -258,8 +279,9 @@ export const useLayersStore = defineStore('layers', () => {
 
       // Clear polygon references from all points (bidirectional relationship cleanup)
       if (id && polygon && polygon.pointIds) {
+        const pointIndex = pointsById.value;
         for (const pointId of polygon.pointIds) {
-          const point = points.value.find((p) => p.id === pointId);
+          const point = pointIndex.get(pointId);
           if (point?.polygonIds) {
             point.polygonIds = point.polygonIds.filter((pid) => pid !== id);
           }
@@ -747,8 +769,9 @@ export const useLayersStore = defineStore('layers', () => {
     }
 
     // Also update lineId for points in pointsOnLine array
+    const pointIndex = pointsById.value;
     for (const pointId of line.pointsOnLine) {
-      const point = points.value.find((p) => p.id === pointId);
+      const point = pointIndex.get(pointId);
       if (point) {
         point.lineId = lineId;
       }
@@ -829,8 +852,9 @@ export const useLayersStore = defineStore('layers', () => {
     if (!polygon || !polygon.pointIds) return;
 
     // Update bidirectional relationship: polygon → points and points → polygon
+    const pointIndex = pointsById.value;
     for (const pointId of polygon.pointIds) {
-      const point = points.value.find((p) => p.id === pointId);
+      const point = pointIndex.get(pointId);
       if (point) {
         // Initialize polygonIds array if not present
         if (!point.polygonIds) {

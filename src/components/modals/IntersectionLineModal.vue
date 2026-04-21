@@ -164,13 +164,20 @@ async function submitForm() {
   }
 
   if (isEditing.value && uiStore.editingElement) {
-    layersStore.updateLineSegment(uiStore.editingElement.id, {
+    drawing.updateLineSegment(
+      uiStore.editingElement.id,
+      startLat,
+      startLon,
+      endpoint.lat,
+      endpoint.lon,
       name,
-      center: { lat: startLat, lon: startLon },
-      mode: 'intersection',
-      intersectionPoint: { lat: intersectLat, lon: intersectLon },
-      intersectionDistance: form.distance,
-    });
+      'intersection',
+      undefined,
+      undefined,
+      intersectLat,
+      intersectLon,
+      form.distance
+    );
     uiStore.addToast(t('messages.lineUpdated'), 'success');
   } else {
     // Create new intersection line

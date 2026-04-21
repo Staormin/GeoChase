@@ -73,8 +73,8 @@
 </template>
 
 <script lang="ts" setup>
-import type { Ref } from 'vue';
 import type { NoteElement } from '@/services/storage';
+import type { Ref } from 'vue';
 import { v4 as uuidv4 } from 'uuid';
 import { computed, inject, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';

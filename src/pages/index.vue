@@ -62,6 +62,10 @@
 
   <!-- View capture helper -->
   <ViewCaptureHelper />
+
+  <!-- Tools -->
+  <ToolsToolbar />
+  <ToolsButton />
 </template>
 
 <script lang="ts" setup>
@@ -69,6 +73,8 @@ import type { useNoteTooltips } from '@/composables/useNoteTooltips';
 import { computed, onMounted, provide, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import NavigationBar from '@/components/layout/NavigationBar.vue';
+import ToolsButton from '@/components/layout/ToolsButton.vue';
+import ToolsToolbar from '@/components/layout/ToolsToolbar.vue';
 import TopBar from '@/components/layout/TopBar.vue';
 import SearchAlongPanelInline from '@/components/search/SearchAlongPanel.vue';
 import AnimationCountdown from '@/components/shared/AnimationCountdown.vue';
