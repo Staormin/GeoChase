@@ -8,7 +8,8 @@ import { useUIStore } from '@/stores/ui';
  */
 export function useKeyboardNavigation(
   mapContainer: ReturnType<typeof useMap>,
-  onFreeHandEscape?: () => void
+  onFreeHandEscape?: () => void,
+  onRulerEscape?: () => void
 ) {
   const uiStore = useUIStore();
   const layersStore = useLayersStore();
@@ -27,6 +28,13 @@ export function useKeyboardNavigation(
     if (uiStore.freeHandDrawing.isDrawing && event.key === 'Escape' && onFreeHandEscape) {
       event.preventDefault();
       onFreeHandEscape();
+      return;
+    }
+
+    // Active tool (e.g. ruler) escape handling
+    if (uiStore.tools.activeTool && event.key === 'Escape' && onRulerEscape) {
+      event.preventDefault();
+      onRulerEscape();
       return;
     }
 

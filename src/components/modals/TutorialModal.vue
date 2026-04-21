@@ -32,6 +32,12 @@
             {{ $t('tutorial.navigation') }}
           </v-tab>
 
+          <!-- Tools Tab -->
+          <v-tab value="tools">
+            <v-icon class="me-2" icon="mdi-tools" />
+            {{ $t('tutorial.tools') }}
+          </v-tab>
+
           <!-- Layers Tab -->
           <v-tab value="layers">
             <v-icon class="me-2" icon="mdi-layers" />
@@ -267,6 +273,34 @@
                   <li>{{ $t('tutorial.navigationSection.tips.zoomBehavior') }}</li>
                   <li>{{ $t('tutorial.navigationSection.tips.sidebarHide') }}</li>
                 </ul>
+              </div>
+            </div>
+          </v-window-item>
+
+          <!-- Tools -->
+          <v-window-item value="tools">
+            <div class="tutorial-section">
+              <h3 class="mb-3">{{ $t('tutorial.toolsSection.heading') }}</h3>
+              <p class="mb-3">{{ $t('tutorial.toolsSection.intro') }}</p>
+
+              <div class="tutorial-step mb-4">
+                <h4 class="mb-2">{{ $t('tutorial.toolsSection.accessing.title') }}</h4>
+                <ul class="tutorial-list">
+                  <li>{{ $t('tutorial.toolsSection.accessing.location') }}</li>
+                  <li>{{ $t('tutorial.toolsSection.accessing.toggle') }}</li>
+                </ul>
+              </div>
+
+              <div class="tutorial-step">
+                <h4 class="mb-2">{{ $t('tutorial.toolsSection.ruler.title') }}</h4>
+                <p class="mb-2">{{ $t('tutorial.toolsSection.ruler.description') }}</p>
+                <ol class="tutorial-list">
+                  <li>{{ $t('tutorial.toolsSection.ruler.step1') }}</li>
+                  <li>{{ $t('tutorial.toolsSection.ruler.step2') }}</li>
+                  <li>{{ $t('tutorial.toolsSection.ruler.step3') }}</li>
+                  <li>{{ $t('tutorial.toolsSection.ruler.step4') }}</li>
+                </ol>
+                <p class="mt-2">{{ $t('tutorial.toolsSection.ruler.notSaved') }}</p>
               </div>
             </div>
           </v-window-item>

@@ -3,9 +3,9 @@
  * Uses OpenLayers Overlay API to attach permanent tooltips to existing features
  */
 
+import type { NoteElement } from '@/services/storage';
 import type { Feature } from 'ol';
 import type { Geometry } from 'ol/geom';
-import type { NoteElement } from '@/services/storage';
 import { getCenter } from 'ol/extent';
 import Overlay from 'ol/Overlay';
 import { watch } from 'vue';

@@ -1,6 +1,6 @@
-import type { Ref } from 'vue';
 import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
+import type { Ref } from 'vue';
 import { useNoteTooltips } from '@/composables/useNoteTooltips';
 import { isLanguageSet } from '@/plugins/i18n';
 import { useLayersStore } from '@/stores/layers';

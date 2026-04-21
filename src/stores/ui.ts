@@ -82,6 +82,13 @@ export interface ViewCaptureState {
   captureType: 'start' | 'end' | null;
 }
 
+export type ToolId = 'ruler';
+
+export interface ToolsState {
+  isToolbarOpen: boolean;
+  activeTool: ToolId | null;
+}
+
 export const useUIStore = defineStore('ui', () => {
   // State
   const openModals = ref<Set<string>>(new Set());
@@ -132,6 +139,10 @@ export const useUIStore = defineStore('ui', () => {
   const viewCaptureState = ref<ViewCaptureState>({
     isCapturing: false,
     captureType: null,
+  });
+  const tools = ref<ToolsState>({
+    isToolbarOpen: false,
+    activeTool: null,
   });
   const mapProvider = ref<
     'geoportail' | 'osm' | 'google-plan' | 'google-satellite' | 'google-relief'
@@ -336,6 +347,19 @@ export const useUIStore = defineStore('ui', () => {
     };
   }
 
+  function toggleToolbar(): void {
+    tools.value.isToolbarOpen = !tools.value.isToolbarOpen;
+  }
+
+  function startTool(tool: ToolId): void {
+    tools.value.activeTool = tool;
+    tools.value.isToolbarOpen = false;
+  }
+
+  function stopTool(): void {
+    tools.value.activeTool = null;
+  }
+
   function toggleSearchBar(): void {
     searchBarVisible.value = !searchBarVisible.value;
   }
@@ -479,6 +503,7 @@ export const useUIStore = defineStore('ui', () => {
     animationState,
     animationConfig,
     viewCaptureState,
+    tools,
     mapProvider,
     pdfPanelOpen,
     pdfPanelWidth,
@@ -526,6 +551,9 @@ export const useUIStore = defineStore('ui', () => {
     closeSearchAlong,
     startFreeHandDrawing,
     stopFreeHandDrawing,
+    toggleToolbar,
+    startTool,
+    stopTool,
     toggleSearchBar,
     setSearchBarVisible,
     openBearings,

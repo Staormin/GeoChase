@@ -19,6 +19,7 @@
           :placeholder="$t('search.addressPlaceholder')"
           prepend-inner-icon="mdi-magnify"
           variant="solo"
+          @click="onInputClick"
         />
       </div>
     </template>
@@ -47,7 +48,13 @@
 
 <script lang="ts" setup>
 import type { MapContainer } from '@/composables/useMap';
-import { inject, ref, watch } from 'vue';
+import { Feature } from 'ol';
+import { Point } from 'ol/geom';
+import VectorLayer from 'ol/layer/Vector';
+import { fromLonLat } from 'ol/proj';
+import VectorSource from 'ol/source/Vector';
+import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
+import { inject, onUnmounted, ref, watch } from 'vue';
 import { type AddressSearchResult, searchAddress } from '@/services/geoportail';
 import { useUIStore } from '@/stores/ui';
 
@@ -59,6 +66,49 @@ const addressSearchLoading = ref(false);
 const addressSearchInput = ref<string>('');
 const showResults = ref(false);
 let addressSearchTimeout: ReturnType<typeof setTimeout> | null = null;
+
+let searchMarkerLayer: VectorLayer<any> | null = null;
+let searchMarkerSource: VectorSource | null = null;
+
+const SEARCH_MARKER_STYLE = new Style({
+  image: new CircleStyle({
+    radius: 8,
+    fill: new Fill({ color: '#ef4444' }),
+    stroke: new Stroke({ color: '#1e293b', width: 2 }),
+  }),
+});
+
+function showSearchMarker(lat: number, lon: number) {
+  const olMap = mapContainer?.map?.value;
+  if (!olMap) {
+    return;
+  }
+  if (!searchMarkerSource) {
+    searchMarkerSource = new VectorSource();
+    searchMarkerLayer = new VectorLayer({
+      source: searchMarkerSource,
+      className: 'search-marker-layer',
+      zIndex: 1000,
+      updateWhileAnimating: true,
+      updateWhileInteracting: true,
+    });
+    olMap.addLayer(searchMarkerLayer);
+  }
+  searchMarkerSource.clear();
+  const feature = new Feature({ geometry: new Point(fromLonLat([lon, lat])) });
+  feature.setStyle(SEARCH_MARKER_STYLE);
+  searchMarkerSource.addFeature(feature);
+}
+
+function clearSearchMarker() {
+  const olMap = mapContainer?.map?.value;
+  searchMarkerSource?.clear();
+  if (searchMarkerLayer && olMap) {
+    olMap.removeLayer(searchMarkerLayer);
+  }
+  searchMarkerLayer = null;
+  searchMarkerSource = null;
+}
 
 async function onAddressSearch(query: string) {
   if (addressSearchTimeout) {
@@ -86,13 +136,30 @@ async function onAddressSearch(query: string) {
   }, 300);
 }
 
+function onInputClick() {
+  if (addressSearchResults.value.length > 0) {
+    showResults.value = true;
+  }
+}
+
 function onAddressSelect(coordinates: any) {
   if (coordinates && coordinates.lat && coordinates.lon && mapContainer) {
     mapContainer.setCenter(coordinates.lat, coordinates.lon, 13);
+    showSearchMarker(coordinates.lat, coordinates.lon);
   }
 }
 watch(addressSearchInput, (newVal) => {
   onAddressSearch(newVal);
+});
+
+watch(showResults, (isShown) => {
+  if (!isShown) {
+    clearSearchMarker();
+  }
+});
+
+onUnmounted(() => {
+  clearSearchMarker();
 });
 </script>
 

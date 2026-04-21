@@ -1,7 +1,7 @@
-import type { MapBrowserEvent } from 'ol';
-import type { Ref } from 'vue';
 import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
+import type { MapBrowserEvent } from 'ol';
+import type { Ref } from 'vue';
 import { Feature } from 'ol';
 import { LineString } from 'ol/geom';
 import { fromLonLat, toLonLat } from 'ol/proj';
@@ -172,7 +172,11 @@ export function useFreeHandDrawing(
 
   const handleMouseMove = (event: MapBrowserEvent<any>) => {
     if (!uiStore.freeHandDrawing.isDrawing) {
-      cursorTooltip.value.visible = false;
+      // Don't clobber the tooltip when another feature (e.g. a tool like the
+      // ruler) is currently driving it.
+      if (!uiStore.tools.activeTool) {
+        cursorTooltip.value.visible = false;
+      }
       return;
     }
 
