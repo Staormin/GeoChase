@@ -64,8 +64,8 @@
 </template>
 
 <script lang="ts" setup>
-import type VectorLayer from 'ol/layer/Vector';
 import type { AddressSearchResult } from '@/services/geoportail';
+import type VectorLayer from 'ol/layer/Vector';
 import * as turf from '@turf/turf';
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';

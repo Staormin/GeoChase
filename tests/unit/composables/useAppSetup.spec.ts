@@ -6,11 +6,20 @@ import { useFreeHandDrawing } from '@/composables/useFreeHandDrawing';
 import { useKeyboardNavigation } from '@/composables/useKeyboardNavigation';
 import { useMapEventHandlers } from '@/composables/useMapEventHandlers';
 import { useMapInitialization } from '@/composables/useMapInitialization';
+import { useRuler } from '@/composables/useRuler';
 import { useViewCapture } from '@/composables/useViewCapture';
 
 // Mock all the composables that useAppSetup depends on
 vi.mock('@/composables/useFreeHandDrawing', () => ({
   useFreeHandDrawing: vi.fn(() => ({
+    setup: vi.fn(),
+    cleanup: vi.fn(),
+    handleEscape: vi.fn(),
+  })),
+}));
+
+vi.mock('@/composables/useRuler', () => ({
+  useRuler: vi.fn(() => ({
     setup: vi.fn(),
     cleanup: vi.fn(),
     handleEscape: vi.fn(),
@@ -83,8 +92,11 @@ describe('useAppSetup', () => {
 
       expect(useKeyboardNavigation).toHaveBeenCalledWith(
         mockMapContainer,
-        expect.any(Function) // handleEscape from freeHandDrawing
+        expect.any(Function), // handleEscape from freeHandDrawing
+        expect.any(Function) // handleEscape from ruler
       );
+
+      expect(useRuler).toHaveBeenCalledWith(mockMapContainer, mockCursorTooltip);
 
       expect(useMapEventHandlers).toHaveBeenCalledWith(mockMapContainer);
 
@@ -100,12 +112,19 @@ describe('useAppSetup', () => {
     it('should initialize map and setup all handlers', async () => {
       // Track mock instances
       const mockFreeHandSetup = vi.fn();
+      const mockRulerSetup = vi.fn();
       const mockKeyboardSetup = vi.fn();
       const mockMapEventsSetup = vi.fn(() => vi.fn());
       const mockViewCaptureSetup = vi.fn(() => vi.fn());
 
       vi.mocked(useFreeHandDrawing).mockReturnValue({
         setup: mockFreeHandSetup,
+        cleanup: vi.fn(),
+        handleEscape: vi.fn(),
+      });
+
+      vi.mocked(useRuler).mockReturnValue({
+        setup: mockRulerSetup,
         cleanup: vi.fn(),
         handleEscape: vi.fn(),
       });
@@ -141,6 +160,7 @@ describe('useAppSetup', () => {
 
       // Should setup all event handlers
       expect(mockFreeHandSetup).toHaveBeenCalled();
+      expect(mockRulerSetup).toHaveBeenCalled();
       expect(mockKeyboardSetup).toHaveBeenCalled();
       expect(mockMapEventsSetup).toHaveBeenCalled();
       expect(mockViewCaptureSetup).toHaveBeenCalled();
@@ -154,6 +174,12 @@ describe('useAppSetup', () => {
       // Mock to track call order
       const mockFreeHand = {
         setup: vi.fn(() => setupOrder.push('freeHand')),
+        cleanup: vi.fn(),
+        handleEscape: vi.fn(),
+      };
+
+      const mockRuler = {
+        setup: vi.fn(() => setupOrder.push('ruler')),
         cleanup: vi.fn(),
         handleEscape: vi.fn(),
       };
@@ -178,6 +204,7 @@ describe('useAppSetup', () => {
       };
 
       vi.mocked(useFreeHandDrawing).mockReturnValue(mockFreeHand);
+      vi.mocked(useRuler).mockReturnValue(mockRuler);
       vi.mocked(useKeyboardNavigation).mockReturnValue(mockKeyboard);
       vi.mocked(useMapEventHandlers).mockReturnValue(mockMapEvents);
       vi.mocked(useViewCapture).mockReturnValue(mockViewCap);
@@ -191,7 +218,7 @@ describe('useAppSetup', () => {
       await setup();
 
       // Event handlers should be setup after map initialization
-      expect(setupOrder).toEqual(['mapEvents', 'viewCapture', 'freeHand', 'keyboard']);
+      expect(setupOrder).toEqual(['mapEvents', 'viewCapture', 'freeHand', 'ruler', 'keyboard']);
     });
   });
 
@@ -201,6 +228,12 @@ describe('useAppSetup', () => {
       const mockUnsubscribeView = vi.fn();
 
       const mockFreeHand = {
+        setup: vi.fn(),
+        cleanup: vi.fn(),
+        handleEscape: vi.fn(),
+      };
+
+      const mockRuler = {
         setup: vi.fn(),
         cleanup: vi.fn(),
         handleEscape: vi.fn(),
@@ -220,6 +253,7 @@ describe('useAppSetup', () => {
       };
 
       vi.mocked(useFreeHandDrawing).mockReturnValue(mockFreeHand);
+      vi.mocked(useRuler).mockReturnValue(mockRuler);
       vi.mocked(useKeyboardNavigation).mockReturnValue(mockKeyboard);
       vi.mocked(useMapEventHandlers).mockReturnValue(mockMapEvents);
       vi.mocked(useViewCapture).mockReturnValue(mockViewCap);
@@ -239,6 +273,7 @@ describe('useAppSetup', () => {
       expect(mockUnsubscribeRight).toHaveBeenCalled();
       expect(mockUnsubscribeView).toHaveBeenCalled();
       expect(mockFreeHand.cleanup).toHaveBeenCalled();
+      expect(mockRuler.cleanup).toHaveBeenCalled();
       expect(mockKeyboard.cleanup).toHaveBeenCalled();
       expect(mockMapContainer.destroyMap).toHaveBeenCalled();
     });
@@ -257,12 +292,19 @@ describe('useAppSetup', () => {
         handleEscape: vi.fn(),
       };
 
+      const mockRuler = {
+        setup: vi.fn(),
+        cleanup: vi.fn(() => cleanupOrder.push('rulerCleanup')),
+        handleEscape: vi.fn(),
+      };
+
       const mockKeyboard = {
         setup: vi.fn(),
         cleanup: vi.fn(() => cleanupOrder.push('keyboardCleanup')),
       };
 
       vi.mocked(useFreeHandDrawing).mockReturnValue(mockFreeHand);
+      vi.mocked(useRuler).mockReturnValue(mockRuler);
       vi.mocked(useKeyboardNavigation).mockReturnValue(mockKeyboard);
       vi.mocked(useMapEventHandlers).mockReturnValue({
         setup: vi.fn(() => mockUnsubscribeRight),
@@ -286,6 +328,7 @@ describe('useAppSetup', () => {
         'unsubscribeRight',
         'unsubscribeView',
         'freeHandCleanup',
+        'rulerCleanup',
         'keyboardCleanup',
         'destroyMap',
       ]);

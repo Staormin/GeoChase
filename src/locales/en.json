@@ -80,6 +80,11 @@
     "expandTopBar": "Expand top bar",
     "github": "GitHub"
   },
+  "tools": {
+    "toggle": "Tools",
+    "ruler": "Ruler",
+    "rulerHint": "Click to set the start point, click again to measure, Escape to cancel"
+  },
   "sidebar": {
     "drawings": "Drawings",
     "search": "Search",
@@ -389,6 +394,7 @@
     "projects": "Projects",
     "searchExplore": "Search & Explore",
     "tipsTricks": "Tips & Tricks",
+    "tools": "Tools",
     "gettingStartedSection": {
       "heading": "🎯 Welcome to GeoChase",
       "intro": "GeoChase is a powerful treasure hunt solver designed to help you discover locations, analyze clues, and find hidden treasures using advanced geographic mapping and location search tools.",
@@ -490,6 +496,24 @@
         "speedAdjust": "Speed adjusts automatically based on zoom level",
         "zoomBehavior": "Higher zoom = smaller movements, lower zoom = larger movements",
         "sidebarHide": "The sidebar hides during navigation for a clearer view"
+      }
+    },
+    "toolsSection": {
+      "heading": "🛠️ Tools",
+      "intro": "Tools are quick, ephemeral helpers you can use on the map without saving anything to your project.",
+      "accessing": {
+        "title": "Opening the toolbar",
+        "location": "Click the round tools button at the bottom-right of the map",
+        "toggle": "Click it again to close the toolbar, or pick a tool to activate it"
+      },
+      "ruler": {
+        "title": "📏 Ruler",
+        "description": "Measure a distance and azimuth between two points without adding a line to your project.",
+        "step1": "Open the toolbar and click the ruler",
+        "step2": "Click the map to set the start point",
+        "step3": "Move the cursor: distance and azimuth appear next to it in real time",
+        "step4": "Click again to finalize the measurement; any subsequent click exits the tool (panning does not)",
+        "notSaved": "Press ESC at any time to cancel. The ruler never saves a line to your layers."
       }
     },
     "layersSection": {

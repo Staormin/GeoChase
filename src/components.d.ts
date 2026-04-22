@@ -49,6 +49,8 @@ declare module 'vue' {
     SidebarLayersPanel: typeof import('./components/sidebar/SidebarLayersPanel.vue')['default']
     SidebarToggleButton: typeof import('./components/ui/SidebarToggleButton.vue')['default']
     ToastNotifications: typeof import('./components/ui/ToastNotifications.vue')['default']
+    ToolsButton: typeof import('./components/layout/ToolsButton.vue')['default']
+    ToolsToolbar: typeof import('./components/layout/ToolsToolbar.vue')['default']
     TopBar: typeof import('./components/layout/TopBar.vue')['default']
     TutorialModal: typeof import('./components/modals/TutorialModal.vue')['default']
     TwoPointsLineModal: typeof import('./components/modals/TwoPointsLineModal.vue')['default']

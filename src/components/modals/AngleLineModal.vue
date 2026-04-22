@@ -79,7 +79,7 @@ import type { PointElement } from '@/services/storage';
 import { computed, inject, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
-import { destinationPoint } from '@/services/geometry';
+import { calculateBearing, destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -165,24 +165,7 @@ function calculateLineBearingAtPoint(pointId: string): number | null {
     return null;
   }
 
-  // Calculate bearing from start to end of the line
-  const startLat = (line.center.lat * Math.PI) / 180;
-  const startLon = (line.center.lon * Math.PI) / 180;
-  const endLat = (endpoint.lat * Math.PI) / 180;
-  const endLon = (endpoint.lon * Math.PI) / 180;
-
-  const dLon = endLon - startLon;
-  const y = Math.sin(dLon) * Math.cos(endLat);
-  const x =
-    Math.cos(startLat) * Math.sin(endLat) - Math.sin(startLat) * Math.cos(endLat) * Math.cos(dLon);
-  let bearing = Math.atan2(y, x);
-
-  // Convert to degrees
-  bearing = (bearing * 180) / Math.PI;
-  // Normalize to 0-360
-  bearing = (bearing + 360) % 360;
-
-  return bearing;
+  return calculateBearing(line.center.lat, line.center.lon, endpoint.lat, endpoint.lon);
 }
 
 function submitForm() {
