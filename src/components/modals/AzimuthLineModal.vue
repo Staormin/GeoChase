@@ -146,19 +146,23 @@ async function submitForm() {
     name = await generateAzimuthName(startLat, startLon, form.azimuth);
   }
 
+  // Calculate endpoint from azimuth and distance
+  const endpoint = destinationPoint(startLat, startLon, form.distance, form.azimuth);
+
   if (isEditing.value && uiStore.editingElement) {
-    layersStore.updateLineSegment(uiStore.editingElement.id, {
+    drawing.updateLineSegment(
+      uiStore.editingElement.id,
+      startLat,
+      startLon,
+      endpoint.lat,
+      endpoint.lon,
       name,
-      center: { lat: startLat, lon: startLon },
-      mode: 'azimuth',
-      azimuth: form.azimuth,
-      distance: form.distance,
-    });
+      'azimuth',
+      form.distance,
+      form.azimuth
+    );
     uiStore.addToast(t('line.updated'), 'success');
   } else {
-    // Calculate endpoint from azimuth and distance
-    const endpoint = destinationPoint(startLat, startLon, form.distance, form.azimuth);
-
     // Create new azimuth line
     drawing.drawLineSegment(
       startLat,
