@@ -8,10 +8,33 @@ import { LineString, Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 import { v4 as uuidv4 } from 'uuid';
+import { densifyGeodesic, geodesicIntermediate } from '@/services/geodesy';
 import { useLayersStore } from '@/stores/layers';
 import { usePointDrawing } from './usePointDrawing';
 
 const DEFAULT_COLOR = '#000000';
+
+/**
+ * Build the projected coordinates for a line segment.
+ * Straight lines are 2-point segments in Web Mercator (the historical
+ * behaviour); geodesic lines are densified polylines following the Earth's
+ * curvature, with longitudes unwrapped so the arc does not jump at the
+ * antimeridian.
+ */
+function buildSegmentCoords(
+  startLat: number,
+  startLon: number,
+  endLat: number,
+  endLon: number,
+  geodesic?: boolean
+): number[][] {
+  if (geodesic) {
+    return densifyGeodesic({ lat: startLat, lon: startLon }, { lat: endLat, lon: endLon }).map(
+      (p) => fromLonLat([p.lon, p.lat])
+    );
+  }
+  return [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
+}
 
 export function useLineDrawing(mapRef: any) {
   const layersStore = useLayersStore();
@@ -30,7 +53,8 @@ export function useLineDrawing(mapRef: any) {
     intersectLat?: number,
     intersectLon?: number,
     color?: string,
-    duration = 800 // Animation duration in ms
+    duration = 800, // Animation duration in ms
+    geodesic?: boolean
   ): Promise<void> => {
     return new Promise((resolve) => {
       if (!mapRef.map?.value || !mapRef.linesSource?.value) {
@@ -74,15 +98,30 @@ export function useLineDrawing(mapRef: any) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        // Interpolate current end point
-        const currentEndLat = startLat + (endLat - startLat) * progress;
-        const currentEndLon = startLon + (endLon - startLon) * progress;
+        // Interpolate current end point (along the geodesic when applicable)
+        let currentEndLat: number;
+        let currentEndLon: number;
+        if (geodesic) {
+          const current = geodesicIntermediate(
+            { lat: startLat, lon: startLon },
+            { lat: endLat, lon: endLon },
+            progress
+          );
+          currentEndLat = current.lat;
+          currentEndLon = current.lon;
+        } else {
+          currentEndLat = startLat + (endLat - startLat) * progress;
+          currentEndLon = startLon + (endLon - startLon) * progress;
+        }
 
         // Update the geometry of the existing feature instead of removing/adding
-        const newCoordinates = [
-          fromLonLat([startLon, startLat]),
-          fromLonLat([currentEndLon, currentEndLat]),
-        ];
+        const newCoordinates = buildSegmentCoords(
+          startLat,
+          startLon,
+          currentEndLat,
+          currentEndLon,
+          geodesic
+        );
 
         geometry.setCoordinates(newCoordinates);
 
@@ -149,13 +188,14 @@ export function useLineDrawing(mapRef: any) {
     mode: 'coordinate' | 'azimuth' | 'intersection' = 'coordinate',
     intersectLat?: number,
     intersectLon?: number,
-    color?: string
+    color?: string,
+    geodesic?: boolean
   ) => {
     if (!mapRef.map?.value || !mapRef.linesSource?.value) {
       return;
     }
 
-    const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
+    const coordinates = buildSegmentCoords(startLat, startLon, endLat, endLon, geodesic);
 
     const geometry = new LineString(coordinates);
     const feature = new Feature({
@@ -257,7 +297,8 @@ export function useLineDrawing(mapRef: any) {
     intersectLon?: number,
     intersectDistance?: number,
     createEndpoint?: boolean,
-    endpointName?: string
+    endpointName?: string,
+    geodesic?: boolean
   ): LineSegmentElement | null => {
     if (!mapRef.map?.value || !mapRef.linesSource?.value) {
       return null;
@@ -270,6 +311,7 @@ export function useLineDrawing(mapRef: any) {
       center: { lat: startLat, lon: startLon },
       endpoint: { lat: endLat, lon: endLon },
       mode,
+      geodesic: geodesic || undefined,
       distance,
       azimuth,
       intersectionPoint:
@@ -278,8 +320,8 @@ export function useLineDrawing(mapRef: any) {
       color: DEFAULT_COLOR,
     } as LineSegmentElement;
 
-    // Draw line as simple 2-point straight line
-    const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
+    // Straight lines are 2-point Mercator segments; geodesic lines are densified
+    const coordinates = buildSegmentCoords(startLat, startLon, endLat, endLon, geodesic);
 
     // Create OpenLayers feature
     const geometry = new LineString(coordinates);
@@ -357,10 +399,25 @@ export function useLineDrawing(mapRef: any) {
     // Use requestAnimationFrame to ensure the feature is rendered before flying
     if (mapRef.flyToBoundsWithPanels) {
       requestAnimationFrame(() => {
-        const minLat = Math.min(startLat, endLat);
-        const maxLat = Math.max(startLat, endLat);
-        const minLon = Math.min(startLon, endLon);
-        const maxLon = Math.max(startLon, endLon);
+        let minLat = Math.min(startLat, endLat);
+        let maxLat = Math.max(startLat, endLat);
+        let minLon = Math.min(startLon, endLon);
+        let maxLon = Math.max(startLon, endLon);
+
+        // A geodesic arc can leave the bounding box of its endpoints (e.g. its
+        // apex latitude), so include the densified path in the bounds
+        if (geodesic) {
+          for (const p of densifyGeodesic(
+            { lat: startLat, lon: startLon },
+            { lat: endLat, lon: endLon }
+          )) {
+            minLat = Math.min(minLat, p.lat);
+            maxLat = Math.max(maxLat, p.lat);
+            minLon = Math.min(minLon, p.lon);
+            maxLon = Math.max(maxLon, p.lon);
+          }
+        }
+
         const bounds: [[number, number], [number, number]] = [
           [minLat, minLon],
           [maxLat, maxLon],
@@ -385,7 +442,8 @@ export function useLineDrawing(mapRef: any) {
     azimuth?: number,
     intersectLat?: number,
     intersectLon?: number,
-    intersectDistance?: number
+    intersectDistance?: number,
+    geodesic?: boolean
   ) => {
     if (!mapRef.map?.value || !lineId) {
       return;
@@ -397,6 +455,7 @@ export function useLineDrawing(mapRef: any) {
       center: { lat: startLat, lon: startLon },
       endpoint: { lat: endLat, lon: endLon },
       mode,
+      geodesic: geodesic || undefined,
       distance,
       azimuth,
       intersectionPoint:
@@ -417,7 +476,7 @@ export function useLineDrawing(mapRef: any) {
     }
 
     // Redraw line segment
-    const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
+    const coordinates = buildSegmentCoords(startLat, startLon, endLat, endLon, geodesic);
 
     const geometry = new LineString(coordinates);
     const newFeature = new Feature({
@@ -466,6 +525,12 @@ export function useLineDrawing(mapRef: any) {
   };
 
   // Parallel drawing
+  //
+  // Parallels intentionally ignore the geodesic flag: a parallel of latitude
+  // is a rhumb line (constant 90°/270° bearing) by definition, NOT a geodesic.
+  // The geodesic between two points at the same latitude bows toward the pole,
+  // so a "geodesic parallel" would no longer be the set of points at that
+  // latitude — which is what this mode is for.
   const drawParallel = (latitude: number, name?: string): LineSegmentElement | null => {
     if (!mapRef.map?.value || !mapRef.linesSource?.value) {
       return null;

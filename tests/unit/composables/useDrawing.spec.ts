@@ -306,7 +306,8 @@ describe('useDrawing', () => {
         'coordinate',
         undefined,
         undefined,
-        '#ff00ff'
+        '#ff00ff',
+        undefined
       );
     });
 
@@ -333,7 +334,9 @@ describe('useDrawing', () => {
         'azimuth',
         48.85,
         2.36,
-        '#ff00ff'
+        '#ff00ff',
+        undefined,
+        undefined
       );
     });
 
@@ -782,7 +785,8 @@ describe('useDrawing', () => {
         'coordinate',
         undefined,
         undefined,
-        '#ff00ff'
+        '#ff00ff',
+        undefined
       );
     });
 
@@ -808,7 +812,8 @@ describe('useDrawing', () => {
         'intersection',
         48.85,
         2.36,
-        '#ff00ff'
+        '#ff00ff',
+        undefined
       );
     });
 

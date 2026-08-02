@@ -30,7 +30,7 @@
         v-model.number="form.azimuth"
         class="mb-4"
         density="compact"
-        :label="$t('line.azimuth')"
+        :label="form.geodesic ? $t('line.initialBearing') : $t('line.azimuth')"
         max="360"
         min="0"
         step="0.01"
@@ -47,6 +47,15 @@
         step="0.1"
         type="number"
         variant="outlined"
+      />
+
+      <v-checkbox
+        v-model="form.geodesic"
+        class="mb-2"
+        data-testid="geodesic-checkbox"
+        density="compact"
+        hide-details
+        :label="$t('line.geodesic')"
       />
 
       <v-checkbox
@@ -75,6 +84,7 @@ import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
+import { geodesicDestination } from '@/services/geodesy';
 import { destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -100,30 +110,39 @@ const form = reactive({
   startCoord: null as string | null,
   azimuth: 0,
   distance: 0,
+  geodesic: false,
   createEndpoint: false,
   endpointName: '',
 });
 
-watch(isOpen, (newVal) => {
-  if (newVal) {
-    if (isEditing.value && uiStore.editingElement) {
-      const element = layersStore.lineSegments.find((l) => l.id === uiStore.editingElement?.id);
-      if (element) {
-        form.name = element.name;
-        form.startCoord = `${element.center.lat},${element.center.lon}`;
-        form.azimuth = element.azimuth || 0;
-        form.distance = element.distance || 0;
+watch(
+  isOpen,
+  (newVal) => {
+    if (newVal) {
+      if (isEditing.value && uiStore.editingElement) {
+        const element = layersStore.lineSegments.find((l) => l.id === uiStore.editingElement?.id);
+        if (element) {
+          form.name = element.name;
+          form.startCoord = `${element.center.lat},${element.center.lon}`;
+          form.azimuth = element.azimuth || 0;
+          form.distance = element.distance || 0;
+          form.geodesic = element.geodesic === true;
+        }
+      } else {
+        form.name = '';
+        form.startCoord = null;
+        form.azimuth = 0;
+        form.distance = 0;
+        form.geodesic = uiStore.geodesicDefault;
+        form.createEndpoint = false;
+        form.endpointName = '';
       }
-    } else {
-      form.name = '';
-      form.startCoord = null;
-      form.azimuth = 0;
-      form.distance = 0;
-      form.createEndpoint = false;
-      form.endpointName = '';
     }
-  }
-});
+    // immediate: the modal is mounted with v-if, so isOpen is already true at
+    // setup and the watcher would otherwise never fire for the first open
+  },
+  { immediate: true }
+);
 
 function closeModal() {
   uiStore.closeModal('azimuthLineModal');
@@ -146,8 +165,14 @@ async function submitForm() {
     name = await generateAzimuthName(startLat, startLon, form.azimuth);
   }
 
-  // Calculate endpoint from azimuth and distance
-  const endpoint = destinationPoint(startLat, startLon, form.distance, form.azimuth);
+  // Calculate endpoint from azimuth and distance.
+  // Geodesic ON: the azimuth is the INITIAL bearing of the geodesic (the
+  // bearing varies along the path); endpoint solved on the WGS84 ellipsoid.
+  // Geodesic OFF: historical behaviour, spherical great-circle destination
+  // with a straight Web Mercator segment drawn to it.
+  const endpoint = form.geodesic
+    ? geodesicDestination({ lat: startLat, lon: startLon }, form.azimuth, form.distance * 1000)
+    : destinationPoint(startLat, startLon, form.distance, form.azimuth);
 
   if (isEditing.value && uiStore.editingElement) {
     drawing.updateLineSegment(
@@ -159,7 +184,11 @@ async function submitForm() {
       name,
       'azimuth',
       form.distance,
-      form.azimuth
+      form.azimuth,
+      undefined,
+      undefined,
+      undefined,
+      form.geodesic
     );
     uiStore.addToast(t('line.updated'), 'success');
   } else {
@@ -177,7 +206,8 @@ async function submitForm() {
       undefined,
       undefined,
       form.createEndpoint,
-      form.endpointName
+      form.endpointName,
+      form.geodesic
     );
     uiStore.addToast(t('line.created'), 'success');
   }

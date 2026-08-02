@@ -314,6 +314,7 @@ import { getDistance } from 'ol/sphere';
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import LayerContextMenu from '@/components/layers/LayerContextMenu.vue';
+import { geodesicInverse } from '@/services/geodesy';
 import { calculateBearing } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -458,6 +459,11 @@ function getLineInfo(line: LineSegmentElement) {
   if (line.mode === 'azimuth' && line.distance !== undefined && line.azimuth !== undefined) {
     azimuth = line.azimuth;
     segmentLength = line.distance;
+  } else if (line.geodesic) {
+    // Geodesic lines: ellipsoidal length and initial bearing of the arc
+    const inverse = geodesicInverse(line.center, line.endpoint);
+    segmentLength = inverse.distance / 1000;
+    azimuth = inverse.initialBearing;
   } else {
     // getDistance returns meters, convert to km
     segmentLength =
@@ -477,8 +483,9 @@ function getLineInfo(line: LineSegmentElement) {
       : line.mode === 'azimuth'
         ? 'azimuth'
         : 'intersection';
+  const geodesicSuffix = line.geodesic ? ' • geodesic' : '';
 
-  return `${modeLabel} • ${azimuth.toFixed(2)}° / ${inverseAzimuth.toFixed(2)}° • ${segmentLength.toFixed(2)} km`;
+  return `${modeLabel}${geodesicSuffix} • ${azimuth.toFixed(2)}° / ${inverseAzimuth.toFixed(2)}° • ${segmentLength.toFixed(2)} km`;
 }
 
 function handleEditCircle(circle: CircleElement) {
@@ -745,7 +752,10 @@ function handleDrop(event: DragEvent, targetPoint: PointElement) {
     undefined,
     undefined,
     undefined,
-    undefined
+    undefined,
+    undefined,
+    undefined,
+    uiStore.geodesicDefault
   );
 
   uiStore.addToast(

@@ -147,6 +147,10 @@ export const useUIStore = defineStore('ui', () => {
   const mapProvider = ref<
     'geoportail' | 'osm' | 'google-plan' | 'google-satellite' | 'google-relief'
   >('geoportail');
+  // Global default for the "follow Earth curvature" (geodesic) option of new
+  // lines. Persisted so it survives reloads; each line stores its own flag.
+  const GEODESIC_DEFAULT_STORAGE_KEY = 'geochase_geodesicDefault';
+  const geodesicDefault = ref(localStorage.getItem(GEODESIC_DEFAULT_STORAGE_KEY) === 'true');
   const pdfPanelOpen = ref(false);
   const pdfPanelWidth = ref(500); // Default width
   const pdfCurrentPage = ref(1); // Current page in PDF viewer
@@ -181,6 +185,11 @@ export const useUIStore = defineStore('ui', () => {
 
   function setDrawingMode(mode: DrawingMode): void {
     drawingMode.value = mode;
+  }
+
+  function setGeodesicDefault(value: boolean): void {
+    geodesicDefault.value = value;
+    localStorage.setItem(GEODESIC_DEFAULT_STORAGE_KEY, String(value));
   }
 
   function resetDrawingMode(): void {
@@ -505,6 +514,7 @@ export const useUIStore = defineStore('ui', () => {
     viewCaptureState,
     tools,
     mapProvider,
+    geodesicDefault,
     pdfPanelOpen,
     pdfPanelWidth,
     pdfCurrentPage,
@@ -522,6 +532,7 @@ export const useUIStore = defineStore('ui', () => {
     toggleModal,
     setDrawingMode,
     resetDrawingMode,
+    setGeodesicDefault,
     addToast,
     removeToast,
     clearAllToasts,

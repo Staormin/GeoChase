@@ -1,6 +1,7 @@
 import type { CircleElement, LineSegmentElement } from '@/services/storage';
 import { getDistance } from 'ol/sphere';
 import { computed, ref } from 'vue';
+import { geodesicDistance, geodesicIntermediate, normalizeLon } from '@/services/geodesy';
 import { destinationPoint, toRadians } from '@/services/geometry';
 
 export interface NavigationState {
@@ -42,7 +43,14 @@ export function useNavigation() {
   function calculateSegmentLength(segment: LineSegmentElement): number {
     let segmentEndpoint = segment.endpoint;
 
-    if (segment.mode === 'azimuth' && segment.distance && segment.azimuth !== undefined) {
+    // For geodesic azimuth lines the stored endpoint is the ellipsoidal
+    // destination; recomputing it spherically would drift off the drawn line
+    if (
+      !segment.geodesic &&
+      segment.mode === 'azimuth' &&
+      segment.distance &&
+      segment.azimuth !== undefined
+    ) {
       segmentEndpoint = destinationPoint(
         segment.center.lat,
         segment.center.lon,
@@ -53,6 +61,11 @@ export function useNavigation() {
 
     if (!segmentEndpoint) {
       return 0;
+    }
+
+    // Geodesic lines: ellipsoidal geodesic length
+    if (segment.geodesic) {
+      return geodesicDistance(segment.center, segmentEndpoint) / 1000;
     }
 
     // getDistance returns meters, convert to km
@@ -168,7 +181,13 @@ export function useNavigation() {
   function getSegmentNavigationCoords(segment: LineSegmentElement): { lat: number; lon: number } {
     let segmentEndpoint = segment.endpoint;
 
-    if (segment.mode === 'azimuth' && segment.distance && segment.azimuth !== undefined) {
+    // See calculateSegmentLength: geodesic lines use their stored endpoint
+    if (
+      !segment.geodesic &&
+      segment.mode === 'azimuth' &&
+      segment.distance &&
+      segment.azimuth !== undefined
+    ) {
       segmentEndpoint = destinationPoint(
         segment.center.lat,
         segment.center.lon,
@@ -181,8 +200,15 @@ export function useNavigation() {
       return { lat: segment.center.lat, lon: segment.center.lon };
     }
 
-    // Linear interpolation between start and end points
     const progress = navigationState.value.progress;
+
+    // Geodesic lines: follow the arc so navigation stays on the drawn line
+    if (segment.geodesic) {
+      const point = geodesicIntermediate(segment.center, segmentEndpoint, progress);
+      return { lat: point.lat, lon: normalizeLon(point.lon) };
+    }
+
+    // Linear interpolation between start and end points
     const lat = segment.center.lat + (segmentEndpoint.lat - segment.center.lat) * progress;
     const lon = segment.center.lon + (segmentEndpoint.lon - segment.center.lon) * progress;
 

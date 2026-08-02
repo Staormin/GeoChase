@@ -559,7 +559,10 @@ describe('useFreeHandDrawing', () => {
         undefined,
         undefined,
         undefined,
-        undefined
+        undefined,
+        undefined,
+        undefined,
+        false
       );
     });
 
@@ -656,7 +659,10 @@ describe('useFreeHandDrawing', () => {
         90,
         undefined,
         undefined,
-        undefined
+        undefined,
+        undefined,
+        undefined,
+        false
       );
     });
 

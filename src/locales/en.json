@@ -121,7 +121,8 @@
     "drawLine": "Draw Line",
     "drawPoint": "Draw Point",
     "drawPolygon": "Draw Polygon",
-    "noIntersection": "No intersection found"
+    "noIntersection": "No intersection found",
+    "geodesicDefault": "New lines follow Earth curvature (geodesic)"
   },
   "circle": {
     "title": "Create Circle",
@@ -154,6 +155,8 @@
     "endLat": "End Latitude",
     "endLon": "End Longitude",
     "azimuth": "Azimuth (degrees)",
+    "initialBearing": "Initial bearing (degrees, geodesic)",
+    "geodesic": "Follow Earth curvature (great circle)",
     "distance": "Distance (km)",
     "parallelTo": "Parallel to Line",
     "passingThrough": "Passing through Point",
@@ -760,6 +763,7 @@
     "addAsCoordinate": "Add as Coordinate",
     "addCenterAsPoint": "Add Center as Point",
     "addPointOn": "Add Point On",
+    "followCurvature": "Follow Earth curvature",
     "bearings": "Bearings",
     "editNote": "Edit Note",
     "hide": "Hide",

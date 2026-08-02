@@ -8,6 +8,7 @@ import { fromLonLat, toLonLat } from 'ol/proj';
 import { getDistance } from 'ol/sphere';
 import { Stroke, Style } from 'ol/style';
 import { watch } from 'vue';
+import { densifyGeodesic, geodesicDestination, geodesicInverse } from '@/services/geodesy';
 import { calculateBearing, destinationPoint } from '@/services/geometry';
 import { useUIStore } from '@/stores/ui';
 
@@ -31,6 +32,41 @@ export function useFreeHandDrawing(
   let freeHandPreviewLayer: any = null;
   let lockedAzimuth: number | null = null;
   let lockedDistance: number | null = null;
+
+  // Free hand lines follow the global geodesic default: measurements,
+  // preview and the final line all use the same semantics.
+  // Distance in km, bearing = initial bearing when geodesic.
+  const measure = (
+    startLat: number,
+    startLon: number,
+    endLat: number,
+    endLon: number
+  ): { distance: number; bearing: number } => {
+    if (uiStore.geodesicDefault) {
+      const inverse = geodesicInverse(
+        { lat: startLat, lon: startLon },
+        { lat: endLat, lon: endLon }
+      );
+      return { distance: inverse.distance / 1000, bearing: inverse.initialBearing };
+    }
+    // getDistance returns meters, convert to km
+    return {
+      distance: getDistance([startLon, startLat], [endLon, endLat]) / 1000,
+      bearing: calculateBearing(startLat, startLon, endLat, endLon),
+    };
+  };
+
+  // Destination at distanceKm along bearingDeg from the start point
+  const project = (
+    startLat: number,
+    startLon: number,
+    distanceKm: number,
+    bearingDeg: number
+  ): { lat: number; lon: number } => {
+    return uiStore.geodesicDefault
+      ? geodesicDestination({ lat: startLat, lon: startLon }, bearingDeg, distanceKm * 1000)
+      : destinationPoint(startLat, startLon, distanceKm, bearingDeg);
+  };
 
   // Helper to parse start coordinates
   const parseStartCoordinates = (
@@ -58,9 +94,7 @@ export function useFreeHandDrawing(
     isCtrlPressed: boolean,
     azimuth: number | undefined
   ): { distance: number; bearing: number } => {
-    // getDistance returns meters, convert to km
-    let distance = getDistance([startLon, startLat], [endLon, endLat]) / 1000;
-    let bearing = calculateBearing(startLat, startLon, endLat, endLon);
+    let { distance, bearing } = measure(startLat, startLon, endLat, endLon);
 
     // Handle alt key - lock azimuth
     if (isAltPressed && azimuth === undefined) {
@@ -121,10 +155,10 @@ export function useFreeHandDrawing(
     const effectiveAzimuth = azimuth === undefined ? (lockedAzimuth ?? null) : azimuth;
 
     if (effectiveAzimuth !== null) {
-      const endpoint = destinationPoint(startLat, startLon, distance, effectiveAzimuth);
+      const endpoint = project(startLat, startLon, distance, effectiveAzimuth);
       return { lat: endpoint.lat, lon: endpoint.lon };
     } else if (isCtrlPressed && lockedDistance !== null && azimuth === undefined) {
-      const endpoint = destinationPoint(startLat, startLon, lockedDistance, bearing);
+      const endpoint = project(startLat, startLon, lockedDistance, bearing);
       return { lat: endpoint.lat, lon: endpoint.lon };
     }
 
@@ -146,9 +180,13 @@ export function useFreeHandDrawing(
       }
     }
 
-    // OpenLayers natively renders straight lines in Web Mercator projection
-    // No need for 100-point interpolation - just use start and end points
-    const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
+    // Straight lines render natively in Web Mercator with just 2 points;
+    // geodesic previews are densified to follow the Earth's curvature
+    const coordinates = uiStore.geodesicDefault
+      ? densifyGeodesic({ lat: startLat, lon: startLon }, { lat: endLat, lon: endLon }).map((p) =>
+          fromLonLat([p.lon, p.lat])
+        )
+      : [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
 
     const lineGeometry = new LineString(coordinates);
     freeHandPreviewLayer = new Feature({
@@ -289,9 +327,7 @@ export function useFreeHandDrawing(
     }
 
     let endLat: number, endLon: number;
-    // getDistance returns meters, convert to km
-    let distance = getDistance([startLon, startLat], [lng, lat]) / 1000;
-    let bearing = calculateBearing(startLat, startLon, lat, lng);
+    let { distance, bearing } = measure(startLat, startLon, lat, lng);
 
     // Calculate endpoint based on constraints
     if (azimuth === undefined) {
@@ -303,11 +339,11 @@ export function useFreeHandDrawing(
       }
 
       if (isAltPressed && lockedAzimuth !== null) {
-        const endpoint = destinationPoint(startLat, startLon, distance, lockedAzimuth);
+        const endpoint = project(startLat, startLon, distance, lockedAzimuth);
         endLat = endpoint.lat;
         endLon = endpoint.lon;
       } else if (isCtrlPressed && lockedDistance !== null) {
-        const endpoint = destinationPoint(startLat, startLon, lockedDistance, bearing);
+        const endpoint = project(startLat, startLon, lockedDistance, bearing);
         endLat = endpoint.lat;
         endLon = endpoint.lon;
       } else {
@@ -315,9 +351,8 @@ export function useFreeHandDrawing(
         endLon = lng;
       }
     } else {
-      // getDistance returns meters, convert to km
-      const dist = getDistance([startLon, startLat], [lng, lat]) / 1000;
-      const endpoint = destinationPoint(startLat, startLon, dist, azimuth);
+      const dist = measure(startLat, startLon, lat, lng).distance;
+      const endpoint = project(startLat, startLon, dist, azimuth);
       endLat = endpoint.lat;
       endLon = endpoint.lon;
     }
@@ -334,11 +369,9 @@ export function useFreeHandDrawing(
     // Draw the actual line
     let lineName = name;
     if (!lineName) {
-      // getDistance returns meters, convert to km
-      const dist = getDistance([startLon, startLat], [endLon, endLat]) / 1000;
-      const finalBearing = calculateBearing(startLat, startLon, endLat, endLon);
-      const inverseBearing = (finalBearing + 180) % 360;
-      lineName = `Line ${dist.toFixed(1)}km • ${finalBearing.toFixed(1)}°/${inverseBearing.toFixed(1)}°`;
+      const final = measure(startLat, startLon, endLat, endLon);
+      const inverseBearing = (final.bearing + 180) % 360;
+      lineName = `Line ${final.distance.toFixed(1)}km • ${final.bearing.toFixed(1)}°/${inverseBearing.toFixed(1)}°`;
     }
 
     drawing.drawLineSegment(
@@ -352,7 +385,10 @@ export function useFreeHandDrawing(
       azimuth,
       undefined,
       undefined,
-      undefined
+      undefined,
+      undefined,
+      undefined,
+      uiStore.geodesicDefault
     );
 
     uiStore.addToast('Line segment added successfully!', 'success');

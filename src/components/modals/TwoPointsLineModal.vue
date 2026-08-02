@@ -32,6 +32,15 @@
         :label="$t('common.end') + ' ' + $t('common.point')"
         :placeholder="$t('line.selectPoint')"
       />
+
+      <v-checkbox
+        v-model="form.geodesic"
+        class="mb-2"
+        data-testid="geodesic-checkbox"
+        density="compact"
+        hide-details
+        :label="$t('line.geodesic')"
+      />
     </v-form>
   </BaseModal>
 </template>
@@ -65,24 +74,35 @@ const form = reactive({
   name: '',
   startCoord: null as string | null,
   endCoord: null as string | null,
+  geodesic: false,
 });
 
-watch(isOpen, (newVal) => {
-  if (newVal) {
-    if (isEditing.value && uiStore.editingElement) {
-      const element = layersStore.lineSegments.find((l) => l.id === uiStore.editingElement?.id);
-      if (element) {
-        form.name = element.name;
-        form.startCoord = `${element.center.lat},${element.center.lon}`;
-        form.endCoord = element.endpoint ? `${element.endpoint.lat},${element.endpoint.lon}` : null;
+watch(
+  isOpen,
+  (newVal) => {
+    if (newVal) {
+      if (isEditing.value && uiStore.editingElement) {
+        const element = layersStore.lineSegments.find((l) => l.id === uiStore.editingElement?.id);
+        if (element) {
+          form.name = element.name;
+          form.startCoord = `${element.center.lat},${element.center.lon}`;
+          form.endCoord = element.endpoint
+            ? `${element.endpoint.lat},${element.endpoint.lon}`
+            : null;
+          form.geodesic = element.geodesic === true;
+        }
+      } else {
+        form.name = '';
+        form.startCoord = null;
+        form.endCoord = null;
+        form.geodesic = uiStore.geodesicDefault;
       }
-    } else {
-      form.name = '';
-      form.startCoord = null;
-      form.endCoord = null;
     }
-  }
-});
+    // immediate: the modal is mounted with v-if, so isOpen is already true at
+    // setup and the watcher would otherwise never fire for the first open
+  },
+  { immediate: true }
+);
 
 function closeModal() {
   uiStore.closeModal('twoPointsLineModal');
@@ -116,7 +136,13 @@ async function submitForm() {
       endLat,
       endLon,
       name,
-      'coordinate'
+      'coordinate',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      form.geodesic
     );
     uiStore.addToast(t('line.updated'), 'success');
   } else {
@@ -132,7 +158,10 @@ async function submitForm() {
       undefined,
       undefined,
       undefined,
-      undefined
+      undefined,
+      undefined,
+      undefined,
+      form.geodesic
     );
     uiStore.addToast(t('line.created'), 'success');
   }

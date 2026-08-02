@@ -67,6 +67,73 @@ test.describe('Line Drawing', () => {
         page.locator('.layer-item-name').filter({ hasText: /Paris to London/i })
       ).toBeVisible();
     });
+
+    test('should create a geodesic line with the follow-curvature toggle', async ({
+      page,
+      blankProject,
+    }) => {
+      // Click two-points line button (button index 1 in drawing tools)
+      await page.locator('.v-btn-group').last().locator('button').nth(1).click();
+      await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
+
+      const dialog = page.locator('[role="dialog"]');
+
+      // Fill in start point using combobox
+      await dialog.locator('[role="combobox"]').first().locator('.v-select__menu-icon').click();
+      await page.waitForTimeout(300);
+      await page.locator('.v-select__content .v-list-item').first().click();
+      // Wait for dropdown overlay to disappear and dialog to stabilize
+      await page.locator('.v-select__content').waitFor({ state: 'hidden', timeout: 5000 });
+      await page.waitForTimeout(500);
+
+      // Fill in end point using second combobox
+      await dialog.locator('[role="combobox"]').last().waitFor({ state: 'visible', timeout: 5000 });
+      await dialog.locator('[role="combobox"]').last().click({ force: true });
+      await page.waitForTimeout(300);
+      await page.locator('.v-select__content .v-list-item').nth(1).click();
+      await page.waitForTimeout(300);
+
+      // Enable "Follow Earth curvature"
+      await dialog
+        .locator('[data-testid="geodesic-checkbox"] input[type="checkbox"]')
+        .check({ force: true });
+
+      // Submit form
+      await page.click('button:has-text("Add")');
+      await page.waitForTimeout(500);
+
+      // Verify line appears and its info line reports the geodesic mode
+      await expect(page.locator('.layer-item').filter({ hasText: /geodesic/i })).toBeVisible();
+    });
+
+    test('global geodesic default pre-checks the toggle in the dialog', async ({
+      page,
+      blankProject,
+    }) => {
+      // Enable the global default in the drawing toolbar
+      await page.locator('[data-testid="geodesic-default-btn"]').click();
+
+      // Open the two-points line dialog
+      await page.locator('.v-btn-group').last().locator('button').nth(1).click();
+      await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
+
+      const checkbox = page
+        .locator('[role="dialog"]')
+        .locator('[data-testid="geodesic-checkbox"] input[type="checkbox"]');
+      await expect(checkbox).toBeChecked();
+
+      // Close, disable the default, reopen: no longer pre-checked
+      await page.keyboard.press('Escape');
+      await page.locator('[role="dialog"]').waitFor({ state: 'hidden', timeout: 5000 });
+      await page.locator('[data-testid="geodesic-default-btn"]').click();
+      await page.locator('.v-btn-group').last().locator('button').nth(1).click();
+      await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
+      await expect(
+        page
+          .locator('[role="dialog"]')
+          .locator('[data-testid="geodesic-checkbox"] input[type="checkbox"]')
+      ).not.toBeChecked();
+    });
   });
 
   test.describe('Azimuth Line', () => {

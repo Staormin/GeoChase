@@ -203,6 +203,73 @@ describe('gpx service', () => {
       expect(result).toContain('<type>LineSegment</type>');
       expect(result).toContain('<type>Parallel</type>');
     });
+
+    it('should densify geodesic coordinate segments along the arc', () => {
+      const segments: LineSegmentData[] = [
+        {
+          name: 'Geodesic Segment',
+          center: { lat: 48.8566, lon: 2.3522 }, // Paris
+          endpoint: { lat: 40.7128, lon: -74.006 }, // New York
+          mode: 'coordinate',
+          geodesic: true,
+        },
+      ];
+
+      const result = generateLineSegmentTracks(segments);
+      const trackPointCount = (result.match(/<trkpt/g) || []).length;
+
+      // Densified: many vertices, not just the 2 endpoints
+      expect(trackPointCount).toBeGreaterThan(2);
+
+      // The geodesic Paris → New York passes north of both endpoints
+      const latitudes = [...result.matchAll(/lat="(-?\d+\.\d+)"/g)].map((m) =>
+        Number.parseFloat(m[1]!)
+      );
+      expect(Math.max(...latitudes)).toBeGreaterThan(50);
+
+      // All longitudes normalized to valid GPX range
+      const longitudes = [...result.matchAll(/lon="(-?\d+\.\d+)"/g)].map((m) =>
+        Number.parseFloat(m[1]!)
+      );
+      for (const lon of longitudes) {
+        expect(lon).toBeGreaterThanOrEqual(-180);
+        expect(lon).toBeLessThanOrEqual(180);
+      }
+    });
+
+    it('should keep non-geodesic coordinate segments as 2 points', () => {
+      const segments: LineSegmentData[] = [
+        {
+          name: 'Straight Segment',
+          center: { lat: 48.8566, lon: 2.3522 },
+          endpoint: { lat: 40.7128, lon: -74.006 },
+          mode: 'coordinate',
+        },
+      ];
+
+      const result = generateLineSegmentTracks(segments);
+      const trackPointCount = (result.match(/<trkpt/g) || []).length;
+      expect(trackPointCount).toBe(2);
+    });
+
+    it('should export geodesic azimuth segments along the ellipsoidal geodesic', () => {
+      const segments: LineSegmentData[] = [
+        {
+          name: 'Geodesic Azimuth',
+          center: { lat: 48.8566, lon: 2.3522 },
+          mode: 'azimuth',
+          azimuth: 291.8,
+          distance: 5000, // km
+          geodesic: true,
+        },
+      ];
+
+      const result = generateLineSegmentTracks(segments);
+      const trackPointCount = (result.match(/<trkpt/g) || []).length;
+      expect(trackPointCount).toBeGreaterThan(2);
+      // First point is the start
+      expect(result).toContain('lat="48.856600"');
+    });
   });
 
   describe('generateCompleteGPX', () => {

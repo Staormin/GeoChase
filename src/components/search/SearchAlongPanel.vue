@@ -71,6 +71,7 @@ import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SearchFilters from '@/components/search/SearchFilters.vue';
 import SearchResultsTable from '@/components/search/SearchResultsTable.vue';
+import { densifyGeodesic, normalizeLon } from '@/services/geodesy';
 import { generateLinePointsLinear } from '@/services/geometry';
 import {
   distancePointToSegment,
@@ -201,6 +202,14 @@ const pathPoints = computed(() => {
         120
       );
     } else if (segment.endpoint) {
+      if (segment.geodesic) {
+        // Geodesic lines: sample the great-circle arc so the buffer zone
+        // aligns with the curved line displayed on the map
+        return densifyGeodesic(segment.center, segment.endpoint, { minVertices: 121 }).map((p) => ({
+          lat: p.lat,
+          lon: normalizeLon(p.lon),
+        }));
+      }
       // Generate points along the line segment using linear interpolation
       // This ensures the buffer zone aligns with the displayed straight line in OpenLayers
       // Works for coordinate, azimuth, and intersection modes

@@ -3,6 +3,7 @@
  * Reused from original application with TypeScript typing
  */
 
+import { densifyGeodesic, densifyGeodesicFromBearing, normalizeLon } from './geodesy';
 import { destinationPoint, generateCircle } from './geometry';
 
 export interface CircleData {
@@ -17,9 +18,21 @@ export interface LineSegmentData {
   center: { lat: number; lon: number };
   endpoint?: { lat: number; lon: number };
   mode: 'coordinate' | 'azimuth' | 'intersection' | 'parallel';
+  geodesic?: boolean;
   distance?: number;
   azimuth?: number;
   longitude?: number;
+}
+
+/**
+ * Densify a geodesic line into GPX-safe track points (longitudes normalized
+ * back to [-180, 180] — GPX does not accept unwrapped longitudes).
+ */
+function geodesicTrackPoints(
+  from: { lat: number; lon: number },
+  to: { lat: number; lon: number }
+): { lat: number; lon: number }[] {
+  return densifyGeodesic(from, to).map((p) => ({ lat: p.lat, lon: normalizeLon(p.lon) }));
 }
 
 export interface PointData {
@@ -37,7 +50,10 @@ export function generateLineSegmentTracks(segments: LineSegmentData[]): string {
     let trackPoints: { lat: number; lon: number }[] = [];
 
     if (segment.mode === 'coordinate' && segment.endpoint) {
-      trackPoints = [segment.center, segment.endpoint];
+      // Geodesic lines are densified so the exported track follows the arc
+      trackPoints = segment.geodesic
+        ? geodesicTrackPoints(segment.center, segment.endpoint)
+        : [segment.center, segment.endpoint];
 
       gpxTracks += `  <trk>
     <name>${segment.name || `Line Segment ${segmentIndex + 1}`}</name>
@@ -56,25 +72,28 @@ export function generateLineSegmentTracks(segments: LineSegmentData[]): string {
     } else {
       switch (segment.mode) {
         case 'azimuth': {
-          // Calculate endpoint from azimuth and distance
-          destinationPoint(
-            segment.center.lat,
-            segment.center.lon,
-            segment.distance!,
-            segment.azimuth!
-          );
-          // Generate intermediate points for smooth curve
-          trackPoints = [];
-          const numPoints = 100;
-          for (let i = 0; i <= numPoints; i++) {
-            const distance = (i / numPoints) * segment.distance!;
-            const point = destinationPoint(
-              segment.center.lat,
-              segment.center.lon,
-              distance,
-              segment.azimuth!
-            );
-            trackPoints.push(point);
+          if (segment.geodesic) {
+            // Ellipsoidal geodesic leaving the start at the initial bearing
+            trackPoints = densifyGeodesicFromBearing(
+              segment.center,
+              segment.azimuth!,
+              segment.distance! * 1000
+            ).map((p) => ({ lat: p.lat, lon: normalizeLon(p.lon) }));
+          } else {
+            // Historical behaviour: intermediate points along the spherical
+            // great circle at the initial bearing
+            trackPoints = [];
+            const numPoints = 100;
+            for (let i = 0; i <= numPoints; i++) {
+              const distance = (i / numPoints) * segment.distance!;
+              const point = destinationPoint(
+                segment.center.lat,
+                segment.center.lon,
+                distance,
+                segment.azimuth!
+              );
+              trackPoints.push(point);
+            }
           }
 
           gpxTracks += `  <trk>
@@ -98,7 +117,9 @@ export function generateLineSegmentTracks(segments: LineSegmentData[]): string {
         case 'intersection': {
           // Endpoint is already calculated and stored
           if (segment.endpoint) {
-            trackPoints = [segment.center, segment.endpoint];
+            trackPoints = segment.geodesic
+              ? geodesicTrackPoints(segment.center, segment.endpoint)
+              : [segment.center, segment.endpoint];
 
             gpxTracks += `  <trk>
     <name>${segment.name || `Line Segment ${segmentIndex + 1}`}</name>

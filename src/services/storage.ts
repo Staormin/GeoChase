@@ -56,6 +56,12 @@ export interface LineSegmentElement {
   center: { lat: number; lon: number };
   endpoint?: { lat: number; lon: number };
   mode: 'coordinate' | 'azimuth' | 'intersection' | 'parallel';
+  // When true the line follows the Earth's curvature (geodesic / great circle
+  // on the WGS84 ellipsoid) instead of being a straight segment in Web
+  // Mercator (a rhumb line). Missing means false (legacy straight behaviour).
+  // Never applies to 'parallel' lines: a parallel is a rhumb line by
+  // definition (constant 90°/270° bearing) and is not a geodesic.
+  geodesic?: boolean;
   distance?: number;
   azimuth?: number;
   intersectionPoint?: { lat: number; lon: number };
