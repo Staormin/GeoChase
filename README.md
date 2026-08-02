@@ -13,6 +13,11 @@ A web-based mapping application for solving geoportail treasure hunts through ge
   - Intersection: Line passing through a point at specified distance
   - Parallel: Latitude lines across the map
   - Free hand: Interactive drawing with optional azimuth/distance locking
+- **Geodesic Lines** ("Follow Earth curvature"): optionally draw lines as great-circle
+  arcs on the WGS84 ellipsoid instead of straight Web Mercator segments (rhumb lines).
+  Toggle per line (creation dialogs or layer context menu) or set a global default
+  in the drawing toolbar. GPX export, search along path, navigation and displayed
+  distances all follow the selected mode. Parallels are always rhumb lines by definition.
 - **Points**: Mark locations on the map
 - **Polygons**: Create areas from multiple points (minimum 3)
   - Select points from existing markers

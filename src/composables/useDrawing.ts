@@ -128,7 +128,9 @@ export function useDrawing(mapRef: any) {
           segment.mode as 'coordinate' | 'azimuth' | 'intersection',
           segment.intersectionPoint?.lat,
           segment.intersectionPoint?.lon,
-          segment.color
+          segment.color,
+          undefined,
+          segment.geodesic
         );
       } else {
         lineDrawing.redrawLineSegmentOnMap(
@@ -140,7 +142,8 @@ export function useDrawing(mapRef: any) {
           segment.mode as 'coordinate' | 'azimuth' | 'intersection',
           segment.intersectionPoint?.lat,
           segment.intersectionPoint?.lon,
-          segment.color
+          segment.color,
+          segment.geodesic
         );
       }
     }
@@ -381,7 +384,8 @@ export function useDrawing(mapRef: any) {
             segment.mode as 'coordinate' | 'azimuth' | 'intersection',
             segment.intersectionPoint?.lat,
             segment.intersectionPoint?.lon,
-            segment.color
+            segment.color,
+            segment.geodesic
           );
         }
       }

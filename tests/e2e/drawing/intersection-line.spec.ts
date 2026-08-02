@@ -68,9 +68,9 @@ test.describe('Intersection Line', () => {
       await clickIntersectionButton(page);
       await page.waitForTimeout(300);
 
-      // Should have create endpoint checkbox
+      // Should have create endpoint checkbox (last checkbox, after the geodesic toggle)
       const dialog = page.locator('.v-dialog');
-      const checkbox = dialog.locator('.v-checkbox');
+      const checkbox = dialog.locator('.v-checkbox').last();
       await expect(checkbox).toBeVisible();
     });
 
@@ -166,8 +166,8 @@ test.describe('Intersection Line', () => {
 
       const dialog = page.locator('.v-dialog');
 
-      // Checkbox should be visible
-      const checkbox = dialog.locator('.v-checkbox');
+      // Checkbox should be visible (last checkbox = create endpoint, after the geodesic toggle)
+      const checkbox = dialog.locator('.v-checkbox').last();
       await expect(checkbox).toBeVisible();
 
       // Click the checkbox to enable endpoint creation

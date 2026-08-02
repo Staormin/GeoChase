@@ -40,6 +40,7 @@
     "@fontsource/roboto": "5.2.9",
     "@mdi/font": "7.4.47",
     "@turf/turf": "^7.3.4",
+    "geographiclib-geodesic": "^2.2.0",
     "ol": "^10.8.0",
     "pdfjs-dist": "^5.4.624",
     "pinia": "^3.0.4",

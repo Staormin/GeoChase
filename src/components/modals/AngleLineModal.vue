@@ -207,14 +207,22 @@ function submitForm() {
       distance: form.distance.toFixed(1),
     });
 
-  // Draw the line
+  // Draw the line (follows the global geodesic default, like other new lines)
   drawing.drawLineSegment(
     point.coordinates.lat,
     point.coordinates.lon,
     endpoint.lat,
     endpoint.lon,
     lineName,
-    undefined // color
+    undefined, // mode (defaults to 'coordinate')
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    uiStore.geodesicDefault
   );
 
   // Create endpoint if requested

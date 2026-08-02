@@ -308,6 +308,20 @@
                 $t('drawing.polygon')
               }}</v-tooltip>
             </v-btn>
+
+            <!-- Global default: new lines follow the Earth's curvature (geodesic) -->
+            <v-btn
+              :color="uiStore.geodesicDefault ? 'primary' : 'surface-bright'"
+              data-testid="geodesic-default-btn"
+              icon="mdi-earth"
+              variant="elevated"
+              @click="uiStore.setGeodesicDefault(!uiStore.geodesicDefault)"
+            >
+              <v-icon>mdi-earth</v-icon>
+              <v-tooltip activator="parent" location="bottom">{{
+                $t('drawing.geodesicDefault')
+              }}</v-tooltip>
+            </v-btn>
           </v-btn-group>
         </div>
       </div>

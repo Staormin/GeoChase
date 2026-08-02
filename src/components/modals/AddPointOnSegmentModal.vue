@@ -63,6 +63,7 @@ import { fromLonLat, toLonLat } from 'ol/proj';
 import { getDistance } from 'ol/sphere';
 import { computed, inject, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { geodesicDestination, geodesicDistance, geodesicInverse } from '@/services/geodesy';
 import { destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -100,6 +101,11 @@ function getSegmentEndpoint(segment: any) {
       return segment.endpoint;
     }
     case 'azimuth': {
+      // Geodesic azimuth lines store their (ellipsoidal) endpoint; recomputing
+      // it spherically would drift off the drawn line
+      if (segment.geodesic && segment.endpoint) {
+        return segment.endpoint;
+      }
       return destinationPoint(
         segment.center.lat,
         segment.center.lon,
@@ -160,9 +166,11 @@ function submitForm() {
     return;
   }
 
-  // Use Haversine distance for validation and display consistency (getDistance returns meters, convert to km)
-  const segmentLength =
-    getDistance([segment.center.lon, segment.center.lat], [endpoint.lon, endpoint.lat]) / 1000;
+  // Segment length in km: geodesic (ellipsoidal) for geodesic lines,
+  // Haversine otherwise, for consistency with what is displayed
+  const segmentLength = segment.geodesic
+    ? geodesicDistance(segment.center, endpoint) / 1000
+    : getDistance([segment.center.lon, segment.center.lat], [endpoint.lon, endpoint.lat]) / 1000;
 
   if (form.value.distance > segmentLength) {
     const msg = t('modals.addPointOnSegment.distanceExceeds', { length: segmentLength.toFixed(2) });
@@ -172,6 +180,25 @@ function submitForm() {
 
   if (form.value.distance < 0) {
     uiStore.addToast(t('modals.addPointOnSegment.distancePositive'), 'error');
+    return;
+  }
+
+  // Geodesic lines: the point at a given distance along the line is the
+  // solution of the direct problem along the arc — no search needed
+  if (segment.geodesic) {
+    const pointOnSegment =
+      form.value.distanceFrom === 'start'
+        ? geodesicDestination(
+            segment.center,
+            geodesicInverse(segment.center, endpoint).initialBearing,
+            form.value.distance * 1000
+          )
+        : geodesicDestination(
+            endpoint,
+            geodesicInverse(endpoint, segment.center).initialBearing,
+            form.value.distance * 1000
+          );
+    finalizePoint(segment, pointOnSegment, segmentLength);
     return;
   }
 
@@ -269,6 +296,15 @@ function submitForm() {
     }
   }
 
+  finalizePoint(segment, pointOnSegment, segmentLength);
+}
+
+// Name the point, draw it, and wire the line <-> point relationship
+function finalizePoint(
+  segment: any,
+  pointOnSegment: { lat: number; lon: number },
+  segmentLength: number
+) {
   // Auto-generate clever name based on position
   let name = form.value.name.trim();
   if (!name) {

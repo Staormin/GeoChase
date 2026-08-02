@@ -121,7 +121,8 @@
     "drawLine": "Dessiner une ligne",
     "drawPoint": "Dessiner un point",
     "drawPolygon": "Dessiner un polygone",
-    "noIntersection": "Aucune intersection trouvée"
+    "noIntersection": "Aucune intersection trouvée",
+    "geodesicDefault": "Les nouvelles lignes suivent la courbure de la Terre (géodésique)"
   },
   "circle": {
     "title": "Créer un cercle",
@@ -154,6 +155,8 @@
     "endLat": "Latitude de fin",
     "endLon": "Longitude de fin",
     "azimuth": "Azimut (degrés)",
+    "initialBearing": "Azimut initial (degrés, géodésique)",
+    "geodesic": "Suivre la courbure de la Terre (grand cercle)",
     "distance": "Distance (km)",
     "parallelTo": "Parallèle à la ligne",
     "passingThrough": "Passant par le point",
@@ -760,6 +763,7 @@
     "addAsCoordinate": "Ajouter comme coordonnée",
     "addCenterAsPoint": "Ajouter le centre comme point",
     "addPointOn": "Ajouter un point sur",
+    "followCurvature": "Suivre la courbure de la Terre",
     "bearings": "Relèvements",
     "editNote": "Modifier la note",
     "hide": "Masquer",

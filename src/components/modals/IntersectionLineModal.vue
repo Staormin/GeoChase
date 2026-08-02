@@ -43,6 +43,15 @@
       />
 
       <v-checkbox
+        v-model="form.geodesic"
+        class="mb-2"
+        data-testid="geodesic-checkbox"
+        density="compact"
+        hide-details
+        :label="$t('line.geodesic')"
+      />
+
+      <v-checkbox
         v-model="form.createEndpoint"
         class="mb-2"
         density="compact"
@@ -69,6 +78,7 @@ import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
+import { geodesicDestination, geodesicDistance, geodesicInverse } from '@/services/geodesy';
 import { endpointFromIntersection } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -93,32 +103,41 @@ const form = reactive({
   startCoord: null as string | null,
   intersectCoord: null as string | null,
   distance: 0,
+  geodesic: false,
   createEndpoint: false,
   endpointName: '',
 });
 
-watch(isOpen, (newVal) => {
-  if (newVal) {
-    if (isEditing.value && uiStore.editingElement) {
-      const element = layersStore.lineSegments.find((l) => l.id === uiStore.editingElement?.id);
-      if (element) {
-        form.name = element.name;
-        form.startCoord = `${element.center.lat},${element.center.lon}`;
-        form.intersectCoord = element.intersectionPoint
-          ? `${element.intersectionPoint.lat},${element.intersectionPoint.lon}`
-          : null;
-        form.distance = element.intersectionDistance || 0;
+watch(
+  isOpen,
+  (newVal) => {
+    if (newVal) {
+      if (isEditing.value && uiStore.editingElement) {
+        const element = layersStore.lineSegments.find((l) => l.id === uiStore.editingElement?.id);
+        if (element) {
+          form.name = element.name;
+          form.startCoord = `${element.center.lat},${element.center.lon}`;
+          form.intersectCoord = element.intersectionPoint
+            ? `${element.intersectionPoint.lat},${element.intersectionPoint.lon}`
+            : null;
+          form.distance = element.intersectionDistance || 0;
+          form.geodesic = element.geodesic === true;
+        }
+      } else {
+        form.name = '';
+        form.startCoord = null;
+        form.intersectCoord = null;
+        form.distance = 0;
+        form.geodesic = uiStore.geodesicDefault;
+        form.createEndpoint = false;
+        form.endpointName = '';
       }
-    } else {
-      form.name = '';
-      form.startCoord = null;
-      form.intersectCoord = null;
-      form.distance = 0;
-      form.createEndpoint = false;
-      form.endpointName = '';
     }
-  }
-});
+    // immediate: the modal is mounted with v-if, so isOpen is already true at
+    // setup and the watcher would otherwise never fire for the first open
+  },
+  { immediate: true }
+);
 
 function closeModal() {
   uiStore.closeModal('intersectionLineModal');
@@ -138,8 +157,11 @@ async function submitForm() {
   const intersectLat = intersectCoords[0]!;
   const intersectLon = intersectCoords[1]!;
 
-  // Validate distance is >= distance to intersection point (getDistance returns meters, convert to km)
-  const distToIntersection = getDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
+  // Validate distance is >= distance to intersection point (in km)
+  const distToIntersection = form.geodesic
+    ? geodesicDistance({ lat: startLat, lon: startLon }, { lat: intersectLat, lon: intersectLon }) /
+      1000
+    : getDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
   if (form.distance < distToIntersection - 1e-6) {
     uiStore.addToast(
       t('modals.intersectionLine.distanceError', { distance: distToIntersection.toFixed(2) }),
@@ -148,14 +170,33 @@ async function submitForm() {
     return;
   }
 
-  // Calculate endpoint from intersection
-  const endpoint = endpointFromIntersection(
-    startLat,
-    startLon,
-    intersectLat,
-    intersectLon,
-    form.distance
-  );
+  // Calculate endpoint from intersection.
+  // Geodesic ON: extend the geodesic that leaves the start point toward the
+  // intersection point out to the requested distance — the resulting arc
+  // passes exactly through the intersection point (same construction as the
+  // historical straight-Mercator version, on the ellipsoid instead).
+  // Geodesic OFF: historical behaviour (straight Mercator line through the
+  // intersection point).
+  let endpoint: { lat: number; lon: number };
+  if (form.geodesic) {
+    const toIntersection = geodesicInverse(
+      { lat: startLat, lon: startLon },
+      { lat: intersectLat, lon: intersectLon }
+    );
+    endpoint = geodesicDestination(
+      { lat: startLat, lon: startLon },
+      toIntersection.initialBearing,
+      form.distance * 1000
+    );
+  } else {
+    endpoint = endpointFromIntersection(
+      startLat,
+      startLon,
+      intersectLat,
+      intersectLon,
+      form.distance
+    );
+  }
 
   // Auto-generate name if empty
   let name = form.name.trim();
@@ -176,7 +217,8 @@ async function submitForm() {
       undefined,
       intersectLat,
       intersectLon,
-      form.distance
+      form.distance,
+      form.geodesic
     );
     uiStore.addToast(t('messages.lineUpdated'), 'success');
   } else {
@@ -194,7 +236,8 @@ async function submitForm() {
       intersectLon,
       undefined,
       form.createEndpoint,
-      form.endpointName
+      form.endpointName,
+      form.geodesic
     );
     uiStore.addToast(t('messages.lineAdded'), 'success');
   }
