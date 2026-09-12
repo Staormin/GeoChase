@@ -1,33 +1,24 @@
-import { watch } from 'vue';
-import { useLayersStore } from '@/stores/layers';
-import { useProjectsStore } from '@/stores/projects';
-
 /**
  * Composable for auto-saving project data
  */
+
+import { getCurrentScope, onScopeDispose, watch } from 'vue';
+import { useLayersStore } from '@/stores/layers';
+import { useProjectsStore } from '@/stores/projects';
+import { debounce } from '@/utils/debounce';
+
 export function useAutoSave() {
   const projectsStore = useProjectsStore();
   const layersStore = useLayersStore();
 
-  // Debounce autosave to avoid excessive writes
-  let autoSaveTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  function debouncedAutoSave() {
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout);
+  const debouncedAutoSave = debounce(() => {
+    if (projectsStore.activeProjectId) {
+      projectsStore.autoSaveActiveProject(layersStore.exportLayers());
     }
+  }, 500);
 
-    autoSaveTimeout = setTimeout(() => {
-      if (projectsStore.activeProjectId) {
-        projectsStore.autoSaveActiveProject({
-          circles: layersStore.circles,
-          lineSegments: layersStore.lineSegments,
-          points: layersStore.points,
-          polygons: layersStore.polygons,
-          notes: layersStore.notes,
-        });
-      }
-    }, 500); // 500ms debounce
+  if (getCurrentScope()) {
+    onScopeDispose(debouncedAutoSave.cancel);
   }
 
   // Auto-save on layers change

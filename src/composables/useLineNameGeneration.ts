@@ -1,9 +1,10 @@
-import { getReverseGeocodeAddress } from '@/services/address';
-import { useLayersStore } from '@/stores/layers';
-
 /**
  * Composable for generating automatic line segment names based on mode and coordinates
  */
+
+import { getReverseGeocodeAddress } from '@/services/address';
+import { useLayersStore } from '@/stores/layers';
+
 export function useLineNameGeneration() {
   const layersStore = useLayersStore();
 

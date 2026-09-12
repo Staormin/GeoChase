@@ -3,10 +3,11 @@
     v-if="!uiStore.animationState.isPlaying && !uiStore.viewCaptureState.isCapturing"
     :aria-label="$t('tools.toggle')"
     :aria-pressed="uiStore.tools.isToolbarOpen || !!uiStore.tools.activeTool"
+    class="tools-button"
     :color="uiStore.tools.activeTool ? 'primary' : 'surface-bright'"
     elevation="6"
     icon
-    size="large"
+    size="small"
     :style="{
       position: 'fixed',
       bottom: '16px',
@@ -32,3 +33,12 @@ function handleClick() {
   uiStore.toggleToolbar();
 }
 </script>
+
+<style scoped>
+@media (pointer: coarse) {
+  .tools-button {
+    width: 48px;
+    height: 48px;
+  }
+}
+</style>

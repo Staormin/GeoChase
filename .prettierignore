@@ -14,7 +14,7 @@ coverage
 .vscode
 .idea
 # Auto-generated files
-components.d.ts
+src/typed-router.d.ts
 src/auto-imports.d.ts
 src/components.d.ts
 # Test artifacts

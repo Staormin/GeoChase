@@ -203,7 +203,7 @@ async function collectCoverage(page: Page, testName: string): Promise<void> {
     }
 
     const timestamp = Date.now();
-    const sanitizedName = testName.replace(/[^a-zA-Z0-9]/g, '_');
+    const sanitizedName = testName.replace(/[^a-z0-9]/gi, '_');
     const filename = `coverage-${sanitizedName}-${timestamp}.json`;
     fs.writeFileSync(path.join(coverageDir, filename), JSON.stringify(coverage));
   }

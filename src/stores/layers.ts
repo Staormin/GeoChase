@@ -4,13 +4,15 @@
 
 import type {
   CircleElement,
+  LayerImportData,
   LineSegmentElement,
   NoteElement,
   PointElement,
   PolygonElement,
-} from '@/services/storage';
+} from '@/types/project';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
+import { normalizeLayers } from '@/domain/layers';
 
 export const useLayersStore = defineStore('layers', () => {
   // State
@@ -19,9 +21,6 @@ export const useLayersStore = defineStore('layers', () => {
   const points = ref<PointElement[]>([]);
   const polygons = ref<PolygonElement[]>([]);
   const notes = ref<NoteElement[]>([]);
-
-  // Map of OpenLayers feature IDs for feature management
-  const mapElementIdMap = ref<Map<string, string>>(new Map());
 
   // Computed
   const isEmpty = computed(
@@ -128,10 +127,6 @@ export const useLayersStore = defineStore('layers', () => {
   function deleteCircle(id: string | undefined): void {
     const index = circles.value.findIndex((c) => c.id === id);
     if (index !== -1 && circles.value[index]) {
-      const circle = circles.value[index];
-      if (circle && circle.mapElementId !== undefined) {
-        mapElementIdMap.value.delete(`circle_${id}`);
-      }
       circles.value.splice(index, 1);
     }
   }
@@ -167,11 +162,6 @@ export const useLayersStore = defineStore('layers', () => {
   function deleteLineSegment(id: string | undefined): void {
     const index = lineSegments.value.findIndex((s) => s.id === id);
     if (index !== -1 && lineSegments.value[index]) {
-      const segment = lineSegments.value[index];
-      if (segment && segment.mapElementId !== undefined) {
-        mapElementIdMap.value.delete(`lineSegment_${id}`);
-      }
-
       // Clear lineId from all points that reference this line
       if (id) {
         for (const point of points.value) {
@@ -209,9 +199,6 @@ export const useLayersStore = defineStore('layers', () => {
     const index = points.value.findIndex((p) => p.id === id);
     if (index !== -1 && points.value[index]) {
       const point = points.value[index];
-      if (point && point.mapElementId !== undefined) {
-        mapElementIdMap.value.delete(`point_${id}`);
-      }
 
       // Remove references to this point from all lines
       if (id) {
@@ -288,9 +275,6 @@ export const useLayersStore = defineStore('layers', () => {
         }
       }
 
-      if (polygon && polygon.mapElementId !== undefined) {
-        mapElementIdMap.value.delete(`polygon_${id}`);
-      }
       polygons.value.splice(index, 1);
     }
   }
@@ -403,298 +387,21 @@ export const useLayersStore = defineStore('layers', () => {
     }
   }
 
-  function storeMapElementId(
-    elementType: string,
-    elementId: string | undefined,
-    mapElementId: string
-  ): void {
-    const key = `${elementType}_${elementId}`;
-    mapElementIdMap.value.set(key, mapElementId);
-  }
-
-  function getMapElementId(elementType: string, elementId: string | undefined): string | undefined {
-    const key = `${elementType}_${elementId}`;
-    return mapElementIdMap.value.get(key);
-  }
-
   function clearLayers(): void {
     circles.value = [];
     lineSegments.value = [];
     points.value = [];
     polygons.value = [];
     notes.value = [];
-    mapElementIdMap.value.clear();
   }
 
-  /**
-   * Validate and sanitize element data before loading
-   */
-  function validateCircle(circle: any): circle is CircleElement {
-    return (
-      circle &&
-      typeof circle.id === 'string' &&
-      typeof circle.name === 'string' &&
-      circle.center &&
-      typeof circle.center.lat === 'number' &&
-      typeof circle.center.lon === 'number' &&
-      typeof circle.radius === 'number' &&
-      !Number.isNaN(circle.center.lat) &&
-      !Number.isNaN(circle.center.lon) &&
-      !Number.isNaN(circle.radius) &&
-      circle.radius > 0
-    );
-  }
-
-  function validateLineSegment(segment: any): segment is LineSegmentElement {
-    if (
-      !segment ||
-      typeof segment.id !== 'string' ||
-      typeof segment.name !== 'string' ||
-      !segment.center ||
-      typeof segment.center.lat !== 'number' ||
-      typeof segment.center.lon !== 'number' ||
-      !segment.mode
-    ) {
-      return false;
-    }
-
-    // Special validation for parallel lines
-    if (segment.mode === 'parallel') {
-      return typeof segment.longitude === 'number' && !Number.isNaN(segment.longitude);
-    }
-
-    // Regular line segments need endpoint
-    return (
-      segment.endpoint &&
-      typeof segment.endpoint.lat === 'number' &&
-      typeof segment.endpoint.lon === 'number' &&
-      !Number.isNaN(segment.endpoint.lat) &&
-      !Number.isNaN(segment.endpoint.lon)
-    );
-  }
-
-  function validatePoint(point: any): point is PointElement {
-    return (
-      point &&
-      typeof point.id === 'string' &&
-      typeof point.name === 'string' &&
-      point.coordinates &&
-      typeof point.coordinates.lat === 'number' &&
-      typeof point.coordinates.lon === 'number' &&
-      !Number.isNaN(point.coordinates.lat) &&
-      !Number.isNaN(point.coordinates.lon)
-    );
-  }
-
-  function validatePolygon(polygon: any): polygon is PolygonElement {
-    return (
-      polygon &&
-      typeof polygon.id === 'string' &&
-      typeof polygon.name === 'string' &&
-      Array.isArray(polygon.pointIds) &&
-      polygon.pointIds.length >= 3 &&
-      polygon.pointIds.every((pointId: any) => typeof pointId === 'string')
-    );
-  }
-
-  function validateNote(note: any): note is NoteElement {
-    return (
-      note &&
-      typeof note.id === 'string' &&
-      typeof note.title === 'string' &&
-      typeof note.content === 'string'
-    );
-  }
-
-  // Helper to migrate legacy savedCoordinates to points
-  function migrateSavedCoordinatesToPoints(
-    savedCoordinates: Array<{
-      id: string;
-      name: string;
-      lat: number;
-      lon: number;
-      timestamp?: number;
-    }>,
-    validPoints: PointElement[]
-  ): void {
-    for (const coord of savedCoordinates) {
-      if (
-        !coord ||
-        typeof coord.id !== 'string' ||
-        typeof coord.name !== 'string' ||
-        typeof coord.lat !== 'number' ||
-        typeof coord.lon !== 'number' ||
-        Number.isNaN(coord.lat) ||
-        Number.isNaN(coord.lon)
-      ) {
-        continue;
-      }
-
-      // Check if a point with this ID or at these coordinates already exists
-      const existingPoint = validPoints.find((p) => p.id === coord.id);
-      if (existingPoint) {
-        continue;
-      }
-
-      const pointAtCoords = validPoints.find(
-        (p) =>
-          Math.abs(p.coordinates.lat - coord.lat) < 0.000_001 &&
-          Math.abs(p.coordinates.lon - coord.lon) < 0.000_001
-      );
-      if (pointAtCoords) {
-        continue;
-      }
-
-      // Convert coordinate to point
-      validPoints.push({
-        id: coord.id,
-        name: coord.name,
-        coordinates: { lat: coord.lat, lon: coord.lon },
-        createdAt: coord.timestamp || Date.now(),
-      });
-    }
-  }
-
-  function loadLayers(data: {
-    circles: CircleElement[];
-    lineSegments: LineSegmentElement[];
-    points: PointElement[];
-    polygons?: PolygonElement[];
-    notes?: NoteElement[];
-    // Legacy field - savedCoordinates are migrated to points
-    savedCoordinates?: Array<{
-      id: string;
-      name: string;
-      lat: number;
-      lon: number;
-      timestamp?: number;
-    }>;
-  }): void {
-    clearLayers();
-
-    // Validate and filter data before loading
-    const validCircles = (data.circles || []).filter((circle) => {
-      return validateCircle(circle);
-    });
-
-    const validLineSegments = (data.lineSegments || []).filter((segment) => {
-      return validateLineSegment(segment);
-    });
-
-    const validPoints = (data.points || []).filter((point) => {
-      return validatePoint(point);
-    });
-
-    // Migrate legacy savedCoordinates to points
-    if (data.savedCoordinates && Array.isArray(data.savedCoordinates)) {
-      migrateSavedCoordinatesToPoints(data.savedCoordinates, validPoints);
-    }
-
-    // Migrate old polygon format (coordinates) to new format (point IDs)
-    const validPolygons = (data.polygons || [])
-      .map((polygon: any) => {
-        // Check if this is an old format polygon with coordinates
-        if (polygon.points && !polygon.pointIds && Array.isArray(polygon.points)) {
-          // Old format: has coordinates array, need to convert to point IDs
-          const pointIds: string[] = [];
-
-          for (const coord of polygon.points) {
-            if (
-              coord &&
-              typeof coord.lat === 'number' &&
-              typeof coord.lon === 'number' &&
-              !Number.isNaN(coord.lat) &&
-              !Number.isNaN(coord.lon)
-            ) {
-              // Try to find existing point at these coordinates
-              let point = validPoints.find(
-                (p) =>
-                  Math.abs(p.coordinates.lat - coord.lat) < 0.000_001 &&
-                  Math.abs(p.coordinates.lon - coord.lon) < 0.000_001
-              );
-
-              if (!point) {
-                // Create a new point for this coordinate
-                const pointId = `${polygon.id}-point-${pointIds.length}`;
-                point = {
-                  id: pointId,
-                  name: `${polygon.name} Point ${pointIds.length + 1}`,
-                  coordinates: { lat: coord.lat, lon: coord.lon },
-                  createdAt: Date.now(),
-                };
-                validPoints.push(point);
-              }
-
-              pointIds.push(point.id);
-            }
-          }
-
-          // Return migrated polygon (convert to new format)
-          return {
-            ...polygon,
-            pointIds,
-            points: undefined, // Remove old field
-          };
-        }
-
-        // New format: already has pointIds
-        return polygon;
-      })
-      .filter((polygon) => {
-        return validatePolygon(polygon);
-      });
-
-    const validNotes = (data.notes || []).filter((note) => {
-      return validateNote(note);
-    });
-
-    // Assign timestamps to elements that don't have them (for old projects)
-    // Use a sequential counter to maintain original order
-    let baseTimestamp =
-      Date.now() -
-      (validCircles.length + validLineSegments.length + validPoints.length + validPolygons.length) *
-        1000;
-
-    for (const circle of validCircles) {
-      if (!circle.createdAt) {
-        circle.createdAt = baseTimestamp;
-        baseTimestamp += 1000; // 1 second apart
-      }
-    }
-
-    for (const segment of validLineSegments) {
-      if (!segment.createdAt) {
-        segment.createdAt = baseTimestamp;
-        baseTimestamp += 1000;
-      }
-    }
-
-    for (const point of validPoints) {
-      if (!point.createdAt) {
-        point.createdAt = baseTimestamp;
-        baseTimestamp += 1000;
-      }
-    }
-
-    for (const polygon of validPolygons) {
-      if (!polygon.createdAt) {
-        polygon.createdAt = baseTimestamp;
-        baseTimestamp += 1000;
-      }
-    }
-
-    for (const note of validNotes) {
-      if (!note.createdAt) {
-        note.createdAt = baseTimestamp;
-        baseTimestamp += 1000;
-      }
-    }
-
-    circles.value = [...validCircles];
-    lineSegments.value = [...validLineSegments];
-    points.value = [...validPoints];
-    polygons.value = [...validPolygons];
-    notes.value = [...validNotes];
+  function loadLayers(data: LayerImportData): void {
+    const normalized = normalizeLayers(data);
+    circles.value = normalized.circles;
+    lineSegments.value = normalized.lineSegments;
+    points.value = normalized.points;
+    polygons.value = normalized.polygons;
+    notes.value = normalized.notes;
 
     // Update point references in all lines
     // This ensures compatibility with both old projects (without point refs)
@@ -887,7 +594,6 @@ export const useLayersStore = defineStore('layers', () => {
     points,
     polygons,
     notes,
-    mapElementIdMap,
 
     // Computed
     isEmpty,
@@ -919,8 +625,6 @@ export const useLayersStore = defineStore('layers', () => {
     addNote,
     updateNote,
     deleteNote,
-    storeMapElementId,
-    getMapElementId,
     clearLayers,
     loadLayers,
     exportLayers,

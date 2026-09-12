@@ -13,20 +13,24 @@
       <template #label>
         <span class="text-subtitle-1 font-weight-medium">{{ $t('animation.animationType') }}</span>
       </template>
+
       <v-radio label="Smooth Zoom Out" value="smoothZoomOut">
         <template #label>
           <div>
             <div class="font-weight-medium">{{ $t('animation.smoothZoomOut') }}</div>
+
             <div class="text-caption text-medium-emphasis">
               {{ $t('animation.smoothZoomOutDescription') }}
             </div>
           </div>
         </template>
       </v-radio>
+
       <v-radio label="Start to Finish" value="startToFinish">
         <template #label>
           <div>
             <div class="font-weight-medium">{{ $t('animation.startToFinish') }}</div>
+
             <div class="text-caption text-medium-emphasis">
               {{ $t('animation.startToFinishDescription') }}
             </div>
@@ -40,6 +44,7 @@
       <!-- View Capture Buttons -->
       <div class="mb-4">
         <label class="text-subtitle-2 mb-2 d-block">{{ $t('animation.animationViews') }}</label>
+
         <div class="view-capture-controls">
           <v-card class="view-capture-card" variant="outlined">
             <v-card-text class="pa-3">
@@ -58,6 +63,7 @@
                 <v-icon start>mdi-camera-plus</v-icon>
                 {{ form.startView ? $t('animation.updateStart') : $t('animation.setStart') }}
               </v-btn>
+
               <div v-if="form.startView" class="view-info">
                 <v-icon size="x-small">mdi-check-circle</v-icon>
                 {{ $t('animation.viewCaptured') }}
@@ -82,6 +88,7 @@
                 <v-icon start>mdi-camera-plus</v-icon>
                 {{ form.endView ? $t('animation.updateEnd') : $t('animation.setEnd') }}
               </v-btn>
+
               <div v-if="form.endView" class="view-info">
                 <v-icon size="x-small">mdi-check-circle</v-icon>
                 {{ $t('animation.viewCaptured') }}
@@ -94,10 +101,12 @@
       <div class="mb-4">
         <div class="d-flex align-center justify-space-between mb-2">
           <label class="text-subtitle-2">{{ $t('animation.zoomSpeed') }}</label>
+
           <span class="text-subtitle-2 font-weight-bold text-primary">
             {{ getSpeedLabel(form.zoomSpeed) }}
           </span>
         </div>
+
         <v-slider
           v-model="form.zoomSpeed"
           color="primary"
@@ -123,10 +132,12 @@
       <div class="mb-4">
         <div class="d-flex align-center justify-space-between mb-2">
           <label class="text-subtitle-2">{{ $t('animation.animationSpeed') }}</label>
+
           <span class="text-subtitle-2 font-weight-bold text-primary">
             {{ getSpeedLabel(form.transitionSpeed) }}
           </span>
         </div>
+
         <v-slider
           v-model="form.transitionSpeed"
           color="primary"
@@ -154,10 +165,12 @@
         <template v-if="form.startView && form.endView">
           {{ $t('animation.smoothZoomPreview', { count: totalElements }) }}
         </template>
+
         <template v-else>
           {{ $t('animation.setViewsPrompt') }}
         </template>
       </template>
+
       <template v-else>
         {{ $t('animation.startToFinishPreview', { count: totalElements }) }}
       </template>

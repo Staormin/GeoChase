@@ -1,6 +1,6 @@
 <template>
   <!-- Top bar (only shown when not in navigation/free hand mode or view capture mode) -->
-  <TopBar v-if="!uiStore.viewCaptureState.isCapturing" />
+  <TopBar v-if="!uiStore.viewCaptureState.isCapturing" @resize="topBarHeight = $event" />
 
   <!-- Navigation bar (shown during navigation/free hand modes) -->
   <NavigationBar v-if="!uiStore.viewCaptureState.isCapturing" />
@@ -12,9 +12,10 @@
   <v-navigation-drawer
     v-if="!uiStore.viewCaptureState.isCapturing"
     v-model="sidebarOpen"
+    data-testid="layers-sidebar"
     location="left"
-    style="top: 64px; height: calc(100vh - 64px)"
-    :width="640"
+    :style="panelStyle"
+    :width="sidebarWidth"
   >
     <!-- Search Along Panel (when active) -->
     <SearchAlongPanelInline v-if="uiStore.searchAlongPanel.isOpen" />
@@ -24,14 +25,18 @@
   </v-navigation-drawer>
 
   <!-- Sidebar toggle button -->
-  <SidebarToggleButton v-if="!uiStore.viewCaptureState.isCapturing" v-model="sidebarOpen" />
+  <SidebarToggleButton
+    v-if="!uiStore.viewCaptureState.isCapturing"
+    v-model="sidebarOpen"
+    :sidebar-width="sidebarWidth"
+  />
 
   <!-- PDF Panel (right side) -->
   <v-navigation-drawer
     v-if="!uiStore.viewCaptureState.isCapturing && projectsStore.hasPdf()"
     v-model="uiStore.pdfPanelOpen"
     location="right"
-    style="top: 64px; height: calc(100vh - 64px)"
+    :style="panelStyle"
     :width="pdfPanelDisplayWidth"
   >
     <!-- Resize handle -->
@@ -70,8 +75,9 @@
 
 <script lang="ts" setup>
 import type { useNoteTooltips } from '@/composables/useNoteTooltips';
-import { computed, onMounted, provide, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, provide, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDisplay } from 'vuetify';
 import NavigationBar from '@/components/layout/NavigationBar.vue';
 import ToolsButton from '@/components/layout/ToolsButton.vue';
 import ToolsToolbar from '@/components/layout/ToolsToolbar.vue';
@@ -86,6 +92,7 @@ import PrecisionModeIndicator from '@/components/ui/PrecisionModeIndicator.vue';
 import SidebarToggleButton from '@/components/ui/SidebarToggleButton.vue';
 import ToastNotifications from '@/components/ui/ToastNotifications.vue';
 import ViewCaptureHelper from '@/components/ui/ViewCaptureHelper.vue';
+import { drawingKey, mapKey, noteTooltipsKey } from '@/composables/mapContext';
 import { useAnimation } from '@/composables/useAnimation';
 import { useAppSetup } from '@/composables/useAppSetup';
 import { useAutoSave } from '@/composables/useAutoSave';
@@ -99,6 +106,20 @@ import { useUIStore } from '@/stores/ui';
 const { t } = useI18n();
 const uiStore = useUIStore();
 const projectsStore = useProjectsStore();
+const { width: screenWidth } = useDisplay();
+const topBarHeight = ref(64);
+// Keep room for the panel toggle and its margins on narrow screens.
+const availablePanelWidth = computed(() => Math.max(0, screenWidth.value - 56));
+const sidebarWidth = computed(() => Math.min(640, availablePanelWidth.value));
+const panelStyle = computed(() => {
+  const top =
+    uiStore.navigatingElement || uiStore.freeHandDrawing.isDrawing
+      ? 64
+      : uiStore.topBarOpen && !uiStore.animationState.isPlaying
+        ? topBarHeight.value
+        : 0;
+  return { top: `${top}px`, height: `calc(100dvh - ${top}px)` };
+});
 
 async function handleDeletePdf() {
   await projectsStore.updatePdf(null, null);
@@ -118,14 +139,17 @@ const isResizingPdfPanel = ref(false);
 function startPdfPanelResize(e: MouseEvent) {
   e.preventDefault();
   const startX = e.clientX;
-  const startWidth = uiStore.pdfPanelWidth;
+  const startWidth = pdfPanelDisplayWidth.value;
   isResizingPdfPanel.value = true;
   pdfPanelResizeWidth.value = startWidth;
 
   const onMouseMove = (moveEvent: MouseEvent) => {
     // Calculate new width (dragging left increases width for right panel)
     const deltaX = startX - moveEvent.clientX;
-    const newWidth = Math.max(300, Math.min(900, startWidth + deltaX));
+    const newWidth = Math.min(
+      availablePanelWidth.value,
+      Math.max(300, Math.min(900, startWidth + deltaX))
+    );
     pdfPanelResizeWidth.value = newWidth;
   };
 
@@ -147,21 +171,24 @@ function startPdfPanelResize(e: MouseEvent) {
 
 // Computed width that uses local value during resize, store value otherwise
 const pdfPanelDisplayWidth = computed(() =>
-  isResizingPdfPanel.value ? pdfPanelResizeWidth.value : uiStore.pdfPanelWidth
+  Math.min(
+    availablePanelWidth.value,
+    isResizingPdfPanel.value ? pdfPanelResizeWidth.value : uiStore.pdfPanelWidth
+  )
 );
 
-const mapContainer = useMap('map', uiStore);
+const mapContainer = useMap('map', uiStore, { sidebarWidth, topBarHeight });
 const drawing = useDrawing(mapContainer);
 const precisionLens = usePrecisionLens(mapContainer);
 const viewDataSync = useViewDataSync(mapContainer);
 
 // Create a ref for note tooltips (will be initialized after map is ready)
-const noteTooltipsRef = ref<ReturnType<typeof useNoteTooltips> | null>(null);
+const noteTooltipsRef = shallowRef<ReturnType<typeof useNoteTooltips> | null>(null);
 
 // Provide the map container, drawing functions, and note tooltips to all child components
-provide('mapContainer', mapContainer);
-provide('drawing', drawing);
-provide('noteTooltips', noteTooltipsRef);
+provide(mapKey, mapContainer);
+provide(drawingKey, drawing);
+provide(noteTooltipsKey, noteTooltipsRef);
 
 const sidebarOpen = ref(true);
 const topBarOpen = ref(true);
@@ -243,13 +270,24 @@ useAutoSave();
 // Animation logic
 useAnimation(mapContainer, drawing, sidebarOpen);
 
-// Initialize map on mount
-onMounted(async () => {
-  await useAppSetup(mapContainer, drawing, noteTooltipsRef, cursorTooltip)();
+const initializeApp = useAppSetup(mapContainer, drawing, noteTooltipsRef, cursorTooltip);
+let disposeApp: (() => void) | undefined;
+let disposeViewSync: (() => void) | undefined;
+let unmounted = false;
 
-  // Setup view data sync watchers after map is initialized
-  // The initial view has already been restored during map initialization
-  viewDataSync.setupWatchers();
+onMounted(async () => {
+  disposeApp = await initializeApp();
+  if (unmounted) {
+    disposeApp();
+    return;
+  }
+  disposeViewSync = viewDataSync.setupWatchers();
+});
+
+onBeforeUnmount(() => {
+  unmounted = true;
+  disposeViewSync?.();
+  disposeApp?.();
 });
 </script>
 
@@ -290,7 +328,7 @@ body,
   position: fixed;
   inset: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   z-index: 0;
 }
 

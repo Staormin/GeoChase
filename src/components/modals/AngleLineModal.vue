@@ -75,10 +75,11 @@
 </template>
 
 <script lang="ts" setup>
-import type { PointElement } from '@/services/storage';
-import { computed, inject, reactive, watch } from 'vue';
+import type { PointElement } from '@/types/project';
+import { computed, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
+import { useDrawingContext } from '@/composables/mapContext';
 import { calculateBearing, destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -86,7 +87,7 @@ import { useUIStore } from '@/stores/ui';
 const { t } = useI18n();
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const drawing = inject('drawing') as any;
+const drawing = useDrawingContext();
 
 const isOpen = computed(() => uiStore.isModalOpen('angleLineModal'));
 

@@ -16,6 +16,7 @@
         <template #prepend>
           <v-icon :icon="isVisible ? 'mdi-eye' : 'mdi-eye-off'" size="small" />
         </template>
+
         <v-list-item-title>{{
           isVisible ? $t('contextMenu.hide') : $t('contextMenu.show')
         }}</v-list-item-title>
@@ -26,6 +27,7 @@
         <template #prepend>
           <v-icon icon="mdi-navigation" size="small" />
         </template>
+
         <v-list-item-title>{{ $t('contextMenu.navigate') }}</v-list-item-title>
       </v-list-item>
 
@@ -34,6 +36,7 @@
         <template #prepend>
           <v-icon icon="mdi-plus" size="small" />
         </template>
+
         <v-list-item-title>{{ $t('contextMenu.addPointOn') }}</v-list-item-title>
       </v-list-item>
 
@@ -45,6 +48,7 @@
         <template #prepend>
           <v-icon icon="mdi-magnify" size="small" />
         </template>
+
         <v-list-item-title>{{ $t('contextMenu.locationNear') }}</v-list-item-title>
       </v-list-item>
 
@@ -53,6 +57,7 @@
         <template #prepend>
           <v-icon icon="mdi-compass" size="small" />
         </template>
+
         <v-list-item-title>{{ $t('contextMenu.bearings') }}</v-list-item-title>
       </v-list-item>
 
@@ -61,6 +66,7 @@
         <template #prepend>
           <v-icon icon="mdi-image-filter-center-focus" size="small" />
         </template>
+
         <v-list-item-title>{{ $t('contextMenu.addCenterAsPoint') }}</v-list-item-title>
       </v-list-item>
 
@@ -69,6 +75,7 @@
         <template #prepend>
           <v-icon :icon="hasNote ? 'mdi-note-edit' : 'mdi-note-plus'" size="small" />
         </template>
+
         <v-list-item-title>{{
           hasNote ? $t('contextMenu.editNote') : $t('contextMenu.addNote')
         }}</v-list-item-title>
@@ -79,6 +86,7 @@
         <template #prepend>
           <v-icon icon="mdi-pencil" size="small" />
         </template>
+
         <v-list-item-title>{{ $t('contextMenu.edit') }}</v-list-item-title>
       </v-list-item>
 
@@ -87,6 +95,7 @@
         <template #prepend>
           <v-icon color="error" icon="mdi-delete" size="small" />
         </template>
+
         <v-list-item-title>{{ $t('contextMenu.delete') }}</v-list-item-title>
       </v-list-item>
     </v-list>
@@ -99,9 +108,10 @@ import type {
   LineSegmentElement,
   PointElement,
   PolygonElement,
-} from '@/services/storage';
-import { computed, inject, ref } from 'vue';
+} from '@/types/project';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDrawingContext } from '@/composables/mapContext';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -119,7 +129,7 @@ const emit = defineEmits<{
 const isOpen = ref(false);
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const drawing = inject('drawing') as any;
+const drawing = useDrawingContext();
 const { t } = useI18n();
 
 const isVisible = computed(() => uiStore.isElementVisible(props.elementType, props.elementId));

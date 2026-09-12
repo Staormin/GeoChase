@@ -133,7 +133,6 @@ describe('usePolygonDrawing', () => {
 
     it('should draw a polygon and return polygon element', () => {
       const addPolygonSpy = vi.spyOn(layersStore, 'addPolygon');
-      const storeMapElementIdSpy = vi.spyOn(layersStore, 'storeMapElementId');
 
       const result = polygonDrawing.drawPolygon(testPointIds, 'My Polygon', '#ff0000');
 
@@ -143,7 +142,6 @@ describe('usePolygonDrawing', () => {
           name: 'My Polygon',
           pointIds: testPointIds,
           color: '#ff0000',
-          mapElementId: 'test-uuid',
         })
       );
 
@@ -153,11 +151,9 @@ describe('usePolygonDrawing', () => {
           name: 'My Polygon',
           pointIds: testPointIds,
           color: '#ff0000',
-          mapElementId: 'test-uuid',
         })
       );
 
-      expect(storeMapElementIdSpy).toHaveBeenCalledWith('polygon', 'test-uuid', 'test-uuid');
       expect(mockAddFeature).toHaveBeenCalled();
       expect(mockMapRef.flyToBoundsWithPanels).toHaveBeenCalled();
     });
@@ -275,9 +271,9 @@ describe('usePolygonDrawing', () => {
 
       expect(mockAddFeature).toHaveBeenCalled();
 
-      // Check that mapElementId was set
+      // Redrawing preserves the stable element ID.
       const storedPolygon = layersStore.polygons.find((p: any) => p.id === 'polygon-1');
-      expect(storedPolygon.mapElementId).toBe('polygon-1');
+      expect(storedPolygon.id).toBe('polygon-1');
     });
 
     it('should use default color if not provided', () => {
@@ -330,7 +326,7 @@ describe('usePolygonDrawing', () => {
       // Feature should still be added even if polygon not in store
       expect(mockAddFeature).toHaveBeenCalled();
 
-      // Polygon should not be found so mapElementId is not set
+      // Missing polygons are ignored.
       const storedPolygon = layersStore.polygons.find((p: any) => p.id === 'non-existent-polygon');
       expect(storedPolygon).toBeUndefined();
     });

@@ -1,7 +1,12 @@
+/**
+ * Composable for free hand drawing mode with mouse tracking and line preview
+ */
+
 import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
+import type { CursorTooltipData } from '@/types/ui';
 import type { MapBrowserEvent } from 'ol';
-import type { Ref } from 'vue';
+import type { Ref, WatchStopHandle } from 'vue';
 import { Feature } from 'ol';
 import { LineString } from 'ol/geom';
 import { fromLonLat, toLonLat } from 'ol/proj';
@@ -11,24 +16,13 @@ import { watch } from 'vue';
 import { calculateBearing, destinationPoint } from '@/services/geometry';
 import { useUIStore } from '@/stores/ui';
 
-interface CursorTooltipData {
-  visible: boolean;
-  x: number;
-  y: number;
-  distance: string;
-  azimuth: string;
-}
-
-/**
- * Composable for free hand drawing mode with mouse tracking and line preview
- */
 export function useFreeHandDrawing(
   mapContainer: ReturnType<typeof useMap>,
   drawing: ReturnType<typeof useDrawing>,
   cursorTooltip: Ref<CursorTooltipData>
 ) {
   const uiStore = useUIStore();
-  let freeHandPreviewLayer: any = null;
+  let previewFeature: Feature<LineString> | null = null;
   let lockedAzimuth: number | null = null;
   let lockedDistance: number | null = null;
 
@@ -139,10 +133,10 @@ export function useFreeHandDrawing(
     endLon: number
   ): void => {
     // Remove previous preview layer
-    if (freeHandPreviewLayer) {
+    if (previewFeature) {
       const previewSource = mapContainer.linesSource?.value;
       if (previewSource) {
-        previewSource.removeFeature(freeHandPreviewLayer);
+        previewSource.removeFeature(previewFeature);
       }
     }
 
@@ -151,11 +145,11 @@ export function useFreeHandDrawing(
     const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
 
     const lineGeometry = new LineString(coordinates);
-    freeHandPreviewLayer = new Feature({
+    previewFeature = new Feature({
       geometry: lineGeometry,
     });
 
-    freeHandPreviewLayer.setStyle(
+    previewFeature.setStyle(
       new Style({
         stroke: new Stroke({
           color: '#000000',
@@ -166,11 +160,11 @@ export function useFreeHandDrawing(
 
     const previewSource = mapContainer.linesSource?.value;
     if (previewSource) {
-      previewSource.addFeature(freeHandPreviewLayer);
+      previewSource.addFeature(previewFeature);
     }
   };
 
-  const handleMouseMove = (event: MapBrowserEvent<any>) => {
+  const handleMouseMove = (event: MapBrowserEvent) => {
     if (!uiStore.freeHandDrawing.isDrawing) {
       // Don't clobber the tooltip when another feature (e.g. a tool like the
       // ruler) is currently driving it.
@@ -243,7 +237,7 @@ export function useFreeHandDrawing(
     drawPreviewLine(startCoords.lat, startCoords.lon, endpoint.lat, endpoint.lon);
   };
 
-  const handleMapClick = async (event: MapBrowserEvent<any>) => {
+  const handleMapClick = async (event: MapBrowserEvent) => {
     if (!uiStore.freeHandDrawing.isDrawing) {
       return;
     }
@@ -323,12 +317,12 @@ export function useFreeHandDrawing(
     }
 
     // Remove preview layer
-    if (freeHandPreviewLayer) {
+    if (previewFeature) {
       const previewSource = mapContainer.linesSource?.value;
       if (previewSource) {
-        previewSource.removeFeature(freeHandPreviewLayer);
+        previewSource.removeFeature(previewFeature);
       }
-      freeHandPreviewLayer = null;
+      previewFeature = null;
     }
 
     // Draw the actual line
@@ -371,14 +365,16 @@ export function useFreeHandDrawing(
       // Reset locked values and clean up preview layer
       lockedAzimuth = null;
       lockedDistance = null;
-      if (freeHandPreviewLayer && mapContainer.linesSource?.value) {
-        mapContainer.linesSource.value.removeFeature(freeHandPreviewLayer);
-        freeHandPreviewLayer = null;
+      if (previewFeature && mapContainer.linesSource?.value) {
+        mapContainer.linesSource.value.removeFeature(previewFeature);
+        previewFeature = null;
       }
     }
   };
 
   // Setup event listeners
+  let stopToolWatch: WatchStopHandle | undefined;
+
   const setup = () => {
     if (mapContainer.map?.value) {
       mapContainer.map.value.on('pointermove', handleMouseMove);
@@ -386,12 +382,13 @@ export function useFreeHandDrawing(
     }
 
     // Watch for free hand drawing mode changes to clean up preview
-    watch(
+    stopToolWatch?.();
+    stopToolWatch = watch(
       () => uiStore.freeHandDrawing.isDrawing,
       (isDrawing) => {
-        if (!isDrawing && freeHandPreviewLayer && mapContainer.linesSource?.value) {
-          mapContainer.linesSource.value.removeFeature(freeHandPreviewLayer);
-          freeHandPreviewLayer = null;
+        if (!isDrawing && previewFeature && mapContainer.linesSource?.value) {
+          mapContainer.linesSource.value.removeFeature(previewFeature);
+          previewFeature = null;
         }
       }
     );
@@ -399,11 +396,13 @@ export function useFreeHandDrawing(
 
   // Cleanup
   const cleanup = () => {
+    stopToolWatch?.();
+    stopToolWatch = undefined;
     if (mapContainer.map?.value) {
       mapContainer.map.value.un('pointermove', handleMouseMove);
       mapContainer.map.value.un('click', handleMapClick);
-      if (freeHandPreviewLayer && mapContainer.linesSource?.value) {
-        mapContainer.linesSource.value.removeFeature(freeHandPreviewLayer);
+      if (previewFeature && mapContainer.linesSource?.value) {
+        mapContainer.linesSource.value.removeFeature(previewFeature);
       }
     }
   };

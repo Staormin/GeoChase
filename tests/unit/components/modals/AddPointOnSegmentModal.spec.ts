@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AddPointOnSegmentModal from '@/components/modals/AddPointOnSegmentModal.vue';
+import { drawingKey } from '@/composables/mapContext';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -51,7 +52,7 @@ describe('AddPointOnSegmentModal.vue', () => {
       global: {
         plugins: [pinia],
         provide: {
-          drawing: mockDrawing,
+          [drawingKey as symbol]: mockDrawing,
         },
       },
     });

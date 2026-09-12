@@ -2,7 +2,9 @@
  * Composable for drawing and managing points on the map
  */
 
-import type { PointElement } from '@/services/storage';
+import type { MapContainer } from '@/composables/useMap';
+import type { PointElement } from '@/types/project';
+import type { Coordinate } from 'ol/coordinate';
 import { Feature } from 'ol';
 import { Point } from 'ol/geom';
 import Overlay from 'ol/Overlay';
@@ -16,13 +18,13 @@ const DEFAULT_COLOR = '#000000';
 // Default marker icon (blue pin)
 const DEFAULT_MARKER_ICON = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHZpZXdCb3g9IjAgMCAyNSA0MSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIuNSAwQzUuNTk2IDAgMCA1LjU5NiAwIDEyLjVjMCAzLjUzIDEuNDQyIDYuNzE1IDMuNzcgOS4wMTVMMTIuNSA0MWw4LjczLTE5LjQ4NUMyMy4wNTggMTkuMjE1IDI1IDE1LjAzIDI1IDEyLjUgMjUgNS41OTYgMTkuNDA0IDAgMTIuNSAwem0wIDE5YTYuNSA2LjUgMCAxIDEgMC0xMyA2LjUgNi41IDAgMCAxIDAgMTN6IiBmaWxsPSIjMzM4OGZmIi8+PC9zdmc+`;
 
-export function usePointDrawing(mapRef: any) {
+export function usePointDrawing(mapRef: MapContainer) {
   const layersStore = useLayersStore();
 
   const generateId = () => uuidv4();
 
   // Helper function to create label overlay
-  const createLabelOverlay = (pointId: string, name: string, coordinate: any) => {
+  const createLabelOverlay = (pointId: string, name: string, coordinate: Coordinate) => {
     const labelElement = document.createElement('div');
     labelElement.className = 'point-label';
     labelElement.textContent = name;
@@ -62,7 +64,7 @@ export function usePointDrawing(mapRef: any) {
   };
 
   // Helper function to redraw a point on the map without adding to store
-  const redrawPointOnMap = (pointId: string, lat: number, lon: number, _color?: string) => {
+  const redrawPointOnMap = (pointId: string, lat: number, lon: number) => {
     if (!mapRef.map?.value || !mapRef.pointsSource?.value) {
       return;
     }
@@ -98,11 +100,6 @@ export function usePointDrawing(mapRef: any) {
     // Create and add label overlay
     const labelOverlay = createLabelOverlay(pointId, pointName, coordinate);
     mapRef.map.value.addOverlay(labelOverlay);
-
-    // Update the point element's feature reference in the store
-    if (point) {
-      point.mapElementId = pointId;
-    }
   };
 
   // Point drawing
@@ -147,10 +144,6 @@ export function usePointDrawing(mapRef: any) {
         }),
       })
     );
-
-    // Store feature ID
-    pointElement.mapElementId = pointId;
-    layersStore.storeMapElementId('point', pointId, pointId);
 
     // Add to store
     layersStore.addPoint(pointElement);

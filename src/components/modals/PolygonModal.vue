@@ -7,6 +7,7 @@
   >
     <v-card>
       <v-card-title>{{ $t('polygon.title') }}</v-card-title>
+
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
@@ -20,6 +21,7 @@
           <!-- Points Selection -->
           <div class="mb-4">
             <div class="text-subtitle-2 mb-2">{{ $t('polygon.selectPoints') }}</div>
+
             <v-chip-group v-model="selectedPoints" column multiple>
               <v-chip
                 v-for="point in layersStore.sortedPoints"
@@ -58,6 +60,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn text @click="closeModal">{{ $t('common.cancel') }}</v-btn>
+
         <v-btn color="primary" :disabled="selectedPoints.length < 3" @click="submitForm">
           {{ $t('common.add') }}
         </v-btn>
@@ -67,15 +70,16 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDrawingContext, useMapContext } from '@/composables/mapContext';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-inject('mapContainer');
-const drawing = inject('drawing') as any;
+useMapContext();
+const drawing = useDrawingContext();
 const { t } = useI18n();
 
 const form = ref({

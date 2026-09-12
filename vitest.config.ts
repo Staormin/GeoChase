@@ -13,12 +13,12 @@ export default defineConfig({
     vuetify({
       autoImport: true,
     }),
-    Components(),
+    Components({ dts: false }),
     AutoImport({
       imports: ['vue', 'vue-router', 'pinia'],
-      dts: 'src/auto-imports.d.ts',
+      dts: false,
       eslintrc: {
-        enabled: true,
+        enabled: false,
         filepath: './.eslintrc-auto-import.json',
       },
     }),
@@ -42,7 +42,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/composables/**/*.ts', 'src/services/**/*.ts'],
+      include: ['src/composables/**/*.ts', 'src/services/**/*.ts', 'src/domain/**/*.ts'],
       exclude: ['node_modules', 'tests'],
       thresholds: {
         statements: 45,

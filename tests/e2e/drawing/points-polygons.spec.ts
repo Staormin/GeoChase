@@ -1,10 +1,17 @@
 import { expect, test } from '../fixtures';
 
 test.describe('Points and Polygons', () => {
+  test.beforeEach(async ({ page }) => {
+    // Exercise the generic fallback without relying on the external address service.
+    await page.route('**/geocodage/reverse?*', (route) =>
+      route.fulfill({ json: { type: 'FeatureCollection', features: [] } })
+    );
+  });
+
   test.describe('Point Management', () => {
     test('should create a point with coordinates', async ({ page, blankProject }) => {
-      // Click point button (button index 6 in drawing tools)
-      await page.locator('.v-btn-group').last().locator('button').nth(6).click();
+      // Click point button
+      await page.getByTestId('draw-point-btn').click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       const dialog = page.locator('[role="dialog"]');
@@ -22,7 +29,7 @@ test.describe('Points and Polygons', () => {
 
     test('should create a point with custom name', async ({ page, blankProject }) => {
       // Click point button
-      await page.locator('.v-btn-group').last().locator('button').nth(6).click();
+      await page.getByTestId('draw-point-btn').click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       const dialog = page.locator('[role="dialog"]');
@@ -46,7 +53,7 @@ test.describe('Points and Polygons', () => {
 
     test('should edit a point', async ({ page, blankProject }) => {
       // Create a point first
-      await page.locator('.v-btn-group').last().locator('button').nth(6).click();
+      await page.getByTestId('draw-point-btn').click();
       let dialog = page.locator('[role="dialog"]');
       await dialog.locator('input[placeholder="48.8566, 2.3522"]').fill('48.8566, 2.3522');
       await page.click('button:has-text("Add")');
@@ -86,7 +93,7 @@ test.describe('Points and Polygons', () => {
 
     test('should delete a point', async ({ page, blankProject }) => {
       // Create a point first (fixture already has 3 points)
-      await page.locator('.v-btn-group').last().locator('button').nth(6).click();
+      await page.getByTestId('draw-point-btn').click();
       const dialog = page.locator('[role="dialog"]');
       await dialog.locator('input[placeholder="48.8566, 2.3522"]').fill('48.8566, 2.3522');
       await page.click('button:has-text("Add")');
@@ -113,7 +120,7 @@ test.describe('Points and Polygons', () => {
       const coordinates = ['48.8566, 2.3522', '51.5074, -0.1278', '52.5200, 13.4050'];
 
       for (const coord of coordinates) {
-        await page.locator('.v-btn-group').last().locator('button').nth(6).click();
+        await page.getByTestId('draw-point-btn').click();
         const dialog = page.locator('[role="dialog"]');
         await dialog.locator('input[placeholder="48.8566, 2.3522"]').fill(coord);
         await page.click('button:has-text("Add")');
@@ -136,7 +143,7 @@ test.describe('Points and Polygons', () => {
       ];
 
       for (const point of points) {
-        await page.locator('.v-btn-group').last().locator('button').nth(6).click();
+        await page.getByTestId('draw-point-btn').click();
         const dialog = page.locator('[role="dialog"]');
         await dialog
           .locator('input[placeholder="48.8566, 2.3522"]')
@@ -145,8 +152,8 @@ test.describe('Points and Polygons', () => {
         await page.waitForTimeout(300);
       }
 
-      // Click polygon button (button index 8)
-      await page.locator('.v-btn-group').last().locator('button').nth(8).click();
+      // Click polygon button
+      await page.getByRole('button', { name: 'Polygon', exact: true }).click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       // The polygon modal should show available points to select
@@ -170,7 +177,7 @@ test.describe('Points and Polygons', () => {
     test('should create a polygon with custom name', async ({ page, blankProject }) => {
       // Create three points first
       for (let i = 0; i < 3; i++) {
-        await page.locator('.v-btn-group').last().locator('button').nth(6).click();
+        await page.getByTestId('draw-point-btn').click();
         const dialog = page.locator('[role="dialog"]');
         await dialog.locator('input[placeholder="48.8566, 2.3522"]').fill(`${48 + i}, ${2 + i}`);
         await page.click('button:has-text("Add")');
@@ -178,7 +185,7 @@ test.describe('Points and Polygons', () => {
       }
 
       // Open polygon modal
-      await page.locator('.v-btn-group').last().locator('button').nth(8).click();
+      await page.getByRole('button', { name: 'Polygon', exact: true }).click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       const dialog = page.locator('[role="dialog"]');
@@ -208,7 +215,7 @@ test.describe('Points and Polygons', () => {
     test('should delete a polygon', async ({ page, blankProject }) => {
       // Create three points first
       for (let i = 0; i < 3; i++) {
-        await page.locator('.v-btn-group').last().locator('button').nth(6).click();
+        await page.getByTestId('draw-point-btn').click();
         const dialog = page.locator('[role="dialog"]');
         await dialog.locator('input[placeholder="48.8566, 2.3522"]').fill(`${48 + i}, ${2 + i}`);
         await page.click('button:has-text("Add")');
@@ -216,7 +223,7 @@ test.describe('Points and Polygons', () => {
       }
 
       // Create polygon
-      await page.locator('.v-btn-group').last().locator('button').nth(8).click();
+      await page.getByRole('button', { name: 'Polygon', exact: true }).click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       const dialog = page.locator('[role="dialog"]');

@@ -1,9 +1,10 @@
+import { fixupPluginRules } from '@eslint/compat';
 import vueI18n from '@intlify/eslint-plugin-vue-i18n';
 import prettier from 'eslint-config-prettier';
 import vuetify from 'eslint-config-vuetify';
 import i18nJson from 'eslint-plugin-i18n-json';
 import jsonPlugin from 'eslint-plugin-json';
-import jsoncParser from 'jsonc-eslint-parser';
+import * as jsoncParser from 'jsonc-eslint-parser';
 
 export default vuetify(
   prettier,
@@ -19,7 +20,7 @@ export default vuetify(
     },
     plugins: {
       json: jsonPlugin,
-      'i18n-json': i18nJson,
+      'i18n-json': fixupPluginRules(i18nJson),
     },
     rules: {
       // Ensure all translation keys exist in all locale files
@@ -80,6 +81,18 @@ export default vuetify(
         },
       ],
     },
+  },
+  {
+    files: ['src/**/*.vue'],
+    rules: {
+      // Vue model update events retain their public model prop names.
+      'vue/custom-event-name-casing': ['error', 'kebab-case', { ignores: ['/^update:/u'] }],
+    },
+  },
+  {
+    files: ['src/**/*.ts', 'src/**/*.vue'],
+    ignores: ['src/**/*.d.ts'],
+    rules: { '@typescript-eslint/no-explicit-any': 'error' },
   },
   // E2E test files - allow unused fixture parameters
   {

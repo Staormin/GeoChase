@@ -29,7 +29,7 @@ vi.mock('ol/geom/Polygon', () => ({
   circular: vi.fn(() => ({
     transform: vi.fn(),
     getLinearRing: vi.fn(() => ({
-      getCoordinates: () => Array.from({ length: 64 }).fill([0, 0]),
+      getCoordinates: () => Array.from({ length: 64 }, () => [0, 0]),
     })),
   })),
 }));
@@ -102,7 +102,6 @@ describe('useCircleDrawing', () => {
   describe('drawCircle', () => {
     it('should draw a circle and return circle element', () => {
       const addCircleSpy = vi.spyOn(layersStore, 'addCircle');
-      const storeMapElementIdSpy = vi.spyOn(layersStore, 'storeMapElementId');
 
       const result = circleDrawing.drawCircle(48.8566, 2.3522, 5, 'My Circle');
 
@@ -113,7 +112,6 @@ describe('useCircleDrawing', () => {
           center: { lat: 48.8566, lon: 2.3522 },
           radius: 5,
           color: '#000000',
-          mapElementId: 'test-uuid',
         })
       );
 
@@ -124,11 +122,9 @@ describe('useCircleDrawing', () => {
           center: { lat: 48.8566, lon: 2.3522 },
           radius: 5,
           color: '#000000',
-          mapElementId: 'test-uuid',
         })
       );
 
-      expect(storeMapElementIdSpy).toHaveBeenCalledWith('circle', 'test-uuid', 'test-uuid');
       expect(mockAddFeature).toHaveBeenCalled();
       expect(mockMapRef.flyToBoundsWithPanels).toHaveBeenCalled();
     });
@@ -285,7 +281,7 @@ describe('useCircleDrawing', () => {
       expect(mockAddFeature).not.toHaveBeenCalled();
     });
 
-    it('should update mapElementId if circle exists in store', () => {
+    it('should preserve the element ID if circle exists in store', () => {
       // Add circle to store
       const circle = {
         id: 'circle-1',
@@ -298,9 +294,9 @@ describe('useCircleDrawing', () => {
 
       circleDrawing.redrawCircleOnMap('circle-1', 48.8566, 2.3522, 5, '#00ff00');
 
-      // Check that mapElementId was set
+      // Redrawing preserves the stable element ID.
       const storedCircle = layersStore.circles.find((c: any) => c.id === 'circle-1');
-      expect(storedCircle.mapElementId).toBe('circle-1');
+      expect(storedCircle.id).toBe('circle-1');
     });
 
     it('should use default color if not provided', () => {

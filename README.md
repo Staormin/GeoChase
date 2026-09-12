@@ -10,7 +10,7 @@ A web-based mapping application for solving geoportail treasure hunts through ge
 - **Line Segments**: Create paths using multiple modes:
   - Two points: Connect saved coordinates
   - Azimuth: Specify bearing angle and distance
-  - Intersection: Line passing through a point at specified distance
+  - Intersection: Line through a point, extended by the entered distance in km beyond it (0 ends at the point)
   - Parallel: Latitude lines across the map
   - Free hand: Interactive drawing with optional azimuth/distance locking
 - **Points**: Mark locations on the map
@@ -49,14 +49,19 @@ A web-based mapping application for solving geoportail treasure hunts through ge
 ### Data Management
 
 - **Projects**: Organize drawings into named projects with auto-save to localStorage
-- **Saved Coordinates**: Right-click map to save locations with reverse geocoding
+- **Point names**: Right-click the map and leave the name blank to use the nearest city when saving
 - **Export**: Projects as JSON, drawings as GPX files
 - **Import**: Load JSON projects or GPX files
 
 ## Installation
 
+Use Node **26.8.2** (pinned in `.tool-versions`) and npm **12.0.2**. CI, the Pages
+workflow, and Docker use these same versions. Select the project Node version with
+your version manager before installing dependencies (`mise install` or `asdf install`).
+
 ```bash
-npm install
+npm install --global npm@12.0.2
+npm ci
 npm run dev    # Development server at http://localhost:3000
 npm run build  # Production build
 ```
@@ -74,11 +79,11 @@ See in-app tutorial (help icon) for detailed instructions.
 
 ## Technology Stack
 
-- **Frontend**: Vue 3, Vuetify 3, TypeScript
-- **Mapping**: OpenLayers 10.6.1, Geoportail tiles
+- **Frontend**: Vue 3, Vuetify 4, TypeScript
+- **Mapping**: OpenLayers 10, Geoportail tiles
 - **APIs**: Geoportail, Overpass API, Open-Elevation, Nominatim
-- **State**: Pinia 3, localStorage
-- **Build**: Vite 7, ESLint, Prettier
+- **State**: Pinia 4, localStorage
+- **Build**: Vite 8, ESLint 10, Prettier
 
 ## Project Structure
 
@@ -87,9 +92,55 @@ src/
 ├── components/     # Vue components
 ├── composables/    # Reusable logic (useMap, useDrawing)
 ├── pages/         # Main application view
-├── services/      # Business logic (geometry, storage, APIs)
+├── domain/        # Layer validation and legacy-data migration
+├── services/      # Geometry, storage, and external APIs
 ├── stores/        # Pinia state management
+├── types/         # Shared project and UI contracts
+├── utils/         # Debouncing, downloads, and input guards
 └── plugins/       # Vuetify, auto-imports
+```
+
+## Development checks
+
+```bash
+npm run type-check       # Strict application types and unused-code checks
+npm run lint             # Read-only lint check; explicit any is disallowed in app code
+npm run lint:fix          # Apply available lint fixes
+npm run format:check
+npm run test:unit:run
+npm run test:e2e          # Requires Playwright browsers
+npm run build
+npm run test:pages        # Tests the built site under /GeoChase/
+```
+
+Map objects use shallow Vue refs to preserve OpenLayers class instances. Components receive
+map and drawing services through the typed keys in `src/composables/mapContext.ts`.
+Project import/export runs through `useProjectFiles`; `domain/layers.ts` validates incoming
+files before state changes and migrates older layer formats. Exported JSON includes project
+metadata and a format version; older layer-only exports remain importable.
+
+## TypeScript compatibility
+
+TypeScript 7 checks the Node/build configuration. Vue's current `vue-tsc` and ESLint
+still need the JavaScript compiler API, so the `typescript` dependency uses the official
+`@typescript/typescript6` compatibility package. `npm run type-check` runs both checks;
+application type checking remains strict.
+
+## GitHub Pages deployment
+
+The Pages workflow builds on pushes to `main` and can also be started manually. It
+uses `npm ci` and uploads only `dist/`. Vite's `/GeoChase/` base and hash routing keep
+assets and page reloads working at <https://staormin.github.io/GeoChase/>.
+
+Before uploading, the workflow serves that production build and tests JavaScript,
+CSS, fonts, drawing controls, responsive layouts, and the bundled PDF worker with
+Chromium. The CI build job runs the same check. To reproduce it locally:
+
+```bash
+npm ci
+npm run build
+npx playwright install chromium
+npm run test:pages
 ```
 
 ## Key Keyboard Shortcuts

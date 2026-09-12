@@ -46,6 +46,7 @@
               total: searchQuery ? layersStore.circleCount : null,
             })
           }}</span>
+
           <div class="layers-section-actions">
             <v-btn
               color="primary"
@@ -55,11 +56,13 @@
               variant="text"
               @click.stop="toggleAllElementsOfType('circle')"
             />
+
             <span class="collapse-icon" @click="circlesExpanded = !circlesExpanded">{{
               circlesExpanded ? '▼' : '▶'
             }}</span>
           </div>
         </div>
+
         <div v-show="circlesExpanded" class="layer-items">
           <div
             v-for="circle in filteredCircles"
@@ -73,6 +76,7 @@
               <div class="layer-item-name">{{ circle.name }}</div>
               <div class="layer-item-type">{{ circle.radius }}km radius</div>
             </div>
+
             <div class="layer-item-actions">
               <LayerContextMenu
                 v-if="circle.id"
@@ -93,6 +97,7 @@
             >{{ $t('layers.lines') }} ({{ filteredLines.length
             }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.lineSegmentCount}` : '' }})</span
           >
+
           <div class="layers-section-actions">
             <v-btn
               color="primary"
@@ -102,11 +107,13 @@
               variant="text"
               @click.stop="toggleAllElementsOfType('lineSegment')"
             />
+
             <span class="collapse-icon" @click="linesExpanded = !linesExpanded">{{
               linesExpanded ? '▼' : '▶'
             }}</span>
           </div>
         </div>
+
         <div v-show="linesExpanded" class="layer-items">
           <div
             v-for="line in filteredLines"
@@ -118,10 +125,12 @@
           >
             <div class="layer-item-info" @click="handleGoTo('lineSegment', line)">
               <div class="layer-item-name">{{ line.name }}</div>
+
               <div class="layer-item-type">
                 {{ $t('layers.lineSegmentType') }} • {{ getLineInfo(line) }}
               </div>
             </div>
+
             <div class="layer-item-actions">
               <LayerContextMenu
                 v-if="line.id"
@@ -142,6 +151,7 @@
             >{{ $t('layers.points') }} ({{ filteredPoints.length
             }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.pointCount}` : '' }})</span
           >
+
           <div class="layers-section-actions">
             <v-btn
               color="primary"
@@ -151,11 +161,13 @@
               variant="text"
               @click.stop="toggleAllElementsOfType('point')"
             />
+
             <span class="collapse-icon" @click="pointsExpanded = !pointsExpanded">{{
               pointsExpanded ? '▼' : '▶'
             }}</span>
           </div>
         </div>
+
         <div v-show="pointsExpanded" class="layer-items">
           <div
             v-for="point in filteredPoints"
@@ -166,18 +178,19 @@
               'drag-over': dragOverPointId === point.id,
             }"
             draggable="true"
-            @click="handlePointClick($event, point)"
+            @click="handlePointClick(point)"
             @dragend="handleDragEnd"
             @dragenter.prevent
             @dragleave="handleDragLeave($event, point)"
             @dragover.prevent="handleDragOver($event, point)"
             @dragstart="handleDragStart($event, point)"
-            @drop.prevent="handleDrop($event, point)"
+            @drop.prevent="handleDrop(point)"
           >
             <div class="layer-item-info">
               <div class="layer-item-name">{{ point.name }}</div>
               <div class="layer-item-type">{{ $t('layers.pointType') }}</div>
             </div>
+
             <div class="layer-item-actions" @click.stop>
               <LayerContextMenu
                 v-if="point.id"
@@ -198,6 +211,7 @@
             >{{ $t('layers.polygons') }} ({{ filteredPolygons.length
             }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.polygonCount}` : '' }})</span
           >
+
           <div class="layers-section-actions">
             <v-btn
               color="primary"
@@ -207,11 +221,13 @@
               variant="text"
               @click.stop="toggleAllElementsOfType('polygon')"
             />
+
             <span class="collapse-icon" @click="polygonsExpanded = !polygonsExpanded">{{
               polygonsExpanded ? '▼' : '▶'
             }}</span>
           </div>
         </div>
+
         <div v-show="polygonsExpanded" class="layer-items">
           <div
             v-for="polygon in filteredPolygons"
@@ -220,16 +236,18 @@
             :class="{
               'layer-item-hidden': polygon.id && !uiStore.isElementVisible('polygon', polygon.id),
             }"
-            @click="handlePolygonClick($event, polygon)"
+            @click="handlePolygonClick(polygon)"
           >
             <div class="layer-item-info">
               <div class="layer-item-name">{{ polygon.name }}</div>
+
               <div class="layer-item-type">
                 {{ $t('layers.polygonType') }} ({{ polygon.pointIds.length }}
                 {{ $t('common.points') }}) •
                 {{ formatDistance(calculatePolygonPerimeter(polygon)) }}
               </div>
             </div>
+
             <div class="layer-item-actions" @click.stop>
               <LayerContextMenu
                 v-if="polygon.id"
@@ -249,8 +267,10 @@
             >{{ $t('layers.notes') }} ({{ filteredNotes.length
             }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.noteCount}` : '' }})</span
           >
+
           <span class="collapse-icon">{{ notesExpanded ? '▼' : '▶' }}</span>
         </div>
+
         <div v-show="notesExpanded" class="layer-items">
           <div
             v-for="note in filteredNotes"
@@ -260,6 +280,7 @@
           >
             <div class="layer-item-info">
               <div class="layer-item-name">{{ note.title }}</div>
+
               <div class="layer-item-type">
                 {{
                   note.linkedElementType
@@ -268,6 +289,7 @@
                 }}
               </div>
             </div>
+
             <div class="layer-item-actions" @click.stop>
               <v-menu location="bottom">
                 <template #activator="{ props }">
@@ -279,17 +301,21 @@
                     v-bind="props"
                   />
                 </template>
+
                 <v-list density="compact">
                   <v-list-item @click="handleEditNote(note)">
                     <template #prepend>
                       <v-icon icon="mdi-pencil" size="small" />
                     </template>
+
                     <v-list-item-title>{{ $t('common.edit') }}</v-list-item-title>
                   </v-list-item>
+
                   <v-list-item class="text-error" @click="handleDeleteNote(note)">
                     <template #prepend>
                       <v-icon color="error" icon="mdi-delete" size="small" />
                     </template>
+
                     <v-list-item-title>{{ $t('common.delete') }}</v-list-item-title>
                   </v-list-item>
                 </v-list>
@@ -305,24 +331,24 @@
 <script lang="ts" setup>
 import type {
   CircleElement,
+  DrawingElement,
   LineSegmentElement,
   NoteElement,
   PointElement,
   PolygonElement,
-} from '@/services/storage';
+} from '@/types/project';
 import { getDistance } from 'ol/sphere';
-import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import LayerContextMenu from '@/components/layers/LayerContextMenu.vue';
+import { useDrawingContext, useMapContext } from '@/composables/mapContext';
 import { calculateBearing } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
-const { t: _t } = useI18n();
 const layersStore = useLayersStore();
 const uiStore = useUIStore();
-const drawing = inject('drawing') as any;
-const mapContainer = inject('mapContainer') as any;
+const drawing = useDrawingContext();
+const mapContainer = useMapContext();
 
 const searchQuery = ref('');
 const draggedPoint = ref<PointElement | null>(null);
@@ -625,13 +651,13 @@ function handleDragStart(event: DragEvent, point: PointElement) {
   }
 }
 
-function handlePointClick(event: MouseEvent, point: PointElement) {
+function handlePointClick(point: PointElement) {
   if (!isDragging.value) {
     handleGoTo('point', point);
   }
 }
 
-function handlePolygonClick(event: MouseEvent, polygon: PolygonElement) {
+function handlePolygonClick(polygon: PolygonElement) {
   handleGoTo('polygon', polygon);
 }
 
@@ -706,7 +732,7 @@ function handleDragLeave(event: DragEvent, point: PointElement) {
   }
 }
 
-function handleDrop(event: DragEvent, targetPoint: PointElement) {
+function handleDrop(targetPoint: PointElement) {
   if (dragLeaveTimeout) {
     clearTimeout(dragLeaveTimeout);
     dragLeaveTimeout = null;
@@ -762,7 +788,7 @@ function handleDragEnd(event: DragEvent) {
 
   // If drop didn't fire but we have a last drop target, create the line anyway
   if (!dropWasSuccessful && lastDropTarget.value && draggedPoint.value) {
-    handleDrop(event, lastDropTarget.value);
+    handleDrop(lastDropTarget.value);
   }
 
   setTimeout(() => {
@@ -815,7 +841,7 @@ function handleDeleteNote(note: NoteElement) {
 }
 
 function toggleAllElementsOfType(elementType: 'circle' | 'lineSegment' | 'point' | 'polygon') {
-  let elements: any[];
+  let elements: DrawingElement[];
   let typeName: string;
   let allVisible: boolean;
 

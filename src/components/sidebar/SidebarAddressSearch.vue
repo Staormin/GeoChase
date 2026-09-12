@@ -10,6 +10,7 @@
       <div v-bind="menuProps">
         <v-text-field
           v-model="addressSearchInput"
+          :aria-label="$t('search.addressPlaceholder')"
           bg-color="surface-bright"
           class="my-0"
           clearable
@@ -34,9 +35,11 @@
           <template #prepend>
             <v-icon icon="mdi-map-marker" size="small" />
           </template>
+
           <v-list-item-title class="text-sm font-weight-medium">
             {{ result.main }}
           </v-list-item-title>
+
           <v-list-item-subtitle class="text-xs">
             {{ result.secondary }}
           </v-list-item-subtitle>
@@ -47,19 +50,19 @@
 </template>
 
 <script lang="ts" setup>
-import type { MapContainer } from '@/composables/useMap';
 import { Feature } from 'ol';
 import { Point } from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
-import { inject, onUnmounted, ref, watch } from 'vue';
+import { onUnmounted, ref, watch } from 'vue';
+import { useMapContext } from '@/composables/mapContext';
 import { type AddressSearchResult, searchAddress } from '@/services/geoportail';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
-const mapContainer = inject<MapContainer>('mapContainer');
+const mapContainer = useMapContext();
 
 const addressSearchResults = ref<AddressSearchResult[]>([]);
 const addressSearchLoading = ref(false);
@@ -67,7 +70,7 @@ const addressSearchInput = ref<string>('');
 const showResults = ref(false);
 let addressSearchTimeout: ReturnType<typeof setTimeout> | null = null;
 
-let searchMarkerLayer: VectorLayer<any> | null = null;
+let searchMarkerLayer: VectorLayer<VectorSource> | null = null;
 let searchMarkerSource: VectorSource | null = null;
 
 const SEARCH_MARKER_STYLE = new Style({
@@ -142,8 +145,8 @@ function onInputClick() {
   }
 }
 
-function onAddressSelect(coordinates: any) {
-  if (coordinates && coordinates.lat && coordinates.lon && mapContainer) {
+function onAddressSelect(coordinates: AddressSearchResult['coordinates']) {
+  if (Number.isFinite(coordinates.lat) && Number.isFinite(coordinates.lon)) {
     mapContainer.setCenter(coordinates.lat, coordinates.lon, 13);
     showSearchMarker(coordinates.lat, coordinates.lon);
   }

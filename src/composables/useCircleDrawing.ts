@@ -2,7 +2,8 @@
  * Composable for drawing and managing circles on the map
  */
 
-import type { CircleElement } from '@/services/storage';
+import type { MapContainer } from '@/composables/useMap';
+import type { CircleElement } from '@/types/project';
 import { Feature } from 'ol';
 import { LineString } from 'ol/geom';
 import { circular as circularPolygon } from 'ol/geom/Polygon';
@@ -12,7 +13,7 @@ import { useLayersStore } from '@/stores/layers';
 
 const DEFAULT_COLOR = '#000000';
 
-export function useCircleDrawing(mapRef: any) {
+export function useCircleDrawing(mapRef: MapContainer) {
   const layersStore = useLayersStore();
 
   const generateId = () => uuidv4();
@@ -58,12 +59,6 @@ export function useCircleDrawing(mapRef: any) {
     );
 
     mapRef.circlesSource.value.addFeature(feature);
-
-    // Update the circle element's feature reference in the store
-    const circle = layersStore.circles.find((c) => c.id === circleId);
-    if (circle) {
-      circle.mapElementId = circleId; // Using same ID for OpenLayers feature
-    }
   };
 
   // Circle drawing
@@ -110,10 +105,6 @@ export function useCircleDrawing(mapRef: any) {
       })
     );
 
-    // Store feature ID
-    circleElement.mapElementId = circleId;
-    layersStore.storeMapElementId('circle', circleId, circleId);
-
     // Add to store
     layersStore.addCircle(circleElement);
 
@@ -157,7 +148,7 @@ export function useCircleDrawing(mapRef: any) {
     // Remove old circle from map
     const feature = mapRef.circlesSource.value?.getFeatureById(circleId);
     if (feature) {
-      mapRef.circlesSource.value.removeFeature(feature);
+      mapRef.circlesSource.value?.removeFeature(feature);
     }
 
     // Redraw circle

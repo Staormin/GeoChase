@@ -42,9 +42,10 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, reactive, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
+import { useDrawingContext } from '@/composables/mapContext';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -54,7 +55,7 @@ const { t } = useI18n();
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const { generateParallelName } = useLineNameGeneration();
-const drawing = inject('drawing') as any;
+const drawing = useDrawingContext();
 
 const isOpen = computed(() => uiStore.isModalOpen('parallelLineModal'));
 const isEditing = computed(() => !!uiStore.editingElement);
@@ -98,7 +99,7 @@ function submitForm() {
   }
 
   // Validate latitude range
-  if (form.latitude < -90 || form.latitude > 90) {
+  if (Math.abs(form.latitude) > 90) {
     uiStore.addToast(t('validation.invalidCoordinates'), 'error');
     return;
   }

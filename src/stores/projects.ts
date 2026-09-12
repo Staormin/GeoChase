@@ -2,7 +2,7 @@
  * Projects store - Manages project save/load operations
  */
 
-import type { ProjectData, ProjectLayerData, ViewData } from '@/services/storage';
+import type { ProjectData, ProjectLayerData, ViewData } from '@/types/project';
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 import * as pdfStorage from '@/services/pdfStorage';
@@ -51,9 +51,7 @@ export const useProjectsStore = defineStore('projects', () => {
   const projectCount = computed(() => projects.value.length);
 
   const sortedProjects = computed(() => {
-    return [...projects.value].toSorted(
-      (a: any, b: any) => (b.updatedAt || 0) - (a.updatedAt || 0)
-    );
+    return projects.value.toSorted((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
   });
 
   const activeProject = computed(() => {
@@ -73,7 +71,7 @@ export const useProjectsStore = defineStore('projects', () => {
     localStorage.setItem('geochase_activeProjectId', projectId || '');
   }
 
-  function createAndSwitchProject(name: string, _data: ProjectLayerData): void {
+  function createAndSwitchProject(name: string): void {
     // Create new project with empty state and get the returned project
     const newProject = storage.saveProject(name, {
       circles: [],
@@ -90,11 +88,6 @@ export const useProjectsStore = defineStore('projects', () => {
     if (newProject.id) {
       setActiveProject(newProject.id);
     }
-  }
-
-  function saveProject(name: string, data: ProjectLayerData): void {
-    storage.saveProject(name, data);
-    loadProjects();
   }
 
   function autoSaveActiveProject(data: ProjectLayerData): void {
@@ -133,40 +126,6 @@ export const useProjectsStore = defineStore('projects', () => {
   function deleteProject(index: number): void {
     storage.deleteProject(index);
     loadProjects();
-  }
-
-  function getProject(index: number): ProjectData | null {
-    return storage.getProject(index);
-  }
-
-  function clearAllProjects(): void {
-    storage.clearAllProjects();
-    projects.value = [];
-  }
-
-  function exportProjectAsJSON(index: number): string | null {
-    const project = getProject(index);
-    if (!project) {
-      return null;
-    }
-    return storage.exportProjectAsJSON(project);
-  }
-
-  function importProject(jsonString: string): boolean {
-    const project = storage.importProjectFromJSON(jsonString);
-    if (!project) {
-      return false;
-    }
-    storage.saveProject(project.name, project.data);
-    loadProjects();
-    return true;
-  }
-
-  function renameProject(index: number, newName: string): void {
-    const project = getProject(index);
-    if (project) {
-      updateProject(index, newName, project.data);
-    }
   }
 
   /**
@@ -314,16 +273,10 @@ export const useProjectsStore = defineStore('projects', () => {
     loadProjects,
     setActiveProject,
     createAndSwitchProject,
-    saveProject,
     autoSaveActiveProject,
     loadActiveProject,
     updateProject,
     deleteProject,
-    getProject,
-    clearAllProjects,
-    exportProjectAsJSON,
-    importProject,
-    renameProject,
     updateViewData,
     getViewData,
     updatePdf,

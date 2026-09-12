@@ -8,6 +8,7 @@
   >
     <v-card>
       <v-card-title>{{ isEditing ? $t('circle.editTitle') : $t('circle.title') }}</v-card-title>
+
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
@@ -56,6 +57,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn text @click="closeModal">{{ $t('common.cancel') }}</v-btn>
+
         <v-btn color="primary" @click="submitForm">{{
           isEditing ? $t('common.save') : $t('common.add')
         }}</v-btn>
@@ -65,15 +67,16 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDrawingContext } from '@/composables/mapContext';
 import { getReverseGeocodeAddress } from '@/services/address';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const drawing = inject('drawing') as any;
+const drawing = useDrawingContext();
 const { t } = useI18n();
 
 const form = ref({

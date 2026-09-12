@@ -3,8 +3,8 @@ import { expect, test } from '../fixtures';
 test.describe('Line Drawing', () => {
   test.describe('Two Points Line', () => {
     test('should create a line between two points', async ({ page, blankProject }) => {
-      // Click two-points line button (button index 1 in drawing tools)
-      await page.locator('.v-btn-group').last().locator('button').nth(1).click();
+      // Click two-points line button
+      await page.getByTestId('draw-line-btn').click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       const dialog = page.locator('[role="dialog"]');
@@ -33,8 +33,8 @@ test.describe('Line Drawing', () => {
     });
 
     test('should create a line with custom name', async ({ page, blankProject }) => {
-      // Click two-points line button (button index 1 in drawing tools)
-      await page.locator('.v-btn-group').last().locator('button').nth(1).click();
+      // Click two-points line button
+      await page.getByTestId('draw-line-btn').click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       const dialog = page.locator('[role="dialog"]');
@@ -71,8 +71,8 @@ test.describe('Line Drawing', () => {
 
   test.describe('Azimuth Line', () => {
     test('should create a line with azimuth and distance', async ({ page, blankProject }) => {
-      // Click azimuth line button (button index 2 in drawing tools)
-      await page.locator('.v-btn-group').last().locator('button').nth(2).click();
+      // Click azimuth line button
+      await page.getByRole('button', { name: 'Azimuth Line', exact: true }).click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       const dialog = page.locator('[role="dialog"]');
@@ -101,8 +101,8 @@ test.describe('Line Drawing', () => {
     });
 
     test('should create azimuth line with custom name', async ({ page, blankProject }) => {
-      // Click azimuth line button (button index 2 in drawing tools)
-      await page.locator('.v-btn-group').last().locator('button').nth(2).click();
+      // Click azimuth line button
+      await page.getByRole('button', { name: 'Azimuth Line', exact: true }).click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       const dialog = page.locator('[role="dialog"]');
@@ -135,8 +135,8 @@ test.describe('Line Drawing', () => {
 
   test.describe('Parallel Line', () => {
     test('should create a parallel line at specific latitude', async ({ page, blankProject }) => {
-      // Click parallel line button (button index 4 in drawing tools)
-      await page.locator('.v-btn-group').last().locator('button').nth(4).click();
+      // Click parallel line button
+      await page.getByRole('button', { name: 'Parallel Line', exact: true }).click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       const dialog = page.locator('[role="dialog"]');
@@ -160,7 +160,7 @@ test.describe('Line Drawing', () => {
   test.describe('Line Management', () => {
     test('should delete a line', async ({ page, blankProject }) => {
       // Create a line first
-      await page.locator('.v-btn-group').last().locator('button').nth(1).click();
+      await page.getByTestId('draw-line-btn').click();
       const dialog = page.locator('[role="dialog"]');
       await dialog.locator('[role="combobox"]').first().locator('.v-select__menu-icon').click();
       await page.waitForTimeout(300);
@@ -191,7 +191,7 @@ test.describe('Line Drawing', () => {
 
     test('should toggle line visibility', async ({ page, blankProject }) => {
       // Create a line first
-      await page.locator('.v-btn-group').last().locator('button').nth(1).click();
+      await page.getByTestId('draw-line-btn').click();
       const dialog = page.locator('[role="dialog"]');
       await dialog.locator('[role="combobox"]').first().locator('.v-select__menu-icon').click();
       await page.waitForTimeout(300);
@@ -222,7 +222,7 @@ test.describe('Line Drawing', () => {
 
     test('should create multiple lines', async ({ page, blankProject }) => {
       // Create first line (two-points)
-      await page.locator('.v-btn-group').last().locator('button').nth(1).click();
+      await page.getByTestId('draw-line-btn').click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       let dialog = page.locator('[role="dialog"]');
@@ -245,7 +245,7 @@ test.describe('Line Drawing', () => {
       await page.waitForTimeout(500);
 
       // Create second line (azimuth)
-      await page.locator('.v-btn-group').last().locator('button').nth(2).click();
+      await page.getByRole('button', { name: 'Azimuth Line', exact: true }).click();
       await page.locator('[role="dialog"]').waitFor({ state: 'visible', timeout: 5000 });
 
       dialog = page.locator('[role="dialog"]');

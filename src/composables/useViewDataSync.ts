@@ -3,22 +3,14 @@
  */
 
 import type { MapContainer } from './useMap';
-import type { ViewData } from '@/services/storage';
+import type { ViewData } from '@/types/project';
 import { fromLonLat } from 'ol/proj';
 import { watch } from 'vue';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
+import { debounce } from '@/utils/debounce';
 
 // Debounce helper to reduce localStorage writes during pan/zoom
-function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-  return ((...args: Parameters<T>) => {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    timeout = setTimeout(() => func(...args), wait);
-  }) as T;
-}
 
 export function useViewDataSync(mapContainer: MapContainer) {
   const projectsStore = useProjectsStore();
@@ -110,93 +102,42 @@ export function useViewDataSync(mapContainer: MapContainer) {
    * Setup watchers to auto-save view data when state changes
    */
   const setupWatchers = () => {
-    // Debounce saveViewData to avoid excessive localStorage writes
-    // 500ms is appropriate for user actions (longer than UI updates)
     const debouncedSaveViewData = debounce(saveViewData, 500);
-
-    // Watch top bar state
-    watch(
-      () => uiStore.topBarOpen,
-      () => {
-        debouncedSaveViewData();
-      }
-    );
-
-    // Watch sidebar state
-    watch(
-      () => uiStore.sidebarOpen,
-      () => {
-        debouncedSaveViewData();
-      }
-    );
-
-    // Watch PDF panel open state
-    watch(
-      () => uiStore.pdfPanelOpen,
-      () => {
-        debouncedSaveViewData();
-      }
-    );
-
-    // Watch PDF panel width
-    watch(
-      () => uiStore.pdfPanelWidth,
-      () => {
-        debouncedSaveViewData();
-      }
-    );
-
-    // Watch PDF current page
-    watch(
-      () => uiStore.pdfCurrentPage,
-      () => {
-        debouncedSaveViewData();
-      }
-    );
-
-    // Watch PDF zoom level
-    watch(
-      () => uiStore.pdfZoomLevel,
-      () => {
-        debouncedSaveViewData();
-      }
-    );
-
-    // Watch PDF scroll position
-    watch(
-      () => uiStore.pdfScrollPosition,
-      () => {
-        debouncedSaveViewData();
-      },
+    const stopUIWatch = watch(
+      () => [
+        uiStore.topBarOpen,
+        uiStore.sidebarOpen,
+        uiStore.pdfPanelOpen,
+        uiStore.pdfPanelWidth,
+        uiStore.pdfCurrentPage,
+        uiStore.pdfZoomLevel,
+        uiStore.pdfScrollPosition,
+      ],
+      debouncedSaveViewData,
       { deep: true }
     );
+    const view = mapContainer.map.value?.getView();
+    view?.on('change:center', debouncedSaveViewData);
+    view?.on('change:resolution', debouncedSaveViewData);
 
-    // Watch map view changes (center and zoom)
-    // Heavily debounced to reduce CPU and localStorage writes during interaction
-    if (mapContainer.map.value) {
-      const view = mapContainer.map.value.getView();
-
-      view.on('change:center', () => {
-        debouncedSaveViewData();
-      });
-
-      view.on('change:resolution', () => {
-        debouncedSaveViewData();
-      });
-    }
-
-    // Watch active project changes to restore view data
-    // Use immediate: true to also restore on initial load
-    watch(
+    let restoreTimer: ReturnType<typeof setTimeout> | undefined;
+    const stopProjectWatch = watch(
       () => projectsStore.activeProjectId,
       () => {
-        // Use setTimeout to ensure map is ready
-        setTimeout(() => {
-          restoreViewData();
-        }, 100);
+        clearTimeout(restoreTimer);
+        restoreTimer = setTimeout(restoreViewData, 100);
       },
       { immediate: true }
     );
+
+    return () => {
+      stopUIWatch();
+      stopProjectWatch();
+      clearTimeout(restoreTimer);
+      debouncedSaveViewData.cancel();
+      view?.un('change:center', debouncedSaveViewData);
+      view?.un('change:resolution', debouncedSaveViewData);
+    };
   };
 
   return {

@@ -77,8 +77,8 @@ test.describe('Language Settings', () => {
         .click();
       await page.waitForTimeout(500);
 
-      // Verify UI text changed to French (check topbar title)
-      await expect(page.locator('.text-h6').filter({ hasText: /GeoChase/i })).toBeVisible();
+      // The application title remains visible after switching languages.
+      await expect(page.getByTestId('topbar').getByText('GeoChase', { exact: true })).toBeVisible();
 
       // Verify a French text element is present (button tooltips or menu items)
       // Open save menu and check for French text

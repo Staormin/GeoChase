@@ -9,6 +9,7 @@ const cpus = os.availableParallelism?.() ?? os.cpus().length;
  */
 export default defineConfig({
   testDir: './tests/e2e',
+  testIgnore: '**/deployment.spec.ts',
 
   /* Run tests in files in parallel */
   fullyParallel: true,

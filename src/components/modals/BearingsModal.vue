@@ -10,10 +10,12 @@
         <span>{{ $t('modals.bearings.title', { name: sourcePoint?.name }) }}</span>
         <v-btn icon="mdi-close" size="small" variant="text" @click="closeModal" />
       </v-card-title>
+
       <v-card-text>
         <!-- Source Point Info -->
         <div v-if="sourcePoint" class="mb-4 p-4 bg-blue-50 rounded">
           <div class="font-semibold mb-1">{{ sourcePoint.name }}</div>
+
           <div class="text-sm text-gray-600">
             {{ sourcePoint.coordinates.lat.toFixed(6) }},
             {{ sourcePoint.coordinates.lon.toFixed(6) }}
@@ -36,6 +38,7 @@
                   }}</v-icon>
                 </div>
               </th>
+
               <th class="text-right cursor-pointer select-none" @click="sortBy('distance')">
                 <div class="flex items-center justify-end gap-1">
                   {{ $t('modals.bearings.distance') }}
@@ -44,6 +47,7 @@
                   }}</v-icon>
                 </div>
               </th>
+
               <th class="text-right cursor-pointer select-none" @click="sortBy('azimuth')">
                 <div class="flex items-center justify-end gap-1">
                   {{ $t('modals.bearings.azimuth') }}
@@ -52,6 +56,7 @@
                   }}</v-icon>
                 </div>
               </th>
+
               <th class="text-right cursor-pointer select-none" @click="sortBy('inverseAzimuth')">
                 <div class="flex items-center justify-end gap-1">
                   {{ $t('modals.bearings.inverseAzimuth') }}
@@ -62,6 +67,7 @@
               </th>
             </tr>
           </thead>
+
           <tbody>
             <tr
               v-for="pointData in sortedBearingsData"
@@ -71,11 +77,13 @@
             >
               <td>
                 <div class="font-medium">{{ pointData.point.name }}</div>
+
                 <div class="text-xs text-gray-500">
                   {{ pointData.point.coordinates.lat.toFixed(6) }},
                   {{ pointData.point.coordinates.lon.toFixed(6) }}
                 </div>
               </td>
+
               <td class="text-right font-mono">{{ pointData.distance.toFixed(3) }}</td>
               <td class="text-right font-mono">{{ pointData.azimuth.toFixed(2) }}</td>
               <td class="text-right font-mono">{{ pointData.inverseAzimuth.toFixed(2) }}</td>
@@ -93,16 +101,17 @@
 </template>
 
 <script lang="ts" setup>
-import type { PointElement } from '@/services/storage';
+import type { PointElement } from '@/types/project';
 import { getDistance } from 'ol/sphere';
-import { computed, inject, ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useMapContext } from '@/composables/mapContext';
 import { calculateBearing, calculateInverseBearing } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const mapContainer = inject('mapContainer') as any;
+const mapContainer = useMapContext();
 
 type SortField = 'name' | 'distance' | 'azimuth' | 'inverseAzimuth';
 type SortDirection = 'asc' | 'desc';
