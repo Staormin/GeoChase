@@ -829,7 +829,7 @@ describe('useFreeHandDrawing', () => {
 
     it('should handle whitespace-only start coordinates', () => {
       uiStore.startFreeHandDrawing();
-      uiStore.freeHandDrawing.startCoord = '   ';
+      uiStore.freeHandDrawing.startCoord = ' '.repeat(3);
 
       const { setup } = useFreeHandDrawing(mockMapContainer, mockDrawing, cursorTooltip);
       setup();

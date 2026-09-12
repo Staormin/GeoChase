@@ -1,3 +1,4 @@
+import { downloadFile } from '@/utils/download';
 /**
  * GPX service - Functions for generating GPX files
  * Reused from original application with TypeScript typing
@@ -34,7 +35,7 @@ export function generateLineSegmentTracks(segments: LineSegmentData[]): string {
   let gpxTracks = '';
 
   for (const [segmentIndex, segment] of segments.entries()) {
-    let trackPoints: { lat: number; lon: number }[] = [];
+    let trackPoints: { lat: number; lon: number }[];
 
     if (segment.mode === 'coordinate' && segment.endpoint) {
       trackPoints = [segment.center, segment.endpoint];
@@ -56,13 +57,6 @@ export function generateLineSegmentTracks(segments: LineSegmentData[]): string {
     } else {
       switch (segment.mode) {
         case 'azimuth': {
-          // Calculate endpoint from azimuth and distance
-          destinationPoint(
-            segment.center.lat,
-            segment.center.lon,
-            segment.distance!,
-            segment.azimuth!
-          );
           // Generate intermediate points for smooth curve
           trackPoints = [];
           const numPoints = 100;
@@ -266,13 +260,5 @@ export function getTimestamp(): string {
  * Download GPX file to client
  */
 export function downloadGPX(content: string, filename: string): void {
-  const blob = new Blob([content], { type: 'application/gpx+xml' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.append(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  downloadFile(content, filename, 'application/gpx+xml');
 }

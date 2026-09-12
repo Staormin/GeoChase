@@ -80,38 +80,48 @@
           <v-window-item value="getting-started">
             <div class="tutorial-section">
               <h3 class="mb-3">{{ $t('tutorial.gettingStartedSection.heading') }}</h3>
+
               <p class="mb-2">
                 {{ $t('tutorial.gettingStartedSection.intro') }}
               </p>
+
               <p class="mb-3">{{ $t('tutorial.gettingStartedSection.whatYouCanDo') }}</p>
+
               <ul class="tutorial-list">
                 <li>
                   <strong>{{ $t('tutorial.gettingStartedSection.features.drawShapes') }}</strong>
                 </li>
+
                 <li>
                   <strong>{{
                     $t('tutorial.gettingStartedSection.features.searchLocations')
                   }}</strong>
                 </li>
+
                 <li>
                   <strong>{{
                     $t('tutorial.gettingStartedSection.features.findAlongPaths')
                   }}</strong>
                 </li>
+
                 <li>
                   <strong>{{ $t('tutorial.gettingStartedSection.features.viewElevation') }}</strong>
                 </li>
+
                 <li>
                   <strong>{{ $t('tutorial.gettingStartedSection.features.savePoints') }}</strong>
                 </li>
+
                 <li>
                   <strong>{{
                     $t('tutorial.gettingStartedSection.features.manageProjects')
                   }}</strong>
                 </li>
+
                 <li>
                   <strong>{{ $t('tutorial.gettingStartedSection.features.navigate') }}</strong>
                 </li>
+
                 <li>
                   <strong>{{ $t('tutorial.gettingStartedSection.features.exportGPX') }}</strong>
                 </li>
@@ -126,9 +136,11 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.drawingToolsSection.accessing.title') }}</h4>
+
                 <p class="mb-2">
                   {{ $t('tutorial.drawingToolsSection.accessing.description') }}
                 </p>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.drawingToolsSection.accessing.clickButtons') }}</li>
                   <li>{{ $t('tutorial.drawingToolsSection.accessing.collapse') }}</li>
@@ -139,13 +151,16 @@
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.drawingToolsSection.circle.title') }}</h4>
                 <p class="mb-2">{{ $t('tutorial.drawingToolsSection.circle.description') }}</p>
+
                 <ul class="tutorial-list">
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.circle.name') }}</strong>
                   </li>
+
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.circle.center') }}</strong>
                   </li>
+
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.circle.radius') }}</strong>
                   </li>
@@ -155,22 +170,28 @@
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.drawingToolsSection.line.title') }}</h4>
                 <p class="mb-2">{{ $t('tutorial.drawingToolsSection.line.description') }}</p>
+
                 <ul class="tutorial-list">
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.line.twoPoints') }}</strong>
                   </li>
+
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.line.azimuth') }}</strong>
                   </li>
+
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.line.intersection') }}</strong>
                   </li>
+
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.line.parallel') }}</strong>
                   </li>
+
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.line.freeHand') }}</strong>
                   </li>
+
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.line.dragDrop') }}</strong>
                   </li>
@@ -179,6 +200,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.drawingToolsSection.point.title') }}</h4>
+
                 <p>
                   {{ $t('tutorial.drawingToolsSection.point.description') }}
                 </p>
@@ -187,16 +209,20 @@
               <div class="tutorial-step">
                 <h4 class="mb-2">{{ $t('tutorial.drawingToolsSection.polygon.title') }}</h4>
                 <p class="mb-2">{{ $t('tutorial.drawingToolsSection.polygon.description') }}</p>
+
                 <ul class="tutorial-list">
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.polygon.selectPoints') }}</strong>
                   </li>
+
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.polygon.visual') }}</strong>
                   </li>
+
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.polygon.extractCenter') }}</strong>
                   </li>
+
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.polygon.useCase') }}</strong>
                   </li>
@@ -213,6 +239,7 @@
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.searchSection.addressSearch.title') }}</h4>
                 <p class="mb-2">{{ $t('tutorial.searchSection.addressSearch.description') }}</p>
+
                 <ol class="tutorial-list">
                   <li>{{ $t('tutorial.searchSection.addressSearch.step1') }}</li>
                   <li>{{ $t('tutorial.searchSection.addressSearch.step2') }}</li>
@@ -225,6 +252,7 @@
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.searchSection.alongPath.title') }}</h4>
                 <p class="mb-2">{{ $t('tutorial.searchSection.alongPath.description') }}</p>
+
                 <ol class="tutorial-list">
                   <li>{{ $t('tutorial.searchSection.alongPath.step1') }}</li>
                   <li>{{ $t('tutorial.searchSection.alongPath.step2') }}</li>
@@ -239,6 +267,7 @@
 
               <div class="tutorial-step">
                 <h4 class="mb-2">{{ $t('tutorial.searchSection.tips.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.searchSection.tips.elevationData') }}</li>
                   <li>{{ $t('tutorial.searchSection.tips.altitudeFilter') }}</li>
@@ -257,6 +286,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.navigationSection.howTo.title') }}</h4>
+
                 <ol class="tutorial-list">
                   <li>{{ $t('tutorial.navigationSection.howTo.step1') }}</li>
                   <li>{{ $t('tutorial.navigationSection.howTo.step2') }}</li>
@@ -268,6 +298,7 @@
 
               <div class="tutorial-step">
                 <h4 class="mb-2">{{ $t('tutorial.navigationSection.tips.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.navigationSection.tips.speedAdjust') }}</li>
                   <li>{{ $t('tutorial.navigationSection.tips.zoomBehavior') }}</li>
@@ -285,6 +316,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.toolsSection.accessing.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.toolsSection.accessing.location') }}</li>
                   <li>{{ $t('tutorial.toolsSection.accessing.toggle') }}</li>
@@ -294,12 +326,14 @@
               <div class="tutorial-step">
                 <h4 class="mb-2">{{ $t('tutorial.toolsSection.ruler.title') }}</h4>
                 <p class="mb-2">{{ $t('tutorial.toolsSection.ruler.description') }}</p>
+
                 <ol class="tutorial-list">
                   <li>{{ $t('tutorial.toolsSection.ruler.step1') }}</li>
                   <li>{{ $t('tutorial.toolsSection.ruler.step2') }}</li>
                   <li>{{ $t('tutorial.toolsSection.ruler.step3') }}</li>
                   <li>{{ $t('tutorial.toolsSection.ruler.step4') }}</li>
                 </ol>
+
                 <p class="mt-2">{{ $t('tutorial.toolsSection.ruler.notSaved') }}</p>
               </div>
             </div>
@@ -313,6 +347,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.layersSection.accessing.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.layersSection.accessing.location') }}</li>
                   <li>{{ $t('tutorial.layersSection.accessing.toggle') }}</li>
@@ -322,6 +357,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.layersSection.actions.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.layersSection.actions.click') }}</li>
                   <li>{{ $t('tutorial.layersSection.actions.menu') }}</li>
@@ -339,6 +375,7 @@
               <div class="tutorial-step">
                 <h4 class="mb-2">{{ $t('tutorial.layersSection.dragDrop.title') }}</h4>
                 <p class="mb-2">{{ $t('tutorial.layersSection.dragDrop.description') }}</p>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.layersSection.dragDrop.drag') }}</li>
                   <li>{{ $t('tutorial.layersSection.dragDrop.autoCreate') }}</li>
@@ -357,6 +394,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.notesSection.howToAdd.title') }}</h4>
+
                 <ol class="tutorial-list">
                   <li>{{ $t('tutorial.notesSection.howToAdd.step1') }}</li>
                   <li>{{ $t('tutorial.notesSection.howToAdd.step2') }}</li>
@@ -368,6 +406,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.notesSection.managing.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.notesSection.managing.viewOnMap') }}</li>
                   <li>{{ $t('tutorial.notesSection.managing.edit') }}</li>
@@ -379,6 +418,7 @@
 
               <div class="tutorial-step">
                 <h4 class="mb-2">{{ $t('tutorial.notesSection.useCases.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.notesSection.useCases.clues') }}</li>
                   <li>{{ $t('tutorial.notesSection.useCases.observations') }}</li>
@@ -398,6 +438,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.pointsSection.howToCreate.title') }}</h4>
+
                 <ol class="tutorial-list">
                   <li>{{ $t('tutorial.pointsSection.howToCreate.step1') }}</li>
                   <li>{{ $t('tutorial.pointsSection.howToCreate.step2') }}</li>
@@ -409,6 +450,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.pointsSection.managing.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.pointsSection.managing.access') }}</li>
                   <li>{{ $t('tutorial.pointsSection.managing.view') }}</li>
@@ -420,6 +462,7 @@
 
               <div class="tutorial-step">
                 <h4 class="mb-2">{{ $t('tutorial.pointsSection.useCases.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.pointsSection.useCases.circleCenter') }}</li>
                   <li>{{ $t('tutorial.pointsSection.useCases.lineEndpoints') }}</li>
@@ -439,6 +482,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.projectsSection.accessing.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.projectsSection.accessing.icon') }}</li>
                   <li>{{ $t('tutorial.projectsSection.accessing.dropdown') }}</li>
@@ -447,6 +491,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.projectsSection.projectActions.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.projectsSection.projectActions.newProject') }}</li>
                   <li>{{ $t('tutorial.projectsSection.projectActions.loadProject') }}</li>
@@ -458,6 +503,7 @@
 
               <div class="tutorial-step">
                 <h4 class="mb-2">{{ $t('tutorial.projectsSection.features.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.projectsSection.features.storage') }}</li>
                   <li>{{ $t('tutorial.projectsSection.features.autoSave') }}</li>
@@ -476,6 +522,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.pdfSection.uploading.title') }}</h4>
+
                 <ol class="tutorial-list">
                   <li>{{ $t('tutorial.pdfSection.uploading.step1') }}</li>
                   <li>{{ $t('tutorial.pdfSection.uploading.step2') }}</li>
@@ -486,6 +533,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.pdfSection.viewing.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.pdfSection.viewing.openPanel') }}</li>
                   <li>{{ $t('tutorial.pdfSection.viewing.resize') }}</li>
@@ -497,6 +545,7 @@
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.pdfSection.passwordProtected.title') }}</h4>
                 <p class="mb-2">{{ $t('tutorial.pdfSection.passwordProtected.description') }}</p>
+
                 <ol class="tutorial-list">
                   <li>{{ $t('tutorial.pdfSection.passwordProtected.step1') }}</li>
                   <li>{{ $t('tutorial.pdfSection.passwordProtected.step2') }}</li>
@@ -506,6 +555,7 @@
 
               <div class="tutorial-step">
                 <h4 class="mb-2">{{ $t('tutorial.pdfSection.features.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.pdfSection.features.storage') }}</li>
                   <li>{{ $t('tutorial.pdfSection.features.perProject') }}</li>
@@ -524,6 +574,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.tipsSection.keyboardShortcuts.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.tipsSection.keyboardShortcuts.arrows') }}</li>
                   <li>{{ $t('tutorial.tipsSection.keyboardShortcuts.z') }}</li>
@@ -537,6 +588,7 @@
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.tipsSection.precisionMode.title') }}</h4>
                 <p class="mb-2">{{ $t('tutorial.tipsSection.precisionMode.description') }}</p>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.tipsSection.precisionMode.activate') }}</li>
                   <li>{{ $t('tutorial.tipsSection.precisionMode.lens') }}</li>
@@ -550,6 +602,7 @@
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.tipsSection.bearingsAnalysis.title') }}</h4>
                 <p class="mb-2">{{ $t('tutorial.tipsSection.bearingsAnalysis.description') }}</p>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.tipsSection.bearingsAnalysis.openView') }}</li>
                   <li>{{ $t('tutorial.tipsSection.bearingsAnalysis.viewCalc') }}</li>
@@ -561,23 +614,29 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.tipsSection.drawingTips.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.tipsSection.drawingTips.saveFirst') }}</li>
                   <li>{{ $t('tutorial.tipsSection.drawingTips.quickLine') }}</li>
+
                   <li>
                     <strong>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.title') }}</strong>
+
                     <ul>
                       <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.setStart') }}</li>
                       <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.preview') }}</li>
                       <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.lockAzimuth') }}</li>
+
                       <li>
                         {{ $t('tutorial.tipsSection.drawingTips.freeHandMode.lockDistance') }}
                       </li>
+
                       <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.tooltip') }}</li>
                       <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.finalize') }}</li>
                       <li>{{ $t('tutorial.tipsSection.drawingTips.freeHandMode.predefined') }}</li>
                     </ul>
                   </li>
+
                   <li>{{ $t('tutorial.tipsSection.drawingTips.multipleLines') }}</li>
                   <li>{{ $t('tutorial.tipsSection.drawingTips.intersectionMode') }}</li>
                   <li>{{ $t('tutorial.tipsSection.drawingTips.azimuthMode') }}</li>
@@ -588,6 +647,7 @@
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.tipsSection.searchWorkflow.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.tipsSection.searchWorkflow.addressSearch') }}</li>
                   <li>{{ $t('tutorial.tipsSection.searchWorkflow.drawLine') }}</li>
@@ -599,6 +659,7 @@
 
               <div class="tutorial-step">
                 <h4 class="mb-2">{{ $t('tutorial.tipsSection.projectManagement.title') }}</h4>
+
                 <ul class="tutorial-list">
                   <li>{{ $t('tutorial.tipsSection.projectManagement.saveFrequently') }}</li>
                   <li>{{ $t('tutorial.tipsSection.projectManagement.descriptiveNames') }}</li>

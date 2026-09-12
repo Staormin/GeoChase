@@ -1,3 +1,4 @@
+import { fromLonLat } from 'ol/proj';
 import { getDistance as olGetDistance } from 'ol/sphere';
 import { describe, expect, it } from 'vitest';
 import {
@@ -154,406 +155,81 @@ describe('geometry service', () => {
   });
 
   describe('endpointFromIntersection', () => {
-    it('should return a valid point for given parameters', () => {
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.9;
-      const intersectLon = 2.4;
+    const start = { lat: 43.208829, lon: 2.35458 };
+    const intersection = { lat: 46.69318, lon: -1.926687 };
 
-      const result = endpointFromIntersection(startLat, startLon, intersectLat, intersectLon, 10);
-
-      // Should return valid coordinates
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-      expect(Number.isNaN(result.lat)).toBe(false);
-      expect(Number.isNaN(result.lon)).toBe(false);
+    it('stops exactly at the intersection for a zero extension', () => {
+      expect(
+        endpointFromIntersection(start.lat, start.lon, intersection.lat, intersection.lon, 0)
+      ).toEqual(intersection);
     });
 
-    it('should return intersection when distance exactly matches (line 147)', () => {
-      // Use olGetDistance to calculate the EXACT geodesic distance
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.8666; // Close enough for easy calculation
-      const intersectLon = 2.3522;
+    it.each([0.1, 5, 500])(
+      'extends %s km past the intersection, independent of the approach distance',
+      (distance) => {
+        const endpoint = endpointFromIntersection(
+          start.lat,
+          start.lon,
+          intersection.lat,
+          intersection.lon,
+          distance
+        );
+        const extension =
+          olGetDistance([intersection.lon, intersection.lat], [endpoint.lon, endpoint.lat]) / 1000;
+        expect(extension).toBeCloseTo(distance, 5);
 
-      // Calculate exact geodesic distance in km using the same function the code uses
-      const exactDistanceKm =
-        olGetDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
+        const a = fromLonLat([start.lon, start.lat]);
+        const b = fromLonLat([intersection.lon, intersection.lat]);
+        const c = fromLonLat([endpoint.lon, endpoint.lat]);
+        const approach = [b[0]! - a[0]!, b[1]! - a[1]!];
+        const beyond = [c[0]! - b[0]!, c[1]! - b[1]!];
+        // The extension must continue forwards on the same straight map line.
+        const cosine =
+          (approach[0]! * beyond[0]! + approach[1]! * beyond[1]!) /
+          (Math.hypot(...approach) * Math.hypot(...beyond));
+        expect(cosine).toBeCloseTo(1, 10);
+      }
+    );
 
-      // Use the EXACT distance to trigger line 147
-      const result = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        exactDistanceKm
-      );
+    it.each([
+      [48, 2, 49, 2],
+      [49, 2, 48, 2],
+      [48, 2, 48, 3],
+      [48, 3, 48, 2],
+      [-20, -40, -21, -41],
+    ])(
+      'supports different directions from (%s, %s) through (%s, %s)',
+      (lat, lon, throughLat, throughLon) => {
+        const endpoint = endpointFromIntersection(lat, lon, throughLat, throughLon, 25);
+        expect(
+          olGetDistance([throughLon, throughLat], [endpoint.lon, endpoint.lat]) / 1000
+        ).toBeCloseTo(25, 5);
+      }
+    );
 
-      // Should return the intersection coordinates exactly
-      expect(result.lat).toBeCloseTo(intersectLat, 5);
-      expect(result.lon).toBeCloseTo(intersectLon, 5);
+    it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
+      'rejects invalid extension %s',
+      (distance) => {
+        expect(() =>
+          endpointFromIntersection(
+            start.lat,
+            start.lon,
+            intersection.lat,
+            intersection.lon,
+            distance
+          )
+        ).toThrow(RangeError);
+      }
+    );
+
+    it('rejects coincident points that cannot define a direction', () => {
+      expect(() => endpointFromIntersection(48, 2, 48, 2, 5)).toThrow(RangeError);
     });
 
-    it('should handle D < distance to intersection case (line 157)', () => {
-      // Set up so D is much smaller than distance to intersection
-      // This should trigger fLow > 0 branch at line 157
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 50; // Very far intersection (~127km away)
-      const intersectLon = 2.3522;
-
-      // Use a very small D (1km) while intersection is 127km away
-      // fLow should be large positive value
-      const result = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        1 // 1km - much smaller than ~127km to intersection
-      );
-
-      // Should return valid coordinates (intersection as fallback)
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-      expect(Number.isNaN(result.lat)).toBe(false);
-      expect(Number.isNaN(result.lon)).toBe(false);
-    });
-
-    it('should handle very small D with far intersection (line 157)', () => {
-      // Another test case with even more extreme values
-      const startLat = 0;
-      const startLon = 0;
-      const intersectLat = 10; // ~1111km away
-      const intersectLon = 0;
-
-      // Request just 1km when intersection is ~1111km away
-      const result = endpointFromIntersection(startLat, startLon, intersectLat, intersectLon, 1);
-
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-      expect(Number.isNaN(result.lat)).toBe(false);
-      expect(Number.isNaN(result.lon)).toBe(false);
-    });
-
-    it('should return intersection when distance matches distance to intersection', () => {
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.8576;
-      const intersectLon = 2.3532;
-
-      // Calculate actual distance which is about 0.12 km
-      const result = endpointFromIntersection(startLat, startLon, intersectLat, intersectLon, 0.12);
-
-      // Should be close to intersection
-      expect(result.lat).toBeCloseTo(intersectLat, 2);
-      expect(result.lon).toBeCloseTo(intersectLon, 2);
-    });
-
-    it('should return intersection when distance is smaller (fallback case)', () => {
-      // When requested distance is smaller than distance to intersection
-      // The function returns the intersection as a fallback
-      const result = endpointFromIntersection(48.8566, 2.3522, 49, 2.5, 1);
-
-      // Verify it returns valid coordinates (the fallback intersection)
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-    });
-
-    it('should handle same start and intersection point', () => {
-      const result = endpointFromIntersection(48.8566, 2.3522, 48.8566, 2.3522, 100);
-
-      // Should return a valid result (fallback direction: east)
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-      expect(Number.isNaN(result.lat)).toBe(false);
-      expect(Number.isNaN(result.lon)).toBe(false);
-    });
-
-    it('should extend beyond intersection for larger distances', () => {
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.8576;
-      const intersectLon = 2.3532;
-
-      // Request a longer distance than to intersection
-      const result = endpointFromIntersection(startLat, startLon, intersectLat, intersectLon, 50);
-
-      // Result should be valid and roughly in the same direction
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-    });
-
-    it('should use bisection for moderate distance beyond intersection', () => {
-      // Start and intersection very close, then extend to a moderate distance
-      // This triggers the bisection algorithm (lines 179-201)
-      const result = endpointFromIntersection(48.8566, 2.3522, 48.8568, 2.3524, 5);
-
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-      expect(Number.isNaN(result.lat)).toBe(false);
-      expect(Number.isNaN(result.lon)).toBe(false);
-    });
-
-    it('should handle very large distances', () => {
-      // This may trigger the fallback for when bisection doesn't converge
-      const result = endpointFromIntersection(48.8566, 2.3522, 48.8568, 2.3524, 10_000);
-
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-      expect(Number.isNaN(result.lat)).toBe(false);
-      expect(Number.isNaN(result.lon)).toBe(false);
-    });
-
-    it('should trigger bisection algorithm and converge', () => {
-      // Set up parameters where bisection algorithm will run and converge
-      // Need intersection far enough that D extends beyond it
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.86; // ~400m away
-      const intersectLon = 2.355;
-      const distance = 2; // 2km - well beyond intersection
-
-      const result = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        distance
-      );
-
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-      expect(Number.isNaN(result.lat)).toBe(false);
-      expect(Number.isNaN(result.lon)).toBe(false);
-    });
-
-    it('should converge quickly for moderate distances', () => {
-      // Test where fm > 0 branch is taken during bisection
-      const result = endpointFromIntersection(48.8566, 2.3522, 48.858, 2.354, 3);
-
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-    });
-
-    it('should handle bisection with very close tolerance', () => {
-      // Test bisection convergence via tolerance check
-      const result = endpointFromIntersection(48.8566, 2.3522, 48.857, 2.353, 0.5);
-
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-    });
-
-    it('should run bisection algorithm when D > distance to intersection (lines 179-197)', () => {
-      // Set up so D > distance to intersection
-      // This ensures we get into the bisection algorithm
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.86; // ~380m away
-      const intersectLon = 2.355;
-
-      // Calculate actual distance to intersection
-      const actualDistanceKm =
-        olGetDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
-
-      // Request a distance LARGER than distance to intersection
-      // This means fLow < 0, so we enter bisection
-      const requestedDistance = actualDistanceKm * 3; // 3x the actual distance
-
-      const result = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        requestedDistance
-      );
-
-      // Result should be further than intersection in the same direction
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-      expect(Number.isNaN(result.lat)).toBe(false);
-      expect(Number.isNaN(result.lon)).toBe(false);
-    });
-
-    it('should exercise fm > 0 branch in bisection (lines 191-193)', () => {
-      // When D is slightly larger than distance to intersection,
-      // the bisection will hit both fm > 0 and fm <= 0 branches
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.859;
-      const intersectLon = 2.356;
-
-      const actualDistanceKm =
-        olGetDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
-      const requestedDistance = actualDistanceKm * 2.5;
-
-      const result = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        requestedDistance
-      );
-
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-    });
-
-    it('should exercise fm <= 0 branch in bisection (lines 194-197)', () => {
-      // Different configuration to exercise the other branch
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.858;
-      const intersectLon = 2.354;
-
-      const actualDistanceKm =
-        olGetDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
-      const requestedDistance = actualDistanceKm * 4;
-
-      const result = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        requestedDistance
-      );
-
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-    });
-
-    it('should run bisection with multiple iterations (lines 179-197)', () => {
-      // Set up a case where D is slightly larger than distance to intersection
-      // This ensures fLow < 0 and we enter bisection
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.857; // Very close intersection
-      const intersectLon = 2.353;
-
-      const actualDistanceKm =
-        olGetDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
-      // Request distance larger than intersection distance to force bisection
-      const requestedDistance = actualDistanceKm + 0.1; // Just slightly more
-
-      const result = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        requestedDistance
-      );
-
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-    });
-
-    it('should exercise bisection convergence paths (lines 186-197)', () => {
-      // Test with various distance ratios to exercise different bisection paths
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.86;
-      const intersectLon = 2.36;
-
-      const actualDistanceKm =
-        olGetDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
-
-      // Test with D = 1.5x distance to intersection
-      const result1 = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        actualDistanceKm * 1.5
-      );
-      expect(typeof result1.lat).toBe('number');
-
-      // Test with D = 2x distance to intersection
-      const result2 = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        actualDistanceKm * 2
-      );
-      expect(typeof result2.lat).toBe('number');
-
-      // Test with D = 5x distance to intersection
-      const result3 = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        actualDistanceKm * 5
-      );
-      expect(typeof result3.lat).toBe('number');
-    });
-
-    it('should handle large D requiring many bisection iterations', () => {
-      // Very small intersection distance, large requested distance
-      // Forces many bisection iterations
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.8567; // Very very close
-      const intersectLon = 2.3523;
-
-      // Request 100km when intersection is just meters away
-      const result = endpointFromIntersection(startLat, startLon, intersectLat, intersectLon, 100);
-
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-    });
-
-    it('should enter bisection when D slightly exceeds intersection distance (lines 179+)', () => {
-      // Critical test: D must be > distance to intersection (fLow < 0)
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.86; // ~380m away
-      const intersectLon = 2.355;
-
-      const actualDistanceKm =
-        olGetDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
-
-      // Request exactly 10% more than actual distance
-      const result = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        actualDistanceKm * 1.1
-      );
-
-      // Just verify we get valid coordinates
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-      expect(Number.isNaN(result.lat)).toBe(false);
-      expect(Number.isNaN(result.lon)).toBe(false);
-    });
-
-    it('should run full bisection loop (testing lines 179-201)', () => {
-      // Use coordinates where bisection will iterate several times
-      const startLat = 48.8566;
-      const startLon = 2.3522;
-      const intersectLat = 48.8576; // ~112m away
-      const intersectLon = 2.3532;
-
-      const actualDistanceKm =
-        olGetDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
-
-      // Request 50% more to force bisection
-      const requestedDistance = actualDistanceKm * 1.5;
-
-      const result = endpointFromIntersection(
-        startLat,
-        startLon,
-        intersectLat,
-        intersectLon,
-        requestedDistance
-      );
-
-      // Just verify we get valid coordinates
-      expect(typeof result.lat).toBe('number');
-      expect(typeof result.lon).toBe('number');
-      expect(Number.isNaN(result.lat)).toBe(false);
-      expect(Number.isNaN(result.lon)).toBe(false);
+    it('rejects an unreachable extension instead of returning an incorrect distance', () => {
+      expect(() =>
+        endpointFromIntersection(start.lat, start.lon, intersection.lat, intersection.lon, 30_000)
+      ).toThrow(RangeError);
     });
   });
 

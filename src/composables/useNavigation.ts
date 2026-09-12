@@ -1,4 +1,4 @@
-import type { CircleElement, LineSegmentElement } from '@/services/storage';
+import type { CircleElement, LineSegmentElement } from '@/types/project';
 import { getDistance } from 'ol/sphere';
 import { computed, ref } from 'vue';
 import { destinationPoint, toRadians } from '@/services/geometry';

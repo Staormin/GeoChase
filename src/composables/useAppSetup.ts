@@ -1,6 +1,7 @@
 import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
 import type { useNoteTooltips } from '@/composables/useNoteTooltips';
+import type { CursorTooltipData } from '@/types/ui';
 import type { Ref } from 'vue';
 import { useFreeHandDrawing } from '@/composables/useFreeHandDrawing';
 import { useKeyboardNavigation } from '@/composables/useKeyboardNavigation';
@@ -8,14 +9,6 @@ import { useMapEventHandlers } from '@/composables/useMapEventHandlers';
 import { useMapInitialization } from '@/composables/useMapInitialization';
 import { useRuler } from '@/composables/useRuler';
 import { useViewCapture } from '@/composables/useViewCapture';
-
-interface CursorTooltipData {
-  visible: boolean;
-  x: number;
-  y: number;
-  distance: string;
-  azimuth: string;
-}
 
 /**
  * Main app setup composable that orchestrates all initialization and event handlers
@@ -55,6 +48,7 @@ export function useAppSetup(
       freeHandDrawing.cleanup();
       ruler.cleanup();
       keyboardNavigation.cleanup();
+      noteTooltipsRef.value?.dispose();
       mapContainer.destroyMap();
     };
   };

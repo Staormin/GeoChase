@@ -16,6 +16,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn @click="$emit('close')">{{ cancelText }}</v-btn>
+
         <v-btn color="primary" :disabled="submitDisabled" @click="$emit('submit')">{{
           submitText
         }}</v-btn>

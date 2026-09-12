@@ -431,7 +431,7 @@
         "description": "Dessinez une ligne avec plusieurs modes :",
         "twoPoints": "Deux points : Connectez deux points enregistrés",
         "azimuth": "Mode azimut : Créez une ligne avec un angle spécifique (azimut) et une distance",
-        "intersection": "Mode intersection : Tracez une ligne passant par un point à une distance spécifique",
+        "intersection": "Mode intersection : Tracez une ligne passant par un point et prolongez-la de la distance indiquée après ce point",
         "parallel": "Mode parallèle : Tracez une ligne parallèle (latitude) sur toute la carte",
         "freeHand": "Mode main levée : Dessinez des lignes de manière interactive en cliquant sur la carte avec verrouillage d'azimut optionnel",
         "dragDrop": "Glisser-déposer : Faites glisser un point vers un autre point dans le panneau des calques pour créer une ligne entre eux"
@@ -896,13 +896,16 @@
       "title": "Ligne d'intersection",
       "editTitle": "Modifier la ligne d'intersection",
       "createEndpoint": "Créer un point d'arrivée",
-      "distance": "Distance",
+      "distance": "Distance après le point d'intersection (km)",
+      "distanceHint": "Mesurée depuis le point d'intersection. Indiquez 0 pour arrêter la ligne à ce point.",
       "endpointName": "Nom du point d'arrivée",
       "endpointPlaceholder": "Laisser vide pour génération automatique",
       "intersectionPoint": "Point d'intersection",
       "selectPoint": "Sélectionner un point",
       "startPoint": "Point de départ",
-      "distanceError": "La distance doit être supérieure à 0",
+      "distanceError": "Indiquez une distance de 0 km ou plus après le point d'intersection",
+      "distinctPoints": "Choisissez deux points différents pour définir la direction de la ligne",
+      "unreachableDistance": "Cette distance ne peut pas être atteinte dans la direction choisie",
       "selectBothPoints": "Veuillez sélectionner les points de départ et d'intersection"
     }
   },

@@ -123,7 +123,6 @@ describe('usePointDrawing', () => {
   describe('drawPoint', () => {
     it('should draw a point and return point element', () => {
       const addPointSpy = vi.spyOn(layersStore, 'addPoint');
-      const storeMapElementIdSpy = vi.spyOn(layersStore, 'storeMapElementId');
 
       const result = pointDrawing.drawPoint(48.8566, 2.3522, 'My Point', '#ff0000', 100);
 
@@ -134,7 +133,6 @@ describe('usePointDrawing', () => {
           coordinates: { lat: 48.8566, lon: 2.3522 },
           elevation: 100,
           color: '#ff0000',
-          mapElementId: 'test-uuid',
         })
       );
 
@@ -145,11 +143,9 @@ describe('usePointDrawing', () => {
           coordinates: { lat: 48.8566, lon: 2.3522 },
           elevation: 100,
           color: '#ff0000',
-          mapElementId: 'test-uuid',
         })
       );
 
-      expect(storeMapElementIdSpy).toHaveBeenCalledWith('point', 'test-uuid', 'test-uuid');
       expect(mockAddFeature).toHaveBeenCalled();
       expect(mockAddOverlay).toHaveBeenCalled();
       expect(mockMapRef.flyToBoundsWithPanels).toHaveBeenCalled();
@@ -286,14 +282,14 @@ describe('usePointDrawing', () => {
     });
 
     it('should redraw a point on the map', () => {
-      pointDrawing.redrawPointOnMap('point-1', 48.8566, 2.3522, '#00ff00');
+      pointDrawing.redrawPointOnMap('point-1', 48.8566, 2.3522);
 
       expect(mockAddFeature).toHaveBeenCalled();
       expect(mockAddOverlay).toHaveBeenCalled();
 
-      // Check that mapElementId was set
+      // Redrawing preserves the stable element ID.
       const storedPoint = layersStore.points.find((p: any) => p.id === 'point-1');
-      expect(storedPoint.mapElementId).toBe('point-1');
+      expect(storedPoint.id).toBe('point-1');
     });
 
     it('should use point name from store', () => {

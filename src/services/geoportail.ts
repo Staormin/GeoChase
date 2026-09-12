@@ -2,6 +2,10 @@
  * Geoportail API service - Integration with IGN Geoportail APIs
  */
 
+import type { Feature, MultiPolygon, Polygon } from 'geojson';
+import { booleanPointInPolygon } from '@turf/turf';
+
+type SearchPolygon = Feature<Polygon | MultiPolygon> | Polygon | MultiPolygon;
 export interface GeoportailResult {
   id?: string;
   fulltext: string;
@@ -156,17 +160,14 @@ export async function searchAddress(query: string, limit = 8): Promise<AddressSe
     }));
   } catch (error) {
     throw new Error(
-      `Failed to search address: ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Failed to search address: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      { cause: error }
     );
   }
 }
 
 export type MapProvider =
-  | 'geoportail'
-  | 'osm'
-  | 'google-plan'
-  | 'google-satellite'
-  | 'google-relief';
+  'geoportail' | 'osm' | 'google-plan' | 'google-satellite' | 'google-relief';
 
 /**
  * Get map tiles URL based on provider
@@ -303,39 +304,12 @@ export function distancePointToSegment(
  * @param polygon GeoJSON Polygon or Feature with Polygon geometry
  * @returns true if point is inside polygon
  */
-function pointInPolygon(point: [number, number], polygon: any): boolean {
-  // Get the polygon coordinates (handle both Polygon and Feature types)
-  let coords: any[];
-  if (polygon.type === 'Polygon') {
-    coords = polygon.coordinates;
-  } else if (polygon.type === 'Feature' && polygon.geometry?.type === 'Polygon') {
-    coords = polygon.geometry.coordinates;
-  } else {
+function pointInPolygon(point: [number, number], polygon: SearchPolygon): boolean {
+  try {
+    return booleanPointInPolygon(point, polygon);
+  } catch {
     return false;
   }
-
-  const [x, y] = point;
-  const exterior = coords[0];
-
-  if (!exterior || !Array.isArray(exterior)) {
-    return false;
-  }
-
-  // Ray casting algorithm
-  let isInside = false;
-  for (let i = 0, j = exterior.length - 1; i < exterior.length; j = i++) {
-    const xi = exterior[i]![0];
-    const yi = exterior[i]![1];
-    const xj = exterior[j]![0];
-    const yj = exterior[j]![1];
-
-    const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-    if (intersect) {
-      isInside = !isInside;
-    }
-  }
-
-  return isInside;
 }
 
 /**
@@ -424,7 +398,7 @@ function getTypeValueFromElement(element: Element): string {
 
   // First, check priority keys in order
   for (const key of priorityKeys) {
-    const tag = element.querySelector(`tag[k="${key}"]`);
+    const tag = element.querySelector(`tag[k="${CSS.escape(key)}"]`);
     const value = tag?.getAttribute('v');
     if (value && value !== 'yes') {
       // Skip generic 'yes' values
@@ -467,7 +441,7 @@ function isLocationInSearchZone(
   resultCoords: { lat: number; lon: number },
   pathPoints: Array<{ lat: number; lon: number }>,
   searchDistanceKm: number,
-  bufferPolygon?: any
+  bufferPolygon?: SearchPolygon | null
 ): boolean {
   if (bufferPolygon) {
     return pointInPolygon([resultCoords.lon, resultCoords.lat], bufferPolygon);
@@ -514,7 +488,7 @@ function processXmlNodes(
   results: Map<string, AddressSearchResult>,
   pathPoints: Array<{ lat: number; lon: number }>,
   searchDistanceKm: number,
-  bufferPolygon?: any
+  bufferPolygon?: SearchPolygon | null
 ): void {
   const nodes = doc.querySelectorAll('node');
   for (const node of nodes) {
@@ -541,7 +515,7 @@ function processXmlWays(
   results: Map<string, AddressSearchResult>,
   pathPoints: Array<{ lat: number; lon: number }>,
   searchDistanceKm: number,
-  bufferPolygon?: any
+  bufferPolygon?: SearchPolygon | null
 ): void {
   const ways = doc.querySelectorAll('way');
   for (const way of ways) {
@@ -574,7 +548,7 @@ function processXmlWays(
 export async function searchLocationsNearPath(
   pathPoints: Array<{ lat: number; lon: number }>,
   searchDistanceKm = 1,
-  bufferPolygon?: any
+  bufferPolygon?: SearchPolygon | null
 ): Promise<AddressSearchResult[]> {
   if (!pathPoints || pathPoints.length === 0) {
     return [];

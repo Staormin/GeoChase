@@ -9,6 +9,7 @@
         <span class="cursor-tooltip-label">{{ $t('common.distance') }}:</span>
         <span class="cursor-tooltip-value">{{ tooltip.distance }}</span>
       </div>
+
       <div class="cursor-tooltip-row">
         <span class="cursor-tooltip-label">{{ $t('common.azimuth') }}:</span>
         <span class="cursor-tooltip-value">{{ tooltip.azimuth }}</span>
@@ -18,13 +19,7 @@
 </template>
 
 <script lang="ts" setup>
-interface CursorTooltipData {
-  visible: boolean;
-  x: number;
-  y: number;
-  distance: string;
-  azimuth: string;
-}
+import type { CursorTooltipData } from '@/types/ui';
 
 interface Props {
   tooltip: CursorTooltipData;

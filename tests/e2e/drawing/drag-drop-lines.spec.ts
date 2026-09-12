@@ -77,7 +77,9 @@ test.describe('Drag and Drop Lines', () => {
 
       // Line should be named "Paris → London"
       await expect(
-        page.locator('.layer-item-name').filter({ hasText: /Paris.*→.*London/ })
+        page
+          .locator('.layer-item-name')
+          .filter({ hasText: /Paris[^\n\r\u2028\u2029\u2192]*\u2192.*London/ })
       ).toBeVisible();
     });
   });

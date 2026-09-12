@@ -391,16 +391,6 @@ describe('useAnimation', () => {
         createdAt: 1000,
       });
 
-      // Manually add resolved points for the animation
-      const polygon = layersStore.polygons.find((p) => p.id === 'polygon-1');
-      if (polygon) {
-        (polygon as any).points = [
-          { lat: 48.8, lon: 2.3 },
-          { lat: 48.9, lon: 2.4 },
-          { lat: 48.85, lon: 2.5 },
-        ];
-      }
-
       uiStore.setElementVisibility('polygon', 'polygon-1', true);
       uiStore.animationConfig.type = 'startToFinish';
       uiStore.animationConfig.disableZoomOnElement = false;
@@ -1311,24 +1301,19 @@ describe('useAnimation', () => {
       expect(true).toBe(true);
     });
 
-    it('should handle polygon with points array in navigateToElement', async () => {
-      // Add polygon with pre-resolved points
+    it('should navigate to a polygon using its referenced points', async () => {
+      // Navigate using the same point-ID format persisted by the app.
       layersStore.addPolygon({
         id: 'polygon-1',
         name: 'Polygon 1',
-        pointIds: [],
+        pointIds: ['p1', 'p2', 'p3'],
         createdAt: 1000,
       });
 
-      // Manually add points array
-      const polygon = layersStore.polygons.find((p) => p.id === 'polygon-1');
-      if (polygon) {
-        (polygon as any).points = [
-          { lat: 48.8, lon: 2.3 },
-          { lat: 48.9, lon: 2.4 },
-          { lat: 48.85, lon: 2.5 },
-        ];
-      }
+      // Resolve coordinates from the point store.
+      layersStore.addPoint({ id: 'p1', name: 'P1', coordinates: { lat: 48, lon: 2 } });
+      layersStore.addPoint({ id: 'p2', name: 'P2', coordinates: { lat: 49, lon: 3 } });
+      layersStore.addPoint({ id: 'p3', name: 'P3', coordinates: { lat: 48, lon: 4 } });
 
       uiStore.setElementVisibility('polygon', 'polygon-1', true);
       uiStore.animationConfig.type = 'startToFinish';

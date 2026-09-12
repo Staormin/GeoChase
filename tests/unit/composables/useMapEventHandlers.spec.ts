@@ -56,12 +56,12 @@ describe('useMapEventHandlers', () => {
       const openModalSpy = vi.spyOn(uiStore, 'openModal');
 
       // Simulate right-click with coordinates
-      mockRightClickHandler(48.856_613, 2.352_222);
+      mockRightClickHandler(48.856613, 2.352222);
 
       // Should start creating a point with prefill
       expect(startCreatingSpy).toHaveBeenCalledWith('point', {
-        lat: 48.856_613,
-        lon: 2.352_222,
+        lat: 48.856613,
+        lon: 2.352222,
       });
 
       expect(openModalSpy).toHaveBeenCalledWith('pointModal');
@@ -71,11 +71,11 @@ describe('useMapEventHandlers', () => {
       const startCreatingSpy = vi.spyOn(uiStore, 'startCreating');
 
       // Test with negative coordinates
-      mockRightClickHandler(-33.868_82, 151.209_29);
+      mockRightClickHandler(-33.86882, 151.20929);
 
       expect(startCreatingSpy).toHaveBeenCalledWith('point', {
-        lat: -33.868_82,
-        lon: 151.209_29,
+        lat: -33.86882,
+        lon: 151.20929,
       });
     });
 
@@ -95,11 +95,11 @@ describe('useMapEventHandlers', () => {
       const startCreatingSpy = vi.spyOn(uiStore, 'startCreating');
 
       // Test with maximum valid latitude/longitude
-      mockRightClickHandler(89.999_999, 179.999_999);
+      mockRightClickHandler(89.999999, 179.999999);
 
       expect(startCreatingSpy).toHaveBeenCalledWith('point', {
-        lat: 89.999_999,
-        lon: 179.999_999,
+        lat: 89.999999,
+        lon: 179.999999,
       });
     });
 
@@ -107,11 +107,11 @@ describe('useMapEventHandlers', () => {
       const startCreatingSpy = vi.spyOn(uiStore, 'startCreating');
 
       // Test with minimum valid latitude/longitude
-      mockRightClickHandler(-89.999_999, -179.999_999);
+      mockRightClickHandler(-89.999999, -179.999999);
 
       expect(startCreatingSpy).toHaveBeenCalledWith('point', {
-        lat: -89.999_999,
-        lon: -179.999_999,
+        lat: -89.999999,
+        lon: -179.999999,
       });
     });
 

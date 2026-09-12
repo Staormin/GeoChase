@@ -88,8 +88,8 @@ test.describe('Bearings Modal', () => {
 
       // Should have column headers
       const modal = page.locator('.v-dialog');
-      await expect(modal.locator('th').filter({ hasText: /Point|point/i })).toBeVisible();
-      await expect(modal.locator('th').filter({ hasText: /Distance|distance/i })).toBeVisible();
+      await expect(modal.locator('th').filter({ hasText: /point/i })).toBeVisible();
+      await expect(modal.locator('th').filter({ hasText: /distance/i })).toBeVisible();
       await expect(
         modal
           .locator('th')
@@ -131,7 +131,7 @@ test.describe('Bearings Modal', () => {
 
       // Distance header should have sort indicator
       const modal = page.locator('.v-dialog');
-      const distanceHeader = modal.locator('th').filter({ hasText: /Distance|distance/i });
+      const distanceHeader = modal.locator('th').filter({ hasText: /distance/i });
       await expect(distanceHeader.locator('.mdi-arrow-up, .mdi-arrow-down')).toBeVisible();
     });
 
@@ -150,7 +150,7 @@ test.describe('Bearings Modal', () => {
       await page.waitForTimeout(300);
 
       const modal = page.locator('.v-dialog');
-      const distanceHeader = modal.locator('th').filter({ hasText: /Distance|distance/i });
+      const distanceHeader = modal.locator('th').filter({ hasText: /distance/i });
 
       // Click to toggle sort direction
       await distanceHeader.click();
@@ -172,7 +172,7 @@ test.describe('Bearings Modal', () => {
       await page.waitForTimeout(300);
 
       const modal = page.locator('.v-dialog');
-      const nameHeader = modal.locator('th').filter({ hasText: /Point|point/i });
+      const nameHeader = modal.locator('th').filter({ hasText: /point/i });
 
       // Click name header to sort by name
       await nameHeader.click();

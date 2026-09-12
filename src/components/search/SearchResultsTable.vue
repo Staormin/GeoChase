@@ -36,6 +36,7 @@
                 />
               </div>
             </th>
+
             <th
               class="cursor-pointer"
               style="padding: 8px; text-align: right; width: 27%; min-width: 70px"
@@ -50,6 +51,7 @@
                 />
               </div>
             </th>
+
             <th
               class="cursor-pointer"
               style="padding: 8px; text-align: right; width: 28%; min-width: 70px"
@@ -66,6 +68,7 @@
             </th>
           </tr>
         </thead>
+
         <tbody>
           <tr
             v-for="(result, index) in filteredResults"
@@ -98,10 +101,12 @@
               >
                 {{ result.main.length > 35 ? result.main.substring(0, 35) + '...' : result.main }}
               </div>
+
               <div class="d-flex align-center gap-1">
                 <div class="text-xs text-slate-600 text-truncate" :title="result.type || 'N/A'">
                   {{ result.type || 'N/A' }}
                 </div>
+
                 <v-btn
                   v-if="!includedTypes.includes(result.type || 'N/A')"
                   color="success"
@@ -110,6 +115,7 @@
                   variant="text"
                   @click.stop="$emit('add-included-type', result.type || 'N/A')"
                 />
+
                 <v-btn
                   v-if="!excludedTypes.includes(result.type || 'N/A')"
                   color="error"
@@ -120,6 +126,7 @@
                 />
               </div>
             </td>
+
             <td
               style="
                 padding: 8px;
@@ -133,6 +140,7 @@
                 {{ getResultDistance(result).toFixed(1) }}{{ $t('common.kmUnit') }}
               </div>
             </td>
+
             <td
               style="
                 padding: 8px;
@@ -155,6 +163,7 @@
       </table>
     </div>
   </div>
+
   <div v-else class="text-caption text-disabled text-center py-8 px-4">
     <v-icon class="mb-2" icon="mdi-magnify" size="24" />
     <div>{{ $t('search.noResultsMatch') }}</div>

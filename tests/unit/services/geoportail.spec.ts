@@ -165,7 +165,7 @@ describe('geoportail service', () => {
     });
 
     it('should return empty array for whitespace query', async () => {
-      const results = await searchAddress('   ');
+      const results = await searchAddress(' '.repeat(3));
       expect(results).toEqual([]);
     });
 

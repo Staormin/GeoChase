@@ -90,8 +90,8 @@ describe('useLineNameGeneration', () => {
     it('should generate default name when no point matches', () => {
       const { generateParallelName } = useLineNameGeneration();
 
-      expect(generateParallelName(45.123_456)).toBe('Parallel at 45.123456°');
-      expect(generateParallelName(-23.654_321)).toBe('Parallel at -23.654321°');
+      expect(generateParallelName(45.123456)).toBe('Parallel at 45.123456°');
+      expect(generateParallelName(-23.654321)).toBe('Parallel at -23.654321°');
     });
   });
 

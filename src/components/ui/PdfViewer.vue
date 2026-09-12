@@ -61,6 +61,7 @@
         </span>
         <!-- eslint-enable @intlify/vue-i18n/no-raw-text -->
         <v-btn density="compact" icon="mdi-plus" size="small" variant="text" @click="zoomIn" />
+
         <v-btn
           density="compact"
           icon="mdi-fit-to-page-outline"
@@ -71,6 +72,7 @@
           <v-icon>mdi-fit-to-page-outline</v-icon>
           <v-tooltip activator="parent" location="bottom">{{ $t('pdf.fitToWidth') }}</v-tooltip>
         </v-btn>
+
         <v-btn
           density="compact"
           icon="mdi-fit-to-screen-outline"
@@ -81,7 +83,9 @@
           <v-icon>mdi-fit-to-screen-outline</v-icon>
           <v-tooltip activator="parent" location="bottom">{{ $t('pdf.fitToPage') }}</v-tooltip>
         </v-btn>
+
         <v-divider class="mx-1" vertical />
+
         <v-btn
           density="compact"
           icon="mdi-rotate-right"
@@ -90,10 +94,12 @@
           @click="rotateClockwise"
         >
           <v-icon>mdi-rotate-right</v-icon>
+
           <v-tooltip activator="parent" location="bottom">{{
             $t('pdf.rotateClockwise')
           }}</v-tooltip>
         </v-btn>
+
         <v-btn
           density="compact"
           icon="mdi-download"
@@ -104,7 +110,9 @@
           <v-icon>mdi-download</v-icon>
           <v-tooltip activator="parent" location="bottom">{{ $t('pdf.download') }}</v-tooltip>
         </v-btn>
+
         <v-divider class="mx-1" vertical />
+
         <v-btn
           density="compact"
           :icon="showThumbnails ? 'mdi-view-grid' : 'mdi-view-grid-outline'"
@@ -115,7 +123,9 @@
           <v-icon>{{ showThumbnails ? 'mdi-view-grid' : 'mdi-view-grid-outline' }}</v-icon>
           <v-tooltip activator="parent" location="bottom">{{ $t('pdf.thumbnails') }}</v-tooltip>
         </v-btn>
+
         <v-divider class="mx-1" vertical />
+
         <v-btn
           color="error"
           density="compact"
@@ -136,6 +146,7 @@
     <v-dialog v-model="showPasswordDialog" max-width="400" persistent>
       <v-card>
         <v-card-title>{{ $t('pdf.passwordRequired') }}</v-card-title>
+
         <v-card-text>
           <v-text-field
             v-model="password"
@@ -147,9 +158,11 @@
             @keyup.enter="submitPassword"
           />
         </v-card-text>
+
         <v-card-actions class="px-4 pb-4">
           <v-spacer />
           <v-btn variant="text" @click="cancelPassword">{{ $t('common.cancel') }}</v-btn>
+
           <v-btn color="primary" variant="flat" @click="submitPassword">{{
             $t('common.ok')
           }}</v-btn>
@@ -190,6 +203,7 @@
             class="block w-full"
             style="box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2)"
           />
+
           <div class="text-center text-caption py-1 bg-surface">{{ pageNum }}</div>
         </div>
       </div>
@@ -268,7 +282,6 @@ const rotation = ref(0);
 
 // Thumbnails state
 const showThumbnails = ref(false);
-const thumbnailsContainer = ref<HTMLElement | null>(null);
 const thumbnailRefs = ref<Map<number, HTMLCanvasElement>>(new Map());
 const thumbnailsRendered = ref(false);
 
@@ -287,7 +300,7 @@ async function loadPdf() {
 
   try {
     // Extract base64 data from data URL
-    const base64Data = props.pdfData.split(',')[1] ?? props.pdfData;
+    const base64Data = props.pdfData.split(',', 2)[1] ?? props.pdfData;
     const loadingTask = pdfjsLib.getDocument({
       data: atob(base64Data),
       password: props.pdfPassword, // Use saved password from props
@@ -465,7 +478,7 @@ async function rotateClockwise() {
 function downloadPdf() {
   try {
     // Create a blob from the base64 data
-    const base64Data = props.pdfData.split(',')[1] ?? props.pdfData;
+    const base64Data = props.pdfData.split(',', 2)[1] ?? props.pdfData;
     const binaryString = atob(base64Data);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
@@ -711,7 +724,7 @@ onUnmounted(() => {
     clearTimeout(wheelTimeout);
   }
   if (pdfDoc) {
-    pdfDoc.destroy();
+    pdfDoc.loadingTask.destroy();
   }
 });
 </script>

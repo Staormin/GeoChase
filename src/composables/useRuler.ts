@@ -1,6 +1,7 @@
 import type { useMap } from '@/composables/useMap';
+import type { CursorTooltipData } from '@/types/ui';
 import type { MapBrowserEvent } from 'ol';
-import type { Ref } from 'vue';
+import type { Ref, WatchStopHandle } from 'vue';
 import { Feature, Overlay } from 'ol';
 import { LineString } from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
@@ -11,14 +12,6 @@ import { Stroke, Style } from 'ol/style';
 import { watch } from 'vue';
 import { calculateBearing } from '@/services/geometry';
 import { useUIStore } from '@/stores/ui';
-
-interface CursorTooltipData {
-  visible: boolean;
-  x: number;
-  y: number;
-  distance: string;
-  azimuth: string;
-}
 
 type RulerPhase = 'idle' | 'placed-first';
 
@@ -172,7 +165,7 @@ export function useRuler(
     measurements.push({ feature, overlay });
   };
 
-  const handlePointerMove = (event: MapBrowserEvent<any>) => {
+  const handlePointerMove = (event: MapBrowserEvent) => {
     if (uiStore.tools.activeTool !== 'ruler') return;
     if (phase !== 'placed-first' || !firstPoint) return;
 
@@ -185,7 +178,7 @@ export function useRuler(
     updateCursorTooltip(event.pixel[0] ?? 0, event.pixel[1] ?? 0, lat, lon);
   };
 
-  const handleClick = (event: MapBrowserEvent<any>) => {
+  const handleClick = (event: MapBrowserEvent) => {
     if (uiStore.tools.activeTool !== 'ruler') return;
     const lonLat = toLonLat(event.coordinate);
     const lon = lonLat[0];
@@ -234,6 +227,8 @@ export function useRuler(
     }
   };
 
+  let stopToolWatch: WatchStopHandle | undefined;
+
   const setup = () => {
     const map = mapContainer.map?.value;
     if (map) {
@@ -243,7 +238,8 @@ export function useRuler(
 
     // Clean up whenever the ruler tool is deactivated (via stopTool, toolbar,
     // Escape, or switching to another tool).
-    watch(
+    stopToolWatch?.();
+    stopToolWatch = watch(
       () => uiStore.tools.activeTool,
       (tool) => {
         if (tool !== 'ruler') {
@@ -254,6 +250,8 @@ export function useRuler(
   };
 
   const cleanup = () => {
+    stopToolWatch?.();
+    stopToolWatch = undefined;
     const map = mapContainer.map?.value;
     if (map) {
       map.un('pointermove', handlePointerMove);

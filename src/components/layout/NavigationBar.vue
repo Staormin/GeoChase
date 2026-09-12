@@ -4,12 +4,14 @@
     <div class="navigation-bar-content">
       <div class="navigation-instructions">
         <span class="navigation-icon">🧭</span>
+
         <span class="navigation-text">
           {{ $t('navigation.useArrowKeys') }} <strong>← →</strong>
           {{ $t('navigation.arrowKeysToNavigate') }} • {{ $t('navigation.pressEsc') }}
           <strong>ESC</strong> {{ $t('navigation.toExit') }}
         </span>
       </div>
+
       <button class="navigation-exit-btn" type="button" @click="handleExitNavigation">
         {{ $t('navigation.exitNavigation') }}
       </button>
@@ -21,20 +23,25 @@
     <div class="navigation-bar-content">
       <div class="navigation-instructions">
         <span class="navigation-icon">✏️</span>
+
         <span class="navigation-text">
           <template v-if="!uiStore.freeHandDrawing.startCoord">
             {{ $t('freehand.clickToSetStart') }}
           </template>
+
           <template v-else>
             {{ $t('freehand.moveToSetEndpoint') }} • {{ $t('freehand.clickToConfirm') }}
           </template>
+
           <template v-if="uiStore.freeHandDrawing.azimuth === undefined">
             • {{ $t('freehand.holdAlt') }} <strong>ALT</strong> {{ $t('freehand.toLockAzimuth') }} •
             {{ $t('freehand.holdCtrl') }} <strong>CTRL</strong> {{ $t('freehand.toLockDistance') }}
           </template>
+
           • {{ $t('freehand.pressEsc') }} <strong>ESC</strong> {{ $t('freehand.toCancel') }}
         </span>
       </div>
+
       <button class="navigation-exit-btn" type="button" @click="handleExitFreeHand">
         {{ $t('freehand.cancelDrawing') }}
       </button>

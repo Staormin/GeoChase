@@ -1,9 +1,10 @@
-import type { useMap } from '@/composables/useMap';
-import { useUIStore } from '@/stores/ui';
-
 /**
  * Composable for map event handlers (right-click, etc.)
  */
+
+import type { useMap } from '@/composables/useMap';
+import { useUIStore } from '@/stores/ui';
+
 export function useMapEventHandlers(mapContainer: ReturnType<typeof useMap>) {
   const uiStore = useUIStore();
 

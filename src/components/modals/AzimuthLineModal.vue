@@ -70,10 +70,11 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, reactive, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
+import { useDrawingContext } from '@/composables/mapContext';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
 import { destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
@@ -90,7 +91,7 @@ const coordinateItems = computed(() =>
   }))
 );
 const { generateAzimuthName } = useLineNameGeneration();
-const drawing = inject('drawing') as any;
+const drawing = useDrawingContext();
 
 const isOpen = computed(() => uiStore.isModalOpen('azimuthLineModal'));
 const isEditing = computed(() => !!uiStore.editingElement);

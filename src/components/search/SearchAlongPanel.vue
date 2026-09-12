@@ -66,11 +66,13 @@
 <script lang="ts" setup>
 import type { AddressSearchResult } from '@/services/geoportail';
 import type VectorLayer from 'ol/layer/Vector';
+import type VectorSource from 'ol/source/Vector';
 import * as turf from '@turf/turf';
-import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SearchFilters from '@/components/search/SearchFilters.vue';
 import SearchResultsTable from '@/components/search/SearchResultsTable.vue';
+import { useMapContext } from '@/composables/mapContext';
 import { generateLinePointsLinear } from '@/services/geometry';
 import {
   distancePointToSegment,
@@ -83,7 +85,7 @@ import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const mapContainer = inject('mapContainer') as any;
+const mapContainer = useMapContext();
 const scrollContainer = ref<HTMLElement | null>(null);
 const { t } = useI18n();
 const searchDistance = ref(5); // Initial value, will be set based on element type
@@ -103,7 +105,7 @@ const liveAltitudeRange = ref<[number, number]>([0, 0]); // Live value shown whi
 const cachedFilteredResults = ref<AddressSearchResult[]>([]);
 const cachedUnfilteredResults = ref<AddressSearchResult[]>([]); // Results before sorting
 
-let searchZoneLayer: VectorLayer<any> | null = null;
+let searchZoneLayer: VectorLayer<VectorSource> | null = null;
 let filterTimeoutId: number | null = null;
 let sortTimeoutId: number | null = null;
 
@@ -694,18 +696,19 @@ async function handleSearch() {
 }
 
 function handleResultClick(result: AddressSearchResult) {
-  const mapInstance = mapContainer?.map?.value || mapContainer?.map;
+  const mapInstance = mapContainer.map.value;
   if (!mapInstance) {
     uiStore.addToast(t('errors.mapNotAvailable'), 'error');
     return;
   }
 
   // Fly to the result location
-  mapInstance.flyTo(
-    [result.coordinates.lat, result.coordinates.lon],
+  mapContainer.flyTo(
+    result.coordinates.lat,
+    result.coordinates.lon,
     16, // zoom level
     {
-      duration: 1, // animation duration in seconds
+      duration: 1000,
     }
   );
 

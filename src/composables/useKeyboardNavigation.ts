@@ -1,11 +1,12 @@
+/**
+ * Composable for keyboard navigation shortcuts (arrow keys, escape)
+ */
+
 import type { useMap } from '@/composables/useMap';
 import { useNavigation } from '@/composables/useNavigation';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
-/**
- * Composable for keyboard navigation shortcuts (arrow keys, escape)
- */
 export function useKeyboardNavigation(
   mapContainer: ReturnType<typeof useMap>,
   onFreeHandEscape?: () => void,

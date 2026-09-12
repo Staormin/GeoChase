@@ -322,7 +322,7 @@ test.describe('Add Point on Segment', () => {
 
       // Should have points section now
       await expect(
-        page.locator('.layers-section-title').filter({ hasText: /Point|point/i })
+        page.locator('.layers-section-title').filter({ hasText: /point/i })
       ).toBeVisible();
     });
   });

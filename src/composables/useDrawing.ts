@@ -2,13 +2,16 @@
  * Composable for drawing shapes on the map (orchestrator)
  */
 
+import type { MapContainer } from '@/composables/useMap';
+import type { LineSegmentElement } from '@/types/project';
+import type VectorSource from 'ol/source/Vector';
 import { useLayersStore } from '@/stores/layers';
 import { useCircleDrawing } from './useCircleDrawing';
 import { useLineDrawing } from './useLineDrawing';
 import { usePointDrawing } from './usePointDrawing';
 import { usePolygonDrawing } from './usePolygonDrawing';
 
-export function useDrawing(mapRef: any) {
+export function useDrawing(mapRef: MapContainer) {
   const layersStore = useLayersStore();
 
   // Initialize specialized drawing composables
@@ -39,20 +42,24 @@ export function useDrawing(mapRef: any) {
   };
 
   // Helper to remove element and associated overlays from map
-  const removeElementFromMap = (elementType: string, elementId: string, source: any) => {
-    const feature = source.getFeatureById(elementId);
+  const removeElementFromMap = (
+    elementType: string,
+    elementId: string,
+    source: VectorSource | null | undefined
+  ) => {
+    const feature = source?.getFeatureById(elementId);
     if (!feature) {
       return;
     }
 
-    source.removeFeature(feature);
+    source?.removeFeature(feature);
 
     // For points, also remove the label overlay
     if (elementType === 'point' && mapRef.map?.value) {
       const labelOverlay = mapRef.map.value
         .getOverlays()
         .getArray()
-        .find((o: any) => o.get('id') === `label-${elementId}`);
+        .find((o) => o.get('id') === `label-${elementId}`);
       if (labelOverlay) {
         mapRef.map.value.removeOverlay(labelOverlay);
       }
@@ -82,19 +89,14 @@ export function useDrawing(mapRef: any) {
       case 'lineSegment': {
         const segment = layersStore.lineSegments.find((s) => s.id === elementId);
         if (segment && segment.id) {
-          await redrawLineSegment(segment, elementId, animate);
+          await redrawLineSegment(segment, animate);
         }
         break;
       }
       case 'point': {
         const point = layersStore.points.find((p) => p.id === elementId);
         if (point && point.id) {
-          pointDrawing.redrawPointOnMap(
-            point.id,
-            point.coordinates.lat,
-            point.coordinates.lon,
-            point.color
-          );
+          pointDrawing.redrawPointOnMap(point.id, point.coordinates.lat, point.coordinates.lon);
         }
         break;
       }
@@ -109,7 +111,7 @@ export function useDrawing(mapRef: any) {
   };
 
   // Helper to redraw line segment with optional animation
-  const redrawLineSegment = async (segment: any, elementId: string, animate: boolean) => {
+  const redrawLineSegment = async (segment: LineSegmentElement, animate: boolean) => {
     // Handle parallel lines (horizontal lines at constant latitude)
     if (segment.mode === 'parallel' && segment.longitude !== undefined) {
       lineDrawing.redrawParallelOnMap(segment.id, segment.longitude, segment.color);
@@ -162,7 +164,7 @@ export function useDrawing(mapRef: any) {
       return;
     }
 
-    const feature = source.getFeatureById(elementId);
+    const feature = source?.getFeatureById(elementId);
     const found = !!feature;
 
     if (found && !visible) {
@@ -177,19 +179,19 @@ export function useDrawing(mapRef: any) {
         `intersection-${elementId}`
       );
       if (intersectionFeature && !visible) {
-        mapRef.linesSource.value.removeFeature(intersectionFeature);
+        mapRef.linesSource.value?.removeFeature(intersectionFeature);
       }
     }
   };
 
   // Helper to remove feature by ID from source
-  const removeFeatureById = (source: any, featureId: string) => {
+  const removeFeatureById = (source: VectorSource | null | undefined, featureId: string) => {
     if (!source) {
       return;
     }
     const feature = source.getFeatureById(featureId);
     if (feature) {
-      source.removeFeature(feature);
+      source?.removeFeature(feature);
     }
   };
 
@@ -255,7 +257,7 @@ export function useDrawing(mapRef: any) {
         const labelOverlay = mapRef.map.value
           .getOverlays()
           .getArray()
-          .find((o: any) => o.get('id') === `label-${elementId}`);
+          .find((o) => o.get('id') === `label-${elementId}`);
         if (labelOverlay) {
           mapRef.map.value.removeOverlay(labelOverlay);
         }
@@ -331,7 +333,7 @@ export function useDrawing(mapRef: any) {
 
   // Redraw all elements on map (useful after loading project)
   // eslint-disable-next-line complexity
-  const redrawAllElements = () => {
+  const redrawAllElements = ({ fitBounds = true }: { fitBounds?: boolean } = {}) => {
     // Clear only map layers using VectorSources, not the store (store is already populated)
     mapRef.circlesSource?.value?.clear();
     mapRef.linesSource?.value?.clear();
@@ -390,12 +392,7 @@ export function useDrawing(mapRef: any) {
     // Redraw points (using redraw helper to avoid adding to store twice)
     for (const point of points) {
       if (point.id) {
-        pointDrawing.redrawPointOnMap(
-          point.id,
-          point.coordinates.lat,
-          point.coordinates.lon,
-          point.color
-        );
+        pointDrawing.redrawPointOnMap(point.id, point.coordinates.lat, point.coordinates.lon);
       }
     }
 
@@ -411,7 +408,7 @@ export function useDrawing(mapRef: any) {
     if (
       (circles.length > 0 || lineSegments.length > 0 || points.length > 0 || polygons.length > 0) &&
       mapRef.flyToBoundsWithPanels &&
-      !(mapRef as any).skipAutoFly
+      fitBounds
     ) {
       // Calculate bounds that include all elements
       let minLat = 90,

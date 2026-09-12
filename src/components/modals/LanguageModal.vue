@@ -9,6 +9,7 @@
     <v-card>
       <v-card-title class="d-flex align-center justify-space-between">
         <span>{{ $t('language.languageSettings') }}</span>
+
         <v-btn
           v-if="isLanguageSet"
           icon="mdi-close"
@@ -32,11 +33,13 @@
             <v-card-text class="d-flex align-center justify-space-between">
               <div class="d-flex align-center gap-3">
                 <div class="text-h4">🇬🇧</div>
+
                 <div>
                   <div class="font-weight-medium">{{ $t('language.english') }}</div>
                   <div class="text-caption text-medium-emphasis">English</div>
                 </div>
               </div>
+
               <v-icon v-if="selectedLanguage === 'en'" color="primary" icon="mdi-check-circle" />
             </v-card-text>
           </v-card>
@@ -51,11 +54,13 @@
             <v-card-text class="d-flex align-center justify-space-between">
               <div class="d-flex align-center gap-3">
                 <div class="text-h4">🇫🇷</div>
+
                 <div>
                   <div class="font-weight-medium">{{ $t('language.french') }}</div>
                   <div class="text-caption text-medium-emphasis">Français</div>
                 </div>
               </div>
+
               <v-icon v-if="selectedLanguage === 'fr'" color="primary" icon="mdi-check-circle" />
             </v-card-text>
           </v-card>
@@ -64,6 +69,7 @@
 
       <v-card-actions>
         <v-spacer />
+
         <v-btn
           color="primary"
           :disabled="!selectedLanguage"

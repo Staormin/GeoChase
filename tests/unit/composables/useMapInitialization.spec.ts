@@ -97,13 +97,7 @@ describe('useMapInitialization', () => {
       };
 
       // Create a test project with view data
-      projectsStore.createAndSwitchProject('Test Project', {
-        circles: [],
-        lineSegments: [],
-        points: [],
-        polygons: [],
-        notes: [],
-      });
+      projectsStore.createAndSwitchProject('Test Project');
       projectsStore.updateViewData(mockViewData);
 
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
@@ -114,13 +108,7 @@ describe('useMapInitialization', () => {
     });
 
     it('should initialize map without view data', async () => {
-      projectsStore.createAndSwitchProject('Test Project', {
-        circles: [],
-        lineSegments: [],
-        points: [],
-        polygons: [],
-        notes: [],
-      });
+      projectsStore.createAndSwitchProject('Test Project');
 
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
 
@@ -224,7 +212,7 @@ describe('useMapInitialization', () => {
 
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
 
-      expect(mockMapContainer.skipAutoFly).toBe(false); // Should be reset after redraw
+      expect(mockDrawing.redrawAllElements).toHaveBeenCalledWith({ fitBounds: false });
       expect(mockDrawing.redrawAllElements).toHaveBeenCalled();
     });
 

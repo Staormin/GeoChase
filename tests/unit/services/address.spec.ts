@@ -32,9 +32,11 @@ describe('address service', () => {
       const result = await getReverseGeocodeAddress(48.8566, 2.3522);
 
       expect(fetch).toHaveBeenCalledWith(
-        'https://data.geopf.fr/geocodage/reverse?lon=2.3522&lat=48.8566&limit=1'
+        'https://data.geopf.fr/geocodage/reverse?lon=2.3522&lat=48.8566&limit=1',
+        { signal: expect.any(AbortSignal) }
       );
       expect(result.address).toBe('1 Rue de Rivoli, 75001, Paris');
+      expect(result.city).toBe('Paris');
       expect(result.error).toBeUndefined();
     });
 
@@ -57,6 +59,7 @@ describe('address service', () => {
       const result = await getReverseGeocodeAddress(48.858, 2.2945);
 
       expect(result.address).toBe('Tour Eiffel');
+      expect(result.city).toBeUndefined();
     });
 
     it('should return address with only postcode and city', async () => {
@@ -79,6 +82,7 @@ describe('address service', () => {
       const result = await getReverseGeocodeAddress(48.858, 2.2945);
 
       expect(result.address).toBe('75007, Paris');
+      expect(result.city).toBe('Paris');
     });
 
     it('should return null address when no features found', async () => {
@@ -159,6 +163,51 @@ describe('address service', () => {
 
       expect(result.address).toBeNull();
       expect(result.error).toBe('Unknown error');
+    });
+
+    it.each([
+      null,
+      { features: [null] },
+      { features: [{}] },
+      {
+        features: [{ properties: { name: {}, city: 123, postcode: [] } }],
+      },
+    ])('ignores malformed geocoding responses: %j', async (data) => {
+      vi.mocked(fetch).mockResolvedValueOnce(Response.json(data));
+      expect(await getReverseGeocodeAddress(48.8584, 2.2945)).toEqual({ address: null });
+    });
+
+    it('cancels the request when the caller aborts', async () => {
+      const controller = new AbortController();
+      vi.mocked(fetch).mockImplementationOnce(
+        (_url, options) =>
+          new Promise((_resolve, reject) => {
+            options?.signal?.addEventListener('abort', () => reject(options.signal?.reason));
+          })
+      );
+      const result = getReverseGeocodeAddress(48.8584, 2.2945, controller.signal);
+      controller.abort();
+      expect((await result).address).toBeNull();
+      expect(vi.mocked(fetch).mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+    });
+
+    it('bounds the lookup so an unresponsive service cannot block point creation', async () => {
+      const timeout = new AbortController();
+      const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeout.signal);
+      try {
+        vi.mocked(fetch).mockImplementationOnce(
+          (_url, options) =>
+            new Promise((_resolve, reject) => {
+              options?.signal?.addEventListener('abort', () => reject(options.signal?.reason));
+            })
+        );
+        const result = getReverseGeocodeAddress(48.8584, 2.2945);
+        expect(timeoutSpy).toHaveBeenCalledWith(5000);
+        timeout.abort(new DOMException('Request timed out', 'TimeoutError'));
+        expect((await result).address).toBeNull();
+      } finally {
+        timeoutSpy.mockRestore();
+      }
     });
   });
 });
