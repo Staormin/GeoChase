@@ -93,9 +93,8 @@ export function calculateInverseBearing(
 }
 
 /**
- * Calculate endpoint from start point through intersection point with specified distance
- * Compute endpoint so that the straight line in Web Mercator from start to end passes through the intersection point,
- * while the geodesic distance from start to end equals the provided distance.
+ * Extend the straight map line from start through the intersection point.
+ * distanceKm is measured from the intersection point to the new endpoint.
  */
 export function endpointFromIntersection(
   startLat: number,
@@ -104,100 +103,55 @@ export function endpointFromIntersection(
   intersectLon: number,
   distanceKm: number
 ): LatLon {
-  const D = distanceKm; // km
-
-  // Project to Web Mercator (meters)
-  const startProj = fromLonLat([startLon, startLat]);
-  const P0x = startProj[0]!;
-  const P0y = startProj[1]!;
-  const intersectProj = fromLonLat([intersectLon, intersectLat]);
-  const Pix = intersectProj[0]!;
-  const Piy = intersectProj[1]!;
-
-  let vx = Pix - P0x;
-  let vy = Piy - P0y;
-  let norm = Math.hypot(vx, vy);
-
-  // Fallback direction if start and intersection project to the same point
-  if (norm === 0) {
-    vx = 1; // east
-    vy = 0;
-    norm = 1;
+  if (!Number.isFinite(distanceKm) || distanceKm < 0) {
+    throw new RangeError('Extension distance must be finite and non-negative');
   }
-  const v = { x: vx / norm, y: vy / norm };
+  if (distanceKm === 0) return { lat: intersectLat, lon: intersectLon };
 
-  // s measured in meters along the projection ray from P0
-  const sIntersection = Math.hypot(Pix - P0x, Piy - P0y);
-
-  function endFromS(sMeters: number): LatLon {
-    const x = P0x + sMeters * v.x;
-    const y = P0y + sMeters * v.y;
-    const coords = toLonLat([x, y]);
-    return { lat: coords[1]!, lon: coords[0]! };
+  const start = fromLonLat([startLon, startLat]);
+  const intersection = fromLonLat([intersectLon, intersectLat]);
+  const dx = intersection[0]! - start[0]!;
+  const dy = intersection[1]! - start[1]!;
+  const length = Math.hypot(dx, dy);
+  if (!Number.isFinite(length) || length === 0) {
+    throw new RangeError('Two distinct points are required to define the line direction');
   }
 
-  function f(sMeters: number): number {
-    const end = endFromS(sMeters);
-    return olGetDistance([startLon, startLat], [end.lon, end.lat]) / 1000 - D; // km
+  // Keep start, intersection and endpoint collinear in the map projection.
+  function endpointAt(offset: number): LatLon {
+    const [lon, lat] = toLonLat([
+      intersection[0]! + (offset * dx) / length,
+      intersection[1]! + (offset * dy) / length,
+    ]);
+    return { lat: lat!, lon: lon! };
   }
 
-  // If requested distance is exactly up to the intersection, return it
-  const dStartToInter = olGetDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
-  if (Math.abs(dStartToInter - D) < 1e-6) {
-    return { lat: intersectLat, lon: intersectLon };
+  function distanceAt(offset: number): number {
+    const endpoint = endpointAt(offset);
+    return olGetDistance([intersectLon, intersectLat], [endpoint.lon, endpoint.lat]) / 1000;
   }
 
-  // Bracket the root for s >= sIntersection
-  const sLow = sIntersection;
-  const fLow = f(sLow);
-
-  // If D is smaller than distance to intersection, no solution while keeping the line passing through the point
-  // The UI should prevent this; as a fallback, return the intersection to avoid incorrect direction.
-  if (fLow > 0) {
-    return { lat: intersectLat, lon: intersectLon };
+  // Find a projected offset whose ground distance reaches the requested extension.
+  const maxOffset = 40_000_000;
+  let low = 0;
+  let high = 1000;
+  while (distanceAt(high) < distanceKm && high < maxOffset) {
+    high = Math.min(high * 2, maxOffset);
+  }
+  if (distanceAt(high) < distanceKm) {
+    throw new RangeError('The requested distance cannot be reached in this direction');
   }
 
-  // Increase sHigh until distance exceeds D (f >= 0)
-  let sHigh = sLow + 1000; // start with +1 km in projected meters
-  let fHigh = f(sHigh);
-  const MAX_S = 40_000_000; // ~40,000 km in meters, safe upper cap
-  let iter = 0;
-  while (fHigh < 0 && sHigh < MAX_S && iter < 60) {
-    sHigh *= 2;
-    fHigh = f(sHigh);
-    iter++;
-  }
-
-  // If still not bracketed, clamp to max
-  if (fHigh < 0) {
-    // Fall back to extend along the ray using destination point from current bearing
-    const pEnd = endFromS(sHigh);
-    return { lat: pEnd.lat, lon: pEnd.lon };
-  }
-
-  // Bisection to solve f(s)=0 - always returns within loop
-  let a = sLow,
-    b = sHigh;
-  let _fa = fLow,
-    _fb = fHigh;
-  let i = 0;
-  while (true) {
-    const mid = 0.5 * (a + b);
-    const fm = f(mid);
-    // Converged or max iterations reached - return result
-    if (Math.abs(fm) < 1e-6 || Math.abs(b - a) < 0.01 || i >= 59) {
-      const end = endFromS(mid);
-      return { lat: end.lat, lon: end.lon };
+  for (let iteration = 0; iteration < 60; iteration++) {
+    const mid = (low + high) / 2;
+    const distance = distanceAt(mid);
+    if (Math.abs(distance - distanceKm) < 1e-6 || high - low < 0.01) {
+      return endpointAt(mid);
     }
-    if (fm > 0) {
-      b = mid;
-      _fb = fm;
-    } else {
-      a = mid;
-      _fa = fm;
-    }
-    i++;
+    if (distance > distanceKm) high = mid;
+    else low = mid;
   }
+  return endpointAt((low + high) / 2);
 }
 
 /**

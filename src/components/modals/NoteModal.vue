@@ -7,6 +7,7 @@
   >
     <v-card>
       <v-card-title>{{ isEditing ? $t('note.editTitle') : $t('note.title') }}</v-card-title>
+
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
@@ -62,8 +63,10 @@
         <v-btn v-if="isEditing" color="error" data-testid="delete-note-btn" @click="handleDelete">
           {{ $t('common.delete') }}
         </v-btn>
+
         <v-spacer />
         <v-btn data-testid="cancel-note-btn" @click="closeModal">{{ $t('common.cancel') }}</v-btn>
+
         <v-btn color="primary" data-testid="submit-note-btn" @click="submitForm">
           {{ isEditing ? $t('common.save') : $t('common.add') }}
         </v-btn>
@@ -73,11 +76,11 @@
 </template>
 
 <script lang="ts" setup>
-import type { NoteElement } from '@/services/storage';
-import type { Ref } from 'vue';
+import type { NoteElement } from '@/types/project';
 import { v4 as uuidv4 } from 'uuid';
-import { computed, inject, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useNoteTooltipsContext } from '@/composables/mapContext';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -85,13 +88,7 @@ const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const { t } = useI18n();
 
-// Inject note tooltips composable (provided as a ref)
-const noteTooltipsRef = inject<
-  Ref<{
-    refreshNoteTooltip: (noteId: string) => void;
-    updateNoteTooltips: () => void;
-  } | null>
->('noteTooltips');
+const noteTooltipsRef = useNoteTooltipsContext();
 
 const form = ref({
   title: '',
@@ -191,7 +188,7 @@ function submitForm() {
     uiStore.stopEditing();
 
     // Refresh the tooltip on the map after Vue updates
-    const noteTooltips = noteTooltipsRef?.value;
+    const noteTooltips = noteTooltipsRef.value;
     if (noteTooltips && noteData.id) {
       nextTick(() => {
         noteTooltips.refreshNoteTooltip(noteData.id);
@@ -202,7 +199,7 @@ function submitForm() {
     uiStore.addToast(t('note.created'), 'success');
 
     // Update tooltips to show the new note after Vue updates
-    const noteTooltips = noteTooltipsRef?.value;
+    const noteTooltips = noteTooltipsRef.value;
     if (noteTooltips) {
       nextTick(() => {
         noteTooltips.updateNoteTooltips();
@@ -226,7 +223,7 @@ function handleDelete() {
     uiStore.stopEditing();
 
     // Update tooltips to remove the deleted note
-    const noteTooltips = noteTooltipsRef?.value;
+    const noteTooltips = noteTooltipsRef.value;
     if (noteTooltips) {
       noteTooltips.updateNoteTooltips();
     }

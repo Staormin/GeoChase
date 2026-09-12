@@ -3,7 +3,8 @@
  * Uses OpenLayers Overlay API to attach permanent tooltips to existing features
  */
 
-import type { NoteElement } from '@/services/storage';
+import type { MapContainer } from '@/composables/useMap';
+import type { NoteElement } from '@/types/project';
 import type { Feature } from 'ol';
 import type { Geometry } from 'ol/geom';
 import { getCenter } from 'ol/extent';
@@ -11,21 +12,13 @@ import Overlay from 'ol/Overlay';
 import { watch } from 'vue';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
+import { debounce } from '@/utils/debounce';
 
 const MIN_ZOOM_FOR_NOTES = 12; // Show notes only at zoom level 12 or higher
 
 // Simple debounce helper for performance optimization
-function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-  return ((...args: Parameters<T>) => {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    timeout = setTimeout(() => func(...args), wait);
-  }) as T;
-}
 
-export function useNoteTooltips(mapRef: any) {
+export function useNoteTooltips(mapRef: MapContainer) {
   const layersStore = useLayersStore();
   const uiStore = useUIStore();
 
@@ -249,24 +242,18 @@ export function useNoteTooltips(mapRef: any) {
   // Debounced version of updateNoteTooltips for performance
   const debouncedUpdateNoteTooltips = debounce(updateNoteTooltips, 150);
 
-  // Watch for zoom changes to show/hide tooltips based on zoom level
-  // Debounced to avoid excessive updates during zoom animations
-  if (mapRef.map?.value) {
-    const view = mapRef.map.value.getView();
-    view.on('change:resolution', () => {
-      debouncedUpdateNoteTooltips();
-    });
-  }
+  const view = mapRef.map.value?.getView();
+  view?.on('change:resolution', debouncedUpdateNoteTooltips);
+  const stopNotesWatch = watch(() => layersStore.notes, debouncedUpdateNoteTooltips, {
+    deep: true,
+  });
 
-  // Watch for changes in notes (add/edit/delete)
-  // Debounced to avoid excessive updates when multiple notes change
-  watch(
-    () => layersStore.notes,
-    () => {
-      debouncedUpdateNoteTooltips();
-    },
-    { deep: true }
-  );
+  function dispose() {
+    stopNotesWatch();
+    debouncedUpdateNoteTooltips.cancel();
+    view?.un('change:resolution', debouncedUpdateNoteTooltips);
+    clearAllTooltips();
+  }
 
   // Initial update
   if (mapRef.map?.value) {
@@ -274,6 +261,7 @@ export function useNoteTooltips(mapRef: any) {
   }
 
   return {
+    dispose,
     updateNoteTooltips,
     refreshNoteTooltip,
     clearAllTooltips,

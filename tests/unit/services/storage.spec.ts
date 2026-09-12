@@ -1,3 +1,4 @@
+import type { ProjectData, ProjectLayerData } from '@/types/project';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearAllProjects,
@@ -7,8 +8,6 @@ import {
   getAllProjects,
   getProject,
   importProjectFromJSON,
-  type ProjectData,
-  type ProjectLayerData,
   saveProject,
   saveProjectsToStorage,
   updateProject,

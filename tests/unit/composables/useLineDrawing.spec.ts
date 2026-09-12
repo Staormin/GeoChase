@@ -593,7 +593,7 @@ describe('useLineDrawing', () => {
       expect(mockMapRef.linesSource.value.addFeature).toHaveBeenCalled();
     });
 
-    it('should update mapElementId in store if segment exists', () => {
+    it('should preserve the element ID in store if segment exists', () => {
       layersStore.addLineSegment({
         id: 'test-id',
         name: 'Test Line',
@@ -607,7 +607,7 @@ describe('useLineDrawing', () => {
 
       redrawLineSegmentOnMap('test-id', 48.8566, 2.3522, 48.86, 2.36);
 
-      expect(layersStore.lineSegments[0].mapElementId).toBe('test-id');
+      expect(layersStore.lineSegments[0].id).toBe('test-id');
     });
 
     it('should add intersection marker in intersection mode', () => {
@@ -682,7 +682,7 @@ describe('useLineDrawing', () => {
       expect(mockMapRef.linesSource.value.addFeature).toHaveBeenCalled();
     });
 
-    it('should update mapElementId in store if segment exists', () => {
+    it('should preserve the element ID in store if segment exists', () => {
       layersStore.addLineSegment({
         id: 'test-id',
         name: 'Test Parallel',
@@ -695,7 +695,7 @@ describe('useLineDrawing', () => {
 
       redrawParallelOnMap('test-id', 45);
 
-      expect(layersStore.lineSegments[0].mapElementId).toBe('test-id');
+      expect(layersStore.lineSegments[0].id).toBe('test-id');
     });
   });
 
@@ -759,7 +759,7 @@ describe('useLineDrawing', () => {
 
       await promise;
 
-      expect(layersStore.lineSegments[0].mapElementId).toBe('test-id');
+      expect(layersStore.lineSegments[0].id).toBe('test-id');
       expect(mockMapRef.linesSource.value.changed).toHaveBeenCalled();
     });
 

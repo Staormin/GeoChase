@@ -1,4 +1,4 @@
-import { os } from 'node:os';
+import os from 'node:os';
 import { defineConfig, devices } from '@playwright/test';
 
 const cpus = os.availableParallelism?.() ?? os.cpus().length;

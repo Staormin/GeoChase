@@ -2,6 +2,7 @@
   <div v-if="uiStore.viewCaptureState.isCapturing" class="view-capture-helper">
     <div class="helper-content">
       <v-icon size="24">mdi-camera</v-icon>
+
       <div class="helper-text">
         <div class="helper-title">
           {{
@@ -10,9 +11,11 @@
               : $t('animation.setEndView')
           }}
         </div>
+
         <div class="helper-instructions">
           {{ $t('animation.panAndZoomInstruction') }}
         </div>
+
         <div class="helper-cancel">{{ $t('animation.pressEscToCancel') }}</div>
       </div>
     </div>

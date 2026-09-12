@@ -2,7 +2,7 @@
  * Unit tests for point reference tracking in line segments
  */
 
-import type { LineSegmentElement, PointElement } from '@/services/storage';
+import type { LineSegmentElement, PointElement } from '@/types/project';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useLayersStore } from '@/stores/layers';
@@ -39,7 +39,7 @@ describe('LayersStore - Point Reference Tracking', () => {
       layersStore.addPoint(point);
 
       // Within default tolerance (0.0001)
-      const found = layersStore.findPointAtCoordinates(48.856_605, 2.352_205);
+      const found = layersStore.findPointAtCoordinates(48.856605, 2.352205);
       expect(found).toBeDefined();
       expect(found?.id).toBe('point-1');
     });
@@ -458,7 +458,7 @@ describe('LayersStore - Point Reference Tracking', () => {
       };
 
       // New line format with point references
-      const newLine: LineSegmentElement = {
+      const referencedLine: LineSegmentElement = {
         id: 'line-1',
         name: 'New Line',
         center: { lat: 48.8566, lon: 2.3522 },
@@ -471,7 +471,7 @@ describe('LayersStore - Point Reference Tracking', () => {
 
       layersStore.loadLayers({
         circles: [],
-        lineSegments: [newLine],
+        lineSegments: [referencedLine],
         points: [point1, point2],
         polygons: [],
         notes: [],

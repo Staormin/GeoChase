@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { nextTick, reactive } from 'vue';
+import { nextTick, reactive, ref } from 'vue';
 import { useMap } from '@/composables/useMap';
 import { DEFAULT_MAP_ZOOM } from '@/services/geoportail';
 import { olProjMockConfig } from '../setup';
@@ -1066,6 +1066,42 @@ describe('useMap', () => {
   });
 
   describe('flyToBoundsWithPanels', () => {
+    it('uses current panel sizes and leaves room for the extent on narrow screens', async () => {
+      mockUiStore.topBarOpen = true;
+      mockUiStore.sidebarOpen = true;
+      const sidebarWidth = ref(640);
+      const topBarHeight = ref(104);
+      const { initMap, map, flyToBoundsWithPanels } = useMap('map-container', mockUiStore, {
+        sidebarWidth,
+        topBarHeight,
+      });
+      await initMap();
+      const olMap = map.value!;
+      vi.mocked(olMap.getSize).mockReturnValue([1366, 768]);
+      const view = olMap.getView();
+      vi.mocked(olMap.getView).mockReturnValue(view);
+      const fit = vi.spyOn(view, 'fit');
+      const bounds: [[number, number], [number, number]] = [
+        [48.8, 2.3],
+        [48.9, 2.4],
+      ];
+
+      flyToBoundsWithPanels(bounds);
+      expect(fit).toHaveBeenLastCalledWith(expect.any(Array), {
+        padding: [154, 50, 50, 690],
+        duration: 1500,
+      });
+
+      vi.mocked(olMap.getSize).mockReturnValue([390, 844]);
+      sidebarWidth.value = 334;
+      topBarHeight.value = 244;
+      flyToBoundsWithPanels(bounds);
+      expect(fit).toHaveBeenLastCalledWith(expect.any(Array), {
+        padding: [294, 14, 50, 348],
+        duration: 1500,
+      });
+    });
+
     it('should fly to bounds without panel adjustments when uiStore not provided', async () => {
       const { initMap, flyToBoundsWithPanels } = useMap('map-container');
 

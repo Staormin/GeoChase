@@ -1,10 +1,11 @@
+/**
+ * Composable for handling view capture clicks during animation setup
+ */
+
 import type { useMap } from '@/composables/useMap';
 import { watch } from 'vue';
 import { useUIStore } from '@/stores/ui';
 
-/**
- * Composable for handling view capture clicks during animation setup
- */
 export function useViewCapture(mapContainer: ReturnType<typeof useMap>) {
   const uiStore = useUIStore();
 

@@ -38,6 +38,7 @@
             {{ includedTypes[index] }}
           </v-chip>
         </template>
+
         <span v-else-if="index === 3" class="text-caption text-medium-emphasis ml-1">
           {{ `+${includedTypes.length - 3}` }} {{ $t('common.more') }}
         </span>
@@ -70,6 +71,7 @@
             {{ excludedTypes[index] }}
           </v-chip>
         </template>
+
         <span v-else-if="index === 3" class="text-caption text-medium-emphasis ml-1">
           {{ `+${excludedTypes.length - 3}` }} {{ $t('common.more') }}
         </span>
@@ -80,10 +82,12 @@
     <div>
       <div class="d-flex align-center justify-space-between mb-2">
         <label class="text-subtitle-2">{{ $t('search.searchDistance') }}</label>
+
         <span class="text-subtitle-2 font-weight-bold text-primary"
           >{{ liveDisplayDistance.toFixed(1) }}{{ $t('common.kmUnit') }}</span
         >
       </div>
+
       <v-slider
         color="primary"
         :disabled="isSearching"
@@ -103,11 +107,13 @@
     <div>
       <div class="d-flex align-center justify-space-between mb-2">
         <label class="text-subtitle-2">{{ $t('search.altitudeRange') }}</label>
+
         <span class="text-subtitle-2 font-weight-bold text-primary">
           {{ liveAltitudeRange[0].toFixed(0) }}{{ $t('common.mUnit') }} -
           {{ liveAltitudeRange[1].toFixed(0) }}{{ $t('common.mUnit') }}
         </span>
       </div>
+
       <v-range-slider
         color="primary"
         :disabled="isSearching"

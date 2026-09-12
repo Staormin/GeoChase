@@ -2,7 +2,10 @@
  * Composable for OpenLayers map management
  */
 
+import type { useUIStore } from '@/stores/ui';
+import type { MapBrowserEvent } from 'ol';
 import type BaseLayer from 'ol/layer/Base';
+import type { Ref, WatchStopHandle } from 'vue';
 import TileLayer from 'ol/layer/Tile';
 import VectorLayer from 'ol/layer/Vector';
 import Map from 'ol/Map';
@@ -10,30 +13,41 @@ import { fromLonLat, toLonLat } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 import XYZ from 'ol/source/XYZ';
 import View from 'ol/View';
-import { nextTick, ref, watch } from 'vue';
+import { nextTick, ref, shallowRef, watch } from 'vue';
 import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, getMapTilesUrl } from '@/services/geoportail';
 
 export type MapContainer = ReturnType<typeof useMap>;
 
-export function useMap(containerId: string, uiStore?: any) {
-  const map = ref<Map | null>(null);
+interface MapPanelSizes {
+  sidebarWidth: Readonly<Ref<number>>;
+  topBarHeight: Readonly<Ref<number>>;
+}
+
+export function useMap(
+  containerId: string,
+  uiStore?: ReturnType<typeof useUIStore>,
+  panelSizes?: MapPanelSizes
+) {
+  const map = shallowRef<Map | null>(null);
   const isMapInitialized = ref(false);
-  const mapLayers = ref<BaseLayer[]>([]);
+  const mapLayers = shallowRef<BaseLayer[]>([]);
 
   // Vector layers for organized layer management
-  const circlesLayer = ref<VectorLayer<any> | null>(null);
-  const linesLayer = ref<VectorLayer<any> | null>(null);
-  const pointsLayer = ref<VectorLayer<any> | null>(null);
-  const polygonsLayer = ref<VectorLayer<any> | null>(null);
+  const circlesLayer = shallowRef<VectorLayer<VectorSource> | null>(null);
+  const linesLayer = shallowRef<VectorLayer<VectorSource> | null>(null);
+  const pointsLayer = shallowRef<VectorLayer<VectorSource> | null>(null);
+  const polygonsLayer = shallowRef<VectorLayer<VectorSource> | null>(null);
 
   // Vector sources for adding/removing features
-  const circlesSource = ref<VectorSource<any> | null>(null);
-  const linesSource = ref<VectorSource<any> | null>(null);
-  const pointsSource = ref<VectorSource<any> | null>(null);
-  const polygonsSource = ref<VectorSource<any> | null>(null);
+  const circlesSource = shallowRef<VectorSource | null>(null);
+  const linesSource = shallowRef<VectorSource | null>(null);
+  const pointsSource = shallowRef<VectorSource | null>(null);
+  const polygonsSource = shallowRef<VectorSource | null>(null);
 
   // Tile source for map provider switching
-  const tileSource = ref<XYZ | null>(null);
+  const tileSource = shallowRef<XYZ | null>(null);
+
+  let stopProviderWatch: WatchStopHandle | undefined;
 
   // Store initial view data for map initialization
   let initialViewData: { lat: number; lon: number; zoom: number } | null = null;
@@ -49,44 +63,44 @@ export function useMap(containerId: string, uiStore?: any) {
       await nextTick();
 
       // Create vector sources
-      circlesSource.value = new VectorSource() as any;
-      linesSource.value = new VectorSource() as any;
-      pointsSource.value = new VectorSource() as any;
-      polygonsSource.value = new VectorSource() as any;
+      circlesSource.value = new VectorSource();
+      linesSource.value = new VectorSource();
+      pointsSource.value = new VectorSource();
+      polygonsSource.value = new VectorSource();
 
       // Create vector layers with renderBuffer for better hit detection
       // renderBuffer extends the rendering area to include features just outside the viewport
       circlesLayer.value = new VectorLayer({
-        source: circlesSource.value as any,
+        source: circlesSource.value,
         className: 'circles-layer',
         renderBuffer: 200, // Render features 200px outside viewport for smooth panning
         updateWhileAnimating: true, // Update features during animations for smooth appearance
         updateWhileInteracting: true, // Update features during interactions (pan/zoom)
-      }) as any;
+      });
 
       linesLayer.value = new VectorLayer({
-        source: linesSource.value as any,
+        source: linesSource.value,
         className: 'lines-layer',
         renderBuffer: 200,
         updateWhileAnimating: true,
         updateWhileInteracting: true,
-      }) as any;
+      });
 
       pointsLayer.value = new VectorLayer({
-        source: pointsSource.value as any,
+        source: pointsSource.value,
         className: 'points-layer',
         renderBuffer: 200, // Important for large icons and labels
         updateWhileAnimating: true,
         updateWhileInteracting: true,
-      }) as any;
+      });
 
       polygonsLayer.value = new VectorLayer({
-        source: polygonsSource.value as any,
+        source: polygonsSource.value,
         className: 'polygons-layer',
         renderBuffer: 200,
         updateWhileAnimating: true,
         updateWhileInteracting: true,
-      }) as any;
+      });
 
       // Determine initial map center and zoom
       const initialCenter = initialViewData
@@ -111,13 +125,13 @@ export function useMap(containerId: string, uiStore?: any) {
         layers: [
           new TileLayer({
             preload: 3, // Preload tiles 3 zoom levels ahead for smoother animations
-            source: tileSource.value as any,
+            source: tileSource.value,
           }),
-          circlesLayer.value as any,
-          linesLayer.value as any,
-          pointsLayer.value as any,
-          polygonsLayer.value as any,
-        ] as any,
+          circlesLayer.value,
+          linesLayer.value,
+          pointsLayer.value,
+          polygonsLayer.value,
+        ],
         view: new View({
           center: initialCenter,
           zoom: initialZoom,
@@ -136,11 +150,7 @@ export function useMap(containerId: string, uiStore?: any) {
         const zoom = map.value.getView().getZoom() || 0;
         const labels = document.querySelectorAll('.point-label');
         for (const label of labels) {
-          if (zoom >= 12) {
-            (label as HTMLElement).style.opacity = '1';
-          } else {
-            (label as HTMLElement).style.opacity = '0';
-          }
+          (label as HTMLElement).style.opacity = zoom >= 12 ? '1' : '0';
         }
       };
 
@@ -151,7 +161,7 @@ export function useMap(containerId: string, uiStore?: any) {
 
       // Watch for map provider changes and update tile source
       if (uiStore) {
-        watch(
+        stopProviderWatch = watch(
           () => uiStore.mapProvider,
           (newProvider) => {
             // tileSource is always set at this point (created before watcher registration)
@@ -176,6 +186,8 @@ export function useMap(containerId: string, uiStore?: any) {
   };
 
   const destroyMap = () => {
+    stopProviderWatch?.();
+    stopProviderWatch = undefined;
     if (map.value) {
       // Clear all overlays (point labels, note tooltips, etc.)
       const overlays = map.value.getOverlays().getArray().slice(); // Clone array to avoid mutation during iteration
@@ -209,7 +221,7 @@ export function useMap(containerId: string, uiStore?: any) {
   const addLayer = (layer: BaseLayer): BaseLayer => {
     if (map.value && layer) {
       map.value.addLayer(layer);
-      mapLayers.value.push(layer);
+      mapLayers.value = [...mapLayers.value, layer];
     }
     return layer;
   };
@@ -231,7 +243,7 @@ export function useMap(containerId: string, uiStore?: any) {
     // Clear tracked layers
     for (const layer of mapLayers.value) {
       if (map.value) {
-        map.value.removeLayer(layer as any);
+        map.value.removeLayer(layer);
       }
     }
     mapLayers.value = [];
@@ -379,23 +391,32 @@ export function useMap(containerId: string, uiStore?: any) {
 
     // Default padding
     let paddingTop = 50;
-    const paddingRight = 50;
-    const paddingBottom = 50;
+    let paddingRight = 50;
+    let paddingBottom = 50;
     let paddingLeft = 50;
 
     // Account for open panels (default: true)
     const shouldAccountForPanels = options?.accountForPanels !== false;
 
     if (shouldAccountForPanels && uiStore) {
-      // Top bar (64px high)
       if (uiStore.topBarOpen) {
-        paddingTop = 64 + 50; // Top bar height + extra padding
+        paddingTop += panelSizes?.topBarHeight.value ?? 64;
       }
 
-      // Left sidebar (640px wide)
       if (uiStore.sidebarOpen) {
-        paddingLeft = 640 + 50; // Sidebar width + extra padding
+        paddingLeft += panelSizes?.sidebarWidth.value ?? 640;
       }
+    }
+
+    // Reduce margins when panels leave only a narrow strip of map visible.
+    const size = map.value.getSize();
+    if (size?.[0] && size[1]) {
+      const leftInset = Math.min(paddingLeft - 50, Math.max(0, size[0] - 1));
+      const topInset = Math.min(paddingTop - 50, Math.max(0, size[1] - 1));
+      paddingRight = Math.min(50, (size[0] - leftInset) / 4);
+      paddingBottom = Math.min(50, (size[1] - topInset) / 4);
+      paddingLeft = leftInset + paddingRight;
+      paddingTop = topInset + paddingBottom;
     }
 
     map.value.getView().fit(extent, {
@@ -446,7 +467,7 @@ export function useMap(containerId: string, uiStore?: any) {
     }
 
     // Calculate the shift needed for sidebar (horizontal)
-    const sidebarWidth = 640;
+    const sidebarWidth = panelSizes?.sidebarWidth.value ?? 640;
     let offsetPixelsX = 0;
 
     if (previousSidebarState !== undefined && newSidebarState !== undefined) {
@@ -464,7 +485,7 @@ export function useMap(containerId: string, uiStore?: any) {
     }
 
     // Calculate the shift needed for top bar (vertical)
-    const topBarHeight = 64;
+    const topBarHeight = panelSizes?.topBarHeight.value ?? 64;
     let offsetPixelsY = 0;
 
     if (previousTopBarState !== undefined && newTopBarState !== undefined) {
@@ -500,7 +521,7 @@ export function useMap(containerId: string, uiStore?: any) {
       return () => {};
     }
 
-    const handler = (event: any) => {
+    const handler = (event: MapBrowserEvent) => {
       const coordinate = map.value?.getCoordinateFromPixel(event.pixel);
       if (coordinate) {
         const lonLat = toLonLat(coordinate);
@@ -602,7 +623,7 @@ export function useMap(containerId: string, uiStore?: any) {
               const transform = htmlCanvas.style.transform;
 
               // Get canvas position
-              const matrix = transform?.match(/matrix.*\((.+)\)/);
+              const matrix = transform?.match(/^matrix(?:3d)?\(([^)]+)\)$/);
               if (matrix && matrix[1]) {
                 const values = matrix[1].split(', ');
                 const x = Number.parseFloat(values[4] || '0');

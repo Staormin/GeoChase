@@ -140,7 +140,7 @@ test.describe('Intersection Line', () => {
       await page.locator('.v-select__content .v-list-item').nth(1).click();
       await page.waitForTimeout(300);
 
-      // Set distance (must be >= distance to intersection point)
+      // Extend 500 km beyond the selected intersection point.
       const distanceInput = dialog.locator('input[type="number"]').first();
       await distanceInput.fill('500');
       await page.waitForTimeout(300);

@@ -7,6 +7,7 @@
   >
     <v-card>
       <v-card-title>{{ $t('project.loadProject') }}</v-card-title>
+
       <v-card-text>
         <div v-if="projectsStore.projectCount === 0" class="text-center py-8">
           <p class="text-medium-emphasis">{{ $t('sidebar.noProjects') }}</p>
@@ -24,6 +25,7 @@
                 <div class="font-weight-medium" :data-testid="`project-name-${project.id}`">
                   {{ project.name }}
                 </div>
+
                 <div class="text-caption text-medium-emphasis">
                   {{ $t('layers.circles') }}: {{ project.data.circles?.length || 0 }} |
                   {{ $t('layers.lines') }}: {{ project.data.lineSegments?.length || 0 }} |
@@ -33,6 +35,7 @@
                     | {{ $t('layers.polygons') }}: {{ project.data.polygons.length }}
                   </span>
                 </div>
+
                 <div v-if="project.updatedAt" class="text-caption text-disabled">
                   {{ new Date(project.updatedAt).toLocaleString() }}
                 </div>
@@ -48,6 +51,7 @@
                   icon="mdi-folder-open"
                   @click="loadProject(project.id)"
                 />
+
                 <v-btn
                   v-if="project.id"
                   color="error"
@@ -63,6 +67,7 @@
 
       <v-card-actions>
         <v-spacer />
+
         <v-btn data-testid="close-load-modal-btn" text @click="closeModal">{{
           $t('common.close')
         }}</v-btn>
@@ -72,8 +77,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDrawingContext, useMapContext, useNoteTooltipsContext } from '@/composables/mapContext';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
@@ -81,9 +87,9 @@ import { useUIStore } from '@/stores/ui';
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const projectsStore = useProjectsStore();
-const mapContainer = inject('mapContainer') as any;
-const drawing = inject('drawing') as any;
-const noteTooltipsRef = inject('noteTooltips') as any;
+const mapContainer = useMapContext();
+const drawing = useDrawingContext();
+const noteTooltipsRef = useNoteTooltipsContext();
 const { t } = useI18n();
 
 const isOpen = computed({
@@ -99,6 +105,8 @@ function loadProject(projectId: string) {
   const project = projectsStore.projects.find((p) => p.id === projectId);
   if (project) {
     try {
+      projectsStore.autoSaveActiveProject(layersStore.exportLayers());
+
       // Clear note tooltips before clearing layers
       const noteTooltips = noteTooltipsRef?.value;
       if (noteTooltips) {
@@ -112,7 +120,7 @@ function loadProject(projectId: string) {
       // Load new layers from project (including migration of savedCoordinates to points)
       layersStore.loadLayers({
         ...project.data,
-        savedCoordinates: (project.data as any).savedCoordinates || [],
+        savedCoordinates: project.data.savedCoordinates || [],
       });
 
       // Redraw on map

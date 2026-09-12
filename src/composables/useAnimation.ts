@@ -1,3 +1,7 @@
+/**
+ * Composable for animation sequence logic
+ */
+
 import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
 import { inAndOut as easeInAndOut } from 'ol/easing';
@@ -6,9 +10,6 @@ import { type Ref, watch } from 'vue';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
-/**
- * Composable for animation sequence logic
- */
 export function useAnimation(
   mapContainer: ReturnType<typeof useMap>,
   drawing: ReturnType<typeof useDrawing>,
@@ -38,7 +39,10 @@ export function useAnimation(
     });
   }
 
-  function navigateToElement(element: any, onComplete?: () => void) {
+  function navigateToElement(
+    element: ReturnType<typeof getAllElementsSorted>[number],
+    onComplete?: () => void
+  ) {
     if (!mapContainer.map?.value) {
       onComplete?.();
       return;
@@ -61,8 +65,8 @@ export function useAnimation(
       }
       case 'lineSegment': {
         if (element.mode === 'parallel' && element.longitude !== undefined) {
-          lat = 0;
-          lon = element.longitude;
+          lat = element.longitude;
+          lon = 0;
           zoom = 6;
         } else {
           lat = element.center.lat;
@@ -88,13 +92,21 @@ export function useAnimation(
         break;
       }
       case 'polygon': {
-        const sumLat = element.points.reduce((sum: number, p: any) => sum + p.lat, 0);
-        const sumLon = element.points.reduce((sum: number, p: any) => sum + p.lon, 0);
-        lat = sumLat / element.points.length;
-        lon = sumLon / element.points.length;
+        const points = element.pointIds.flatMap((id) => {
+          const point = layersStore.points.find((p) => p.id === id);
+          return point ? [point.coordinates] : [];
+        });
+        if (points.length < 3) {
+          onComplete?.();
+          return;
+        }
+        const sumLat = points.reduce((sum, p) => sum + p.lat, 0);
+        const sumLon = points.reduce((sum, p) => sum + p.lon, 0);
+        lat = sumLat / points.length;
+        lon = sumLon / points.length;
 
-        const lats = element.points.map((p: any) => p.lat);
-        const lons = element.points.map((p: any) => p.lon);
+        const lats = points.map((p) => p.lat);
+        const lons = points.map((p) => p.lon);
         const minLat = Math.min(...lats);
         const maxLat = Math.max(...lats);
         const minLon = Math.min(...lons);

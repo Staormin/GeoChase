@@ -2,7 +2,8 @@
  * Composable for drawing and managing line segments on the map
  */
 
-import type { LineSegmentElement } from '@/services/storage';
+import type { MapContainer } from '@/composables/useMap';
+import type { LineSegmentElement } from '@/types/project';
 import { Feature } from 'ol';
 import { LineString, Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -13,7 +14,7 @@ import { usePointDrawing } from './usePointDrawing';
 
 const DEFAULT_COLOR = '#000000';
 
-export function useLineDrawing(mapRef: any) {
+export function useLineDrawing(mapRef: MapContainer) {
   const layersStore = useLayersStore();
   const pointDrawing = usePointDrawing(mapRef);
 
@@ -94,12 +95,6 @@ export function useLineDrawing(mapRef: any) {
             mapRef.linesSource.value.changed();
           }
 
-          // Animation complete - store final feature
-          const segment = layersStore.lineSegments.find((s) => s.id === lineId);
-          if (segment) {
-            segment.mapElementId = lineId;
-          }
-
           // For intersection mode, show the intersection point marker
           if (
             mode === 'intersection' &&
@@ -176,12 +171,6 @@ export function useLineDrawing(mapRef: any) {
 
     mapRef.linesSource.value.addFeature(feature);
 
-    // Update the line segment element's feature reference in the store
-    const segment = layersStore.lineSegments.find((s) => s.id === lineId);
-    if (segment) {
-      segment.mapElementId = lineId;
-    }
-
     // For intersection mode, show the intersection point marker
     if (mode === 'intersection' && intersectLat && intersectLon) {
       const markerGeometry = new Point(fromLonLat([intersectLon, intersectLat]));
@@ -235,12 +224,6 @@ export function useLineDrawing(mapRef: any) {
     );
 
     mapRef.linesSource.value.addFeature(feature);
-
-    // Update the line segment element's feature reference in the store
-    const segment = layersStore.lineSegments.find((s) => s.id === lineId);
-    if (segment) {
-      segment.mapElementId = lineId;
-    }
   };
 
   // Line segment drawing
@@ -298,10 +281,6 @@ export function useLineDrawing(mapRef: any) {
         }),
       })
     );
-
-    // Store feature ID
-    lineElement.mapElementId = lineId;
-    layersStore.storeMapElementId('lineSegment', lineId, lineId);
 
     // Add to store
     layersStore.addLineSegment(lineElement);
@@ -387,7 +366,7 @@ export function useLineDrawing(mapRef: any) {
     intersectLon?: number,
     intersectDistance?: number
   ) => {
-    if (!mapRef.map?.value || !lineId) {
+    if (!mapRef.map.value || !mapRef.linesSource.value || !lineId) {
       return;
     }
 
@@ -501,10 +480,6 @@ export function useLineDrawing(mapRef: any) {
       })
     );
 
-    // Store feature ID
-    lineElement.mapElementId = lineId;
-    layersStore.storeMapElementId('lineSegment', lineId, lineId);
-
     // Add to store
     layersStore.addLineSegment(lineElement);
 
@@ -528,7 +503,7 @@ export function useLineDrawing(mapRef: any) {
 
   // Update existing parallel
   const updateParallel = (lineId: string, latitude: number, name: string) => {
-    if (!mapRef.map?.value || !lineId) {
+    if (!mapRef.map.value || !mapRef.linesSource.value || !lineId) {
       return;
     }
 

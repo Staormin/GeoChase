@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { shallowRef } from 'vue';
 import { createSearchZoneLayer, removeSearchZoneLayer } from '@/services/searchZone';
 
 // Mock turf
@@ -85,7 +86,7 @@ describe('searchZone service', () => {
     };
 
     mockMapContainer = {
-      map: { value: mockMap },
+      map: shallowRef(mockMap),
     };
   });
 

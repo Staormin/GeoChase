@@ -8,6 +8,7 @@
   >
     <v-card>
       <v-card-title>{{ $t('modals.addPointOnSegment.title') }}</v-card-title>
+
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
@@ -40,6 +41,7 @@
               type="number"
               variant="outlined"
             />
+
             <v-btn class="mt-1" color="secondary" @click="calculateMidpoint">
               {{ $t('modals.addPointOnSegment.midpoint') }}
             </v-btn>
@@ -50,6 +52,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn text @click="closeModal">{{ $t('common.cancel') }}</v-btn>
+
         <v-btn color="primary" @click="submitForm">{{
           $t('modals.addPointOnSegment.addPoint')
         }}</v-btn>
@@ -59,10 +62,12 @@
 </template>
 
 <script lang="ts" setup>
+import type { LineSegmentElement } from '@/types/project';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { getDistance } from 'ol/sphere';
-import { computed, inject, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDrawingContext } from '@/composables/mapContext';
 import { destinationPoint } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -70,7 +75,7 @@ import { useUIStore } from '@/stores/ui';
 const { t } = useI18n();
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
-const drawing = inject('drawing') as any;
+const drawing = useDrawingContext();
 
 const distanceFromOptions = computed(() => [
   { title: t('modals.addPointOnSegment.start'), value: 'start' },
@@ -94,12 +99,13 @@ const isOpen = computed({
 
 const selectedSegmentId = computed(() => uiStore.selectedSegmentForPointCreation);
 
-function getSegmentEndpoint(segment: any) {
+function getSegmentEndpoint(segment: LineSegmentElement) {
   switch (segment.mode) {
     case 'coordinate': {
       return segment.endpoint;
     }
     case 'azimuth': {
+      if (segment.distance === undefined || segment.azimuth === undefined) return null;
       return destinationPoint(
         segment.center.lat,
         segment.center.lon,

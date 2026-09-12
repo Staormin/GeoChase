@@ -2,7 +2,8 @@
  * Composable for drawing and managing polygons on the map
  */
 
-import type { PolygonElement } from '@/services/storage';
+import type { MapContainer } from '@/composables/useMap';
+import type { PolygonElement } from '@/types/project';
 import { Feature } from 'ol';
 import { Polygon } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -10,7 +11,7 @@ import { Fill, Stroke, Style } from 'ol/style';
 import { v4 as uuidv4 } from 'uuid';
 import { useLayersStore } from '@/stores/layers';
 
-export function usePolygonDrawing(mapRef: any) {
+export function usePolygonDrawing(mapRef: MapContainer) {
   const layersStore = useLayersStore();
 
   const generateId = () => uuidv4();
@@ -95,10 +96,6 @@ export function usePolygonDrawing(mapRef: any) {
       })
     );
 
-    // Store feature ID
-    polygonElement.mapElementId = polygonId;
-    layersStore.storeMapElementId('polygon', polygonId, polygonId);
-
     // Add to store
     layersStore.addPolygon(polygonElement);
 
@@ -172,12 +169,6 @@ export function usePolygonDrawing(mapRef: any) {
     );
 
     mapRef.polygonsSource.value.addFeature(feature);
-
-    // Update the polygon element's feature reference in the store
-    const polygonElement = layersStore.polygons.find((p) => p.id === polygonId);
-    if (polygonElement) {
-      polygonElement.mapElementId = polygonId;
-    }
   };
 
   return {

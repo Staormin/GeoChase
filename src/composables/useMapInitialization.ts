@@ -1,3 +1,7 @@
+/**
+ * Composable for map initialization and project loading
+ */
+
 import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
 import type { Ref } from 'vue';
@@ -7,9 +11,6 @@ import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
 
-/**
- * Composable for map initialization and project loading
- */
 export async function useMapInitialization(
   mapContainer: ReturnType<typeof useMap>,
   drawing: ReturnType<typeof useDrawing>,
@@ -58,20 +59,13 @@ export async function useMapInitialization(
             points: activeProject.data.points,
             polygons: activeProject.data.polygons || [],
             notes: activeProject.data.notes || [],
-            savedCoordinates: (activeProject.data as any).savedCoordinates || [],
+            savedCoordinates: activeProject.data.savedCoordinates || [],
           });
 
           // Redraw all elements on the map
           // Skip auto-fly if we have saved view data (will be restored later)
           const hasViewData = activeProject.viewData?.mapView !== undefined;
-          if (hasViewData) {
-            // Store a flag to skip auto-fly in redrawAllElements
-            (mapContainer as any).skipAutoFly = true;
-          }
-          drawing.redrawAllElements();
-          if (hasViewData) {
-            (mapContainer as any).skipAutoFly = false;
-          }
+          drawing.redrawAllElements({ fitBounds: !hasViewData });
         } catch {
           uiStore.addToast(
             `Failed to load project "${activeProject.name}". Some elements may not display correctly.`,

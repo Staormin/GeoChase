@@ -138,7 +138,7 @@ test.describe('Layer Context Menu', () => {
       await page.waitForTimeout(300);
 
       // Should have add note option
-      await expect(page.locator('.v-list-item').filter({ hasText: /Note|note/i })).toBeVisible();
+      await expect(page.locator('.v-list-item').filter({ hasText: /note/i })).toBeVisible();
     });
   });
 
@@ -259,10 +259,7 @@ test.describe('Layer Context Menu', () => {
       await page.waitForTimeout(300);
 
       // Click add note option
-      await page
-        .locator('.v-list-item')
-        .filter({ hasText: /Note|note/i })
-        .click();
+      await page.locator('.v-list-item').filter({ hasText: /note/i }).click();
       await page.waitForTimeout(300);
 
       // Note modal should open

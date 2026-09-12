@@ -1,4 +1,4 @@
-import type { CircleElement, LineSegmentElement } from '@/services/storage';
+import type { CircleElement, LineSegmentElement } from '@/types/project';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNavigation } from '@/composables/useNavigation';
 
@@ -43,8 +43,8 @@ describe('useNavigation', () => {
       expect(navigation.getNavigationMovement(5)).toBe(3200); // 2^6 * 50 = 64 * 50 = 3200
       expect(navigation.getNavigationMovement(10)).toBe(100); // 2^1 * 50 = 2 * 50 = 100
       expect(navigation.getNavigationMovement(15)).toBe(3.125); // 2^-4 * 50 = 0.0625 * 50 = 3.125
-      expect(navigation.getNavigationMovement(18)).toBe(0.390_625); // 2^-7 * 50 = 0.0078125 * 50 = 0.390625
-      expect(navigation.getNavigationMovement(20)).toBe(0.097_656_25); // 2^-9 * 50 = 0.001953125 * 50 = 0.09765625
+      expect(navigation.getNavigationMovement(18)).toBe(0.390625); // 2^-7 * 50 = 0.0078125 * 50 = 0.390625
+      expect(navigation.getNavigationMovement(20)).toBe(0.09765625); // 2^-9 * 50 = 0.001953125 * 50 = 0.09765625
     });
 
     it('should have minimum movement of 0.01km', () => {

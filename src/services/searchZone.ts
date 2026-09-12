@@ -5,11 +5,16 @@
 
 import type { Feature } from 'ol';
 import type { Geometry } from 'ol/geom';
+import type Map from 'ol/Map';
+import type { Ref } from 'vue';
 import * as turf from '@turf/turf';
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
+import { unref } from 'vue';
+
+type SearchMap = { map?: Map | Ref<Map | null> | null };
 
 /**
  * Create a search zone layer that displays a buffered area around a path
@@ -19,12 +24,12 @@ import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
  * @returns OpenLayers VectorLayer containing the search zone visualization
  */
 export function createSearchZoneLayer(
-  mapContainer: any,
+  mapContainer: SearchMap,
   pathPoints: Array<{ lat: number; lon: number }>,
   bufferDistanceKm: number
 ): VectorLayer<VectorSource> {
   // Get the actual map instance (handle both ref and direct access)
-  const mapInstance = mapContainer.map?.value || mapContainer.map;
+  const mapInstance = unref(mapContainer.map);
 
   // Create a VectorSource to hold all search zone elements
   const searchZoneSource = new VectorSource();
@@ -147,11 +152,11 @@ export function createSearchZoneLayer(
  * @param searchZoneLayer The VectorLayer to remove
  */
 export function removeSearchZoneLayer(
-  mapContainer: any,
+  mapContainer: SearchMap,
   searchZoneLayer: VectorLayer<VectorSource>
 ): void {
   // Get the actual map instance (handle both ref and direct access)
-  const mapInstance = mapContainer.map?.value || mapContainer.map;
+  const mapInstance = unref(mapContainer.map);
 
   try {
     if (!mapInstance) {

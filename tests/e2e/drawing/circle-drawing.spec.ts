@@ -2,8 +2,8 @@ import { expect, test } from '../fixtures';
 
 test.describe('Circle Drawing', () => {
   test('should create a circle with default values', async ({ page, blankProject }) => {
-    // Click circle button (first button in the centered drawing tools group)
-    await page.locator('.v-btn-group').last().locator('button').nth(0).click();
+    // Click circle button
+    await page.getByTestId('draw-circle-btn').click();
     await page.waitForSelector('text=Create Circle', { timeout: 5000 });
 
     // Get dialog and scope all selectors to it
@@ -32,7 +32,7 @@ test.describe('Circle Drawing', () => {
 
   test('should create a circle with custom name', async ({ page, blankProject }) => {
     // Click circle button
-    await page.locator('.v-btn-group').last().locator('button').nth(0).click();
+    await page.getByTestId('draw-circle-btn').click();
     await page.waitForSelector('text=Create Circle');
 
     const dialog = page.locator('[role="dialog"]');
@@ -60,7 +60,7 @@ test.describe('Circle Drawing', () => {
 
   test('should edit an existing circle', async ({ page, blankProject }) => {
     // Create a circle first
-    await page.locator('.v-btn-group').last().locator('button').nth(0).click();
+    await page.getByTestId('draw-circle-btn').click();
     let dialog = page.locator('[role="dialog"]');
     await dialog.locator('[role="combobox"]').first().locator('.v-select__menu-icon').click();
     await page.waitForTimeout(300);
@@ -100,7 +100,7 @@ test.describe('Circle Drawing', () => {
 
   test('should delete a circle', async ({ page, blankProject }) => {
     // Create a circle first
-    await page.locator('.v-btn-group').last().locator('button').nth(0).click();
+    await page.getByTestId('draw-circle-btn').click();
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('[role="combobox"]').first().locator('.v-select__menu-icon').click();
     await page.waitForTimeout(300);
@@ -130,7 +130,7 @@ test.describe('Circle Drawing', () => {
 
   test('should toggle circle visibility', async ({ page, blankProject }) => {
     // Create a circle first
-    await page.locator('.v-btn-group').last().locator('button').nth(0).click();
+    await page.getByTestId('draw-circle-btn').click();
     const dialog = page.locator('[role="dialog"]');
     await dialog.locator('[role="combobox"]').first().locator('.v-select__menu-icon').click();
     await page.waitForTimeout(300);
@@ -160,7 +160,7 @@ test.describe('Circle Drawing', () => {
 
   test('should create multiple circles', async ({ page, blankProject }) => {
     // Create first circle
-    await page.locator('.v-btn-group').last().locator('button').nth(0).click();
+    await page.getByTestId('draw-circle-btn').click();
     let dialog = page.locator('[role="dialog"]');
     await dialog.locator('[role="combobox"]').first().locator('.v-select__menu-icon').click();
     await page.waitForTimeout(300);
@@ -171,7 +171,7 @@ test.describe('Circle Drawing', () => {
     await page.waitForTimeout(300);
 
     // Create second circle
-    await page.locator('.v-btn-group').last().locator('button').nth(0).click();
+    await page.getByTestId('draw-circle-btn').click();
     dialog = page.locator('[role="dialog"]');
     await dialog.locator('[role="combobox"]').first().locator('.v-select__menu-icon').click();
     await page.waitForTimeout(300);
@@ -188,7 +188,7 @@ test.describe('Circle Drawing', () => {
 
   test('should validate required fields', async ({ page, blankProject }) => {
     // Open circle modal
-    await page.locator('.v-btn-group').last().locator('button').nth(0).click();
+    await page.getByTestId('draw-circle-btn').click();
     await page.waitForSelector('text=Create Circle');
 
     // Try to submit without filling fields
@@ -200,7 +200,7 @@ test.describe('Circle Drawing', () => {
 
   test('should hide all circles', async ({ page, blankProject }) => {
     // Create two circles
-    await page.locator('.v-btn-group').last().locator('button').nth(0).click();
+    await page.getByTestId('draw-circle-btn').click();
     let dialog = page.locator('[role="dialog"]');
     await dialog.locator('[role="combobox"]').first().locator('.v-select__menu-icon').click();
     await page.waitForTimeout(300);
@@ -210,7 +210,7 @@ test.describe('Circle Drawing', () => {
     await page.click('button:has-text("Add")');
     await page.waitForTimeout(300);
 
-    await page.locator('.v-btn-group').last().locator('button').nth(0).click();
+    await page.getByTestId('draw-circle-btn').click();
     dialog = page.locator('[role="dialog"]');
     await dialog.locator('[role="combobox"]').first().locator('.v-select__menu-icon').click();
     await page.waitForTimeout(300);

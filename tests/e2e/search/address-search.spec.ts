@@ -157,7 +157,7 @@ test.describe('Address Search', () => {
 
     test('should not show results for whitespace only', async ({ page, blankProject }) => {
       const searchInput = page.locator('.v-navigation-drawer input[type="text"]').first();
-      await searchInput.fill('   ');
+      await searchInput.fill(' '.repeat(3));
       await page.waitForTimeout(500);
 
       // No results should appear for whitespace

@@ -431,7 +431,7 @@
         "description": "Draw a line with multiple modes:",
         "twoPoints": "Two Points: Connect two saved points",
         "azimuth": "Azimuth Mode: Create a line at a specific angle (azimuth) and distance",
-        "intersection": "Intersection Mode: Draw a line passing through a point at a specific distance",
+        "intersection": "Intersection Mode: Draw a line through a point and extend it by the specified distance beyond that point",
         "parallel": "Parallel Mode: Draw a parallel line (latitude) across the map",
         "freeHand": "Free Hand Mode: Draw lines interactively by clicking on the map with optional azimuth lock",
         "dragDrop": "Drag & Drop: Drag a point to another point in the layers panel to create a line between them"
@@ -896,13 +896,16 @@
       "title": "Intersection Line",
       "editTitle": "Edit Intersection Line",
       "createEndpoint": "Create Endpoint",
-      "distance": "Distance",
+      "distance": "Distance beyond intersection (km)",
+      "distanceHint": "Measured from the intersection point. Use 0 to stop at that point.",
       "endpointName": "Endpoint Name",
       "endpointPlaceholder": "Leave empty for auto-generated name",
       "intersectionPoint": "Intersection Point",
       "selectPoint": "Select a point",
       "startPoint": "Start Point",
-      "distanceError": "Distance must be greater than 0",
+      "distanceError": "Enter a distance of 0 km or more beyond the intersection point",
+      "distinctPoints": "Choose two different points to define the line direction",
+      "unreachableDistance": "This distance cannot be reached along the selected line",
       "selectBothPoints": "Please select both start and intersection points"
     }
   },

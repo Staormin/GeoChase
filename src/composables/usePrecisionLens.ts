@@ -3,11 +3,12 @@
  * Shows a magnified view of the map area under the cursor when activated
  */
 
+import type { MapContainer } from '@/composables/useMap';
 import TileLayer from 'ol/layer/Tile';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 import View from 'ol/View';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 
 interface PrecisionLensOptions {
   lensSize?: number; // Diameter of the lens in pixels
@@ -15,12 +16,12 @@ interface PrecisionLensOptions {
   magnification?: number; // Magnification factor (e.g., 2 = 2x larger)
 }
 
-export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}) {
+export function usePrecisionLens(mapRef: MapContainer, options: PrecisionLensOptions = {}) {
   const { lensSize = 200, offsetY = -220, magnification = 2.5 } = options;
 
   const isActive = ref(false);
   const lensElement = ref<HTMLElement | null>(null);
-  const lensMap = ref<Map | null>(null);
+  const lensMap = shallowRef<Map | null>(null);
   const currentMousePos = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 
   /**
@@ -100,6 +101,7 @@ export function usePrecisionLens(mapRef: any, options: PrecisionLensOptions = {}
     const mainLayers = mainMap.getLayers();
     let tileUrl = '';
     for (const layer of mainLayers.getArray()) {
+      if (!(layer instanceof TileLayer)) continue;
       const source = layer.getSource();
       if (source instanceof XYZ) {
         tileUrl = source.getUrls()?.[0] || '';

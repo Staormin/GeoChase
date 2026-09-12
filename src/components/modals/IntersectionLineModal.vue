@@ -35,9 +35,11 @@
         v-model.number="form.distance"
         class="mb-4"
         density="compact"
+        :hint="$t('modals.intersectionLine.distanceHint')"
         :label="$t('modals.intersectionLine.distance')"
         min="0"
-        step="0.1"
+        persistent-hint
+        step="any"
         type="number"
         variant="outlined"
       />
@@ -63,11 +65,13 @@
 </template>
 
 <script lang="ts" setup>
+import type { LatLon } from '@/services/geometry';
 import { getDistance } from 'ol/sphere';
-import { computed, inject, reactive, watch } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
+import { useDrawingContext } from '@/composables/mapContext';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
 import { endpointFromIntersection } from '@/services/geometry';
 import { useLayersStore } from '@/stores/layers';
@@ -83,7 +87,7 @@ const coordinateItems = computed(() =>
   }))
 );
 const { generateIntersectionName } = useLineNameGeneration();
-const drawing = inject('drawing') as any;
+const drawing = useDrawingContext();
 
 const isOpen = computed(() => uiStore.isModalOpen('intersectionLineModal'));
 const isEditing = computed(() => !!uiStore.editingElement);
@@ -92,33 +96,49 @@ const form = reactive({
   name: '',
   startCoord: null as string | null,
   intersectCoord: null as string | null,
-  distance: 0,
+  distance: 0 as number | string,
   createEndpoint: false,
   endpointName: '',
 });
 
-watch(isOpen, (newVal) => {
-  if (newVal) {
-    if (isEditing.value && uiStore.editingElement) {
-      const element = layersStore.lineSegments.find((l) => l.id === uiStore.editingElement?.id);
-      if (element) {
-        form.name = element.name;
-        form.startCoord = `${element.center.lat},${element.center.lon}`;
-        form.intersectCoord = element.intersectionPoint
-          ? `${element.intersectionPoint.lat},${element.intersectionPoint.lon}`
-          : null;
-        form.distance = element.intersectionDistance || 0;
+watch(
+  isOpen,
+  (newVal) => {
+    if (newVal) {
+      if (isEditing.value && uiStore.editingElement) {
+        const element = layersStore.lineSegments.find((l) => l.id === uiStore.editingElement?.id);
+        if (element) {
+          form.name = element.name;
+          form.startCoord = `${element.center.lat},${element.center.lon}`;
+          form.intersectCoord = element.intersectionPoint
+            ? `${element.intersectionPoint.lat},${element.intersectionPoint.lon}`
+            : null;
+          // Derive the extension from the saved geometry, including older projects
+          // whose distance metadata described the total distance from the start.
+          form.distance =
+            element.intersectionPoint && element.endpoint
+              ? Number(
+                  (
+                    getDistance(
+                      [element.intersectionPoint.lon, element.intersectionPoint.lat],
+                      [element.endpoint.lon, element.endpoint.lat]
+                    ) / 1000
+                  ).toFixed(6)
+                )
+              : 0;
+        }
+      } else {
+        form.name = '';
+        form.startCoord = null;
+        form.intersectCoord = null;
+        form.distance = 0;
+        form.createEndpoint = false;
+        form.endpointName = '';
       }
-    } else {
-      form.name = '';
-      form.startCoord = null;
-      form.intersectCoord = null;
-      form.distance = 0;
-      form.createEndpoint = false;
-      form.endpointName = '';
     }
-  }
-});
+  },
+  { immediate: true }
+);
 
 function closeModal() {
   uiStore.closeModal('intersectionLineModal');
@@ -138,24 +158,27 @@ async function submitForm() {
   const intersectLat = intersectCoords[0]!;
   const intersectLon = intersectCoords[1]!;
 
-  // Validate distance is >= distance to intersection point (getDistance returns meters, convert to km)
-  const distToIntersection = getDistance([startLon, startLat], [intersectLon, intersectLat]) / 1000;
-  if (form.distance < distToIntersection - 1e-6) {
-    uiStore.addToast(
-      t('modals.intersectionLine.distanceError', { distance: distToIntersection.toFixed(2) }),
-      'error'
-    );
+  const distance = Number(form.distance);
+  if (String(form.distance).trim() === '' || !Number.isFinite(distance) || distance < 0) {
+    uiStore.addToast(t('modals.intersectionLine.distanceError'), 'error');
     return;
   }
 
-  // Calculate endpoint from intersection
-  const endpoint = endpointFromIntersection(
-    startLat,
-    startLon,
-    intersectLat,
-    intersectLon,
-    form.distance
-  );
+  if (startLat === intersectLat && startLon === intersectLon) {
+    uiStore.addToast(t('modals.intersectionLine.distinctPoints'), 'error');
+    return;
+  }
+
+  let endpoint: LatLon;
+  try {
+    endpoint = endpointFromIntersection(startLat, startLon, intersectLat, intersectLon, distance);
+  } catch {
+    uiStore.addToast(t('modals.intersectionLine.unreachableDistance'), 'error');
+    return;
+  }
+
+  // Preserve the existing total-distance metadata contract for saved projects.
+  const totalDistance = getDistance([startLon, startLat], [endpoint.lon, endpoint.lat]) / 1000;
 
   // Auto-generate name if empty
   let name = form.name.trim();
@@ -172,11 +195,11 @@ async function submitForm() {
       endpoint.lon,
       name,
       'intersection',
-      undefined,
+      totalDistance,
       undefined,
       intersectLat,
       intersectLon,
-      form.distance
+      totalDistance
     );
     uiStore.addToast(t('messages.lineUpdated'), 'success');
   } else {
@@ -188,11 +211,11 @@ async function submitForm() {
       endpoint.lon,
       name,
       'intersection',
-      form.distance,
+      totalDistance,
       undefined,
       intersectLat,
       intersectLon,
-      undefined,
+      totalDistance,
       form.createEndpoint,
       form.endpointName
     );

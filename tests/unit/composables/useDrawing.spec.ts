@@ -247,7 +247,7 @@ describe('useDrawing', () => {
 
       await drawing.updateElementVisibility('point', 'point-1', true);
 
-      expect(mockRedrawPointOnMap).toHaveBeenCalledWith('point-1', 48.8566, 2.3522, '#00ff00');
+      expect(mockRedrawPointOnMap).toHaveBeenCalledWith('point-1', 48.8566, 2.3522);
     });
 
     it('should redraw polygon when showing hidden element', async () => {
@@ -822,7 +822,7 @@ describe('useDrawing', () => {
 
       drawing.redrawAllElements();
 
-      expect(mockRedrawPointOnMap).toHaveBeenCalledWith('point-1', 48.8566, 2.3522, '#00ff00');
+      expect(mockRedrawPointOnMap).toHaveBeenCalledWith('point-1', 48.8566, 2.3522);
     });
 
     it('should redraw all polygons from store', () => {
@@ -1002,8 +1002,7 @@ describe('useDrawing', () => {
       expect(mockMapRef.flyToBoundsWithPanels).not.toHaveBeenCalled();
     });
 
-    it('should not call flyToBoundsWithPanels when skipAutoFly is set', () => {
-      (mockMapRef as any).skipAutoFly = true;
+    it('should not call flyToBoundsWithPanels when fitting bounds is disabled', () => {
       layersStore.addCircle({
         id: 'circle-1',
         name: 'Test Circle',
@@ -1011,7 +1010,7 @@ describe('useDrawing', () => {
         radius: 1000,
       });
 
-      drawing.redrawAllElements();
+      drawing.redrawAllElements({ fitBounds: false });
 
       expect(mockMapRef.flyToBoundsWithPanels).not.toHaveBeenCalled();
     });
@@ -1298,6 +1297,7 @@ describe('useDrawing', () => {
       let callCount = 0;
       const originalFind = Array.prototype.find;
       vi.spyOn(Array.prototype, 'find').mockImplementation(function (this: any[], predicate: any) {
+        // eslint-disable-next-line unicorn/no-this-outside-of-class -- A prototype spy must forward the original receiver.
         const result = originalFind.call(this, predicate);
         // After deleteElement processes, null out the polygon id for redrawAffectedPolygons
         if (result && result.id === 'poly1') {

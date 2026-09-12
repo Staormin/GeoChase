@@ -8,6 +8,7 @@
   >
     <v-card>
       <v-card-title>{{ $t('project.newProject') }}</v-card-title>
+
       <v-card-text>
         <v-form @submit.prevent="submitForm">
           <v-text-field
@@ -25,9 +26,11 @@
 
       <v-card-actions>
         <v-spacer />
+
         <v-btn data-testid="cancel-project-btn" text @click="closeModal">{{
           $t('common.cancel')
         }}</v-btn>
+
         <v-btn color="primary" data-testid="create-project-btn" @click="submitForm">
           {{ $t('common.add') }}
         </v-btn>
@@ -37,8 +40,9 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useMapContext } from '@/composables/mapContext';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
@@ -46,7 +50,7 @@ import { useUIStore } from '@/stores/ui';
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const projectsStore = useProjectsStore();
-const mapContainer = inject('mapContainer') as any;
+const mapContainer = useMapContext();
 const { t } = useI18n();
 
 const projectName = ref('');
@@ -82,13 +86,7 @@ function submitForm() {
     }
 
     // Create and switch to new project
-    projectsStore.createAndSwitchProject(projectName.value, {
-      circles: [],
-      lineSegments: [],
-      points: [],
-      polygons: [],
-      notes: [],
-    });
+    projectsStore.createAndSwitchProject(projectName.value);
 
     // Clear the current view
     layersStore.clearLayers();
