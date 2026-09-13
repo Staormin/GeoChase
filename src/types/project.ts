@@ -1,3 +1,5 @@
+export type ProjectProjection = 'mercator' | 'geodesic';
+
 export interface ViewData {
   topPanelOpen: boolean;
   sidePanelOpen: boolean;
@@ -17,6 +19,7 @@ export interface ProjectData {
   id?: string;
   name: string;
   data: ProjectLayerData;
+  projection?: ProjectProjection;
   viewData?: ViewData;
   pdfData?: string; // Base64 encoded PDF data
   pdfName?: string; // Original PDF filename
@@ -52,8 +55,10 @@ export interface LineSegmentElement {
   mode: 'coordinate' | 'azimuth' | 'intersection' | 'parallel';
   distance?: number;
   azimuth?: number;
+  angleFrom?: { lineId: string; degrees: number };
   intersectionPoint?: { lat: number; lon: number };
   intersectionDistance?: number;
+  intersectionExtension?: number; // Kilometers beyond the intersection point
   longitude?: number;
   color?: string;
   noteId?: string; // ID of the linked note (one-to-one)
@@ -69,6 +74,8 @@ export interface PointElement {
   name: string;
   coordinates: { lat: number; lon: number };
   elevation?: number;
+  // Recorded only for generated points; ordinary coordinate points remain fixed.
+  construction?: { lineId: string; distanceKm?: number; fromEnd?: boolean };
   color?: string;
   noteId?: string; // ID of the linked note (one-to-one)
   createdAt?: number;

@@ -226,6 +226,15 @@
                   <v-list-item-title>{{ $t('project.loadProject') }}</v-list-item-title>
                 </v-list-item>
 
+                <v-list-item
+                  data-testid="project-settings-btn"
+                  :disabled="!projectsStore.activeProject"
+                  @click="uiStore.openModal('projectSettingsModal')"
+                >
+                  <template #prepend><v-icon size="small">mdi-cog</v-icon></template>
+                  <v-list-item-title>{{ $t('project.settings') }}</v-list-item-title>
+                </v-list-item>
+
                 <v-divider />
 
                 <v-list-item data-testid="export-json-btn" @click="handleExportJSON">

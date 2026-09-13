@@ -4,7 +4,9 @@ import type { useNoteTooltips } from '@/composables/useNoteTooltips';
 import type { CursorTooltipData } from '@/types/ui';
 import type { Ref } from 'vue';
 import { useFreeHandDrawing } from '@/composables/useFreeHandDrawing';
+import { useIntersectionLineEditing } from '@/composables/useIntersectionLineEditing';
 import { useKeyboardNavigation } from '@/composables/useKeyboardNavigation';
+import { useLineCrossingPoints } from '@/composables/useLineCrossingPoints';
 import { useMapEventHandlers } from '@/composables/useMapEventHandlers';
 import { useMapInitialization } from '@/composables/useMapInitialization';
 import { useRuler } from '@/composables/useRuler';
@@ -21,6 +23,8 @@ export function useAppSetup(
 ) {
   // Initialize sub-composables
   const freeHandDrawing = useFreeHandDrawing(mapContainer, drawing, cursorTooltip);
+  const intersectionEditing = useIntersectionLineEditing(mapContainer, drawing, noteTooltipsRef);
+  const crossingPoints = useLineCrossingPoints(mapContainer);
   const ruler = useRuler(mapContainer, cursorTooltip);
   const keyboardNavigation = useKeyboardNavigation(
     mapContainer,
@@ -40,6 +44,8 @@ export function useAppSetup(
     freeHandDrawing.setup();
     ruler.setup();
     keyboardNavigation.setup();
+    intersectionEditing.setup();
+    crossingPoints.setup();
 
     // Cleanup on unmount
     return () => {
@@ -48,6 +54,8 @@ export function useAppSetup(
       freeHandDrawing.cleanup();
       ruler.cleanup();
       keyboardNavigation.cleanup();
+      intersectionEditing.cleanup();
+      crossingPoints.cleanup();
       noteTooltipsRef.value?.dispose();
       mapContainer.destroyMap();
     };

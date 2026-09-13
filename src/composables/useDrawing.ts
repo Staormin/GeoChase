@@ -10,9 +10,11 @@ import { useCircleDrawing } from './useCircleDrawing';
 import { useLineDrawing } from './useLineDrawing';
 import { usePointDrawing } from './usePointDrawing';
 import { usePolygonDrawing } from './usePolygonDrawing';
+import { useProjectGeometry } from './useProjectGeometry';
 
 export function useDrawing(mapRef: MapContainer) {
   const layersStore = useLayersStore();
+  const { isGeodesic, sampleLine } = useProjectGeometry();
 
   // Initialize specialized drawing composables
   const circleDrawing = useCircleDrawing(mapRef);
@@ -427,10 +429,21 @@ export function useDrawing(mapRef: MapContainer) {
       }
 
       for (const segment of lineSegments) {
-        minLat = Math.min(minLat, segment.center.lat, segment.endpoint?.lat || 90);
-        maxLat = Math.max(maxLat, segment.center.lat, segment.endpoint?.lat || -90);
-        minLon = Math.min(minLon, segment.center.lon, segment.endpoint?.lon || 180);
-        maxLon = Math.max(maxLon, segment.center.lon, segment.endpoint?.lon || -180);
+        const path =
+          isGeodesic() && segment.endpoint && segment.mode !== 'parallel'
+            ? sampleLine(
+                segment.center.lat,
+                segment.center.lon,
+                segment.endpoint.lat,
+                segment.endpoint.lon
+              )
+            : [segment.center, ...(segment.endpoint ? [segment.endpoint] : [])];
+        for (const point of path) {
+          minLat = Math.min(minLat, point.lat);
+          maxLat = Math.max(maxLat, point.lat);
+          minLon = Math.min(minLon, point.lon);
+          maxLon = Math.max(maxLon, point.lon);
+        }
       }
 
       for (const point of points) {

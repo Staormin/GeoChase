@@ -1,12 +1,11 @@
+import type { useDrawing } from '@/composables/useDrawing';
 /**
  * Composable for animation sequence logic
  */
-
-import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
 import { inAndOut as easeInAndOut } from 'ol/easing';
-import { getDistance } from 'ol/sphere';
 import { type Ref, watch } from 'vue';
+import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -15,6 +14,7 @@ export function useAnimation(
   drawing: ReturnType<typeof useDrawing>,
   sidebarOpen: Ref<boolean>
 ) {
+  const { getDistance } = useProjectGeometry();
   const uiStore = useUIStore();
   const layersStore = useLayersStore();
 

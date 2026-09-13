@@ -102,12 +102,13 @@
 
 <script lang="ts" setup>
 import type { PointElement } from '@/types/project';
-import { getDistance } from 'ol/sphere';
 import { computed, ref } from 'vue';
 import { useMapContext } from '@/composables/mapContext';
-import { calculateBearing, calculateInverseBearing } from '@/services/geometry';
+import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
+
+const { getDistance, calculateBearing, calculateInverseBearing } = useProjectGeometry();
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();

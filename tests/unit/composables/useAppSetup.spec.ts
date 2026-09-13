@@ -9,6 +9,14 @@ import { useMapInitialization } from '@/composables/useMapInitialization';
 import { useRuler } from '@/composables/useRuler';
 import { useViewCapture } from '@/composables/useViewCapture';
 
+vi.mock('@/composables/useIntersectionLineEditing', () => ({
+  useIntersectionLineEditing: vi.fn(() => ({ setup: vi.fn(), cleanup: vi.fn() })),
+}));
+
+vi.mock('@/composables/useLineCrossingPoints', () => ({
+  useLineCrossingPoints: vi.fn(() => ({ setup: vi.fn(), cleanup: vi.fn() })),
+}));
+
 // Mock all the composables that useAppSetup depends on
 vi.mock('@/composables/useFreeHandDrawing', () => ({
   useFreeHandDrawing: vi.fn(() => ({

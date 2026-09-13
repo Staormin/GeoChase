@@ -123,11 +123,11 @@ function loadProject(projectId: string) {
         savedCoordinates: project.data.savedCoordinates || [],
       });
 
+      // Select the geometry policy before rendering the new project.
+      projectsStore.setActiveProject(projectId);
+
       // Redraw on map
       drawing.redrawAllElements();
-
-      // Set this project as active so auto-save works correctly
-      projectsStore.setActiveProject(projectId);
 
       uiStore.addToast(t('project.loaded'), 'success');
       closeModal();

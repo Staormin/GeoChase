@@ -6,15 +6,17 @@ import type { MapContainer } from '@/composables/useMap';
 import type { LineSegmentElement } from '@/types/project';
 import { Feature } from 'ol';
 import { LineString, Point } from 'ol/geom';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, transform } from 'ol/proj';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 import { v4 as uuidv4 } from 'uuid';
 import { useLayersStore } from '@/stores/layers';
 import { usePointDrawing } from './usePointDrawing';
+import { useProjectGeometry } from './useProjectGeometry';
 
 const DEFAULT_COLOR = '#000000';
 
 export function useLineDrawing(mapRef: MapContainer) {
+  const { lineCoordinates, interpolateLine, getDistance } = useProjectGeometry();
   const layersStore = useLayersStore();
   const pointDrawing = usePointDrawing(mapRef);
 
@@ -40,6 +42,7 @@ export function useLineDrawing(mapRef: MapContainer) {
       }
 
       const startTime = performance.now();
+      const path = lineCoordinates({ lat: startLat, lon: startLon }, { lat: endLat, lon: endLon });
 
       // Create the feature ONCE and update its geometry during animation
       const initialCoordinates = [
@@ -75,17 +78,17 @@ export function useLineDrawing(mapRef: MapContainer) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        // Interpolate current end point
-        const currentEndLat = startLat + (endLat - startLat) * progress;
-        const currentEndLon = startLon + (endLon - startLon) * progress;
-
-        // Update the geometry of the existing feature instead of removing/adding
-        const newCoordinates = [
-          fromLonLat([startLon, startLat]),
-          fromLonLat([currentEndLon, currentEndLat]),
-        ];
-
-        geometry.setCoordinates(newCoordinates);
+        const currentEnd = interpolateLine(
+          { lat: startLat, lon: startLon },
+          { lat: endLat, lon: endLon },
+          progress
+        );
+        const count = Math.floor(progress * (path.length - 1)) + 1;
+        geometry.setCoordinates(
+          progress === 1
+            ? path
+            : [...path.slice(0, count), fromLonLat([currentEnd.lon, currentEnd.lat])]
+        );
 
         if (progress < 1) {
           requestAnimationFrame(animate);
@@ -98,8 +101,8 @@ export function useLineDrawing(mapRef: MapContainer) {
           // For intersection mode, show the intersection point marker
           if (
             mode === 'intersection' &&
-            intersectLat &&
-            intersectLon &&
+            intersectLat !== undefined &&
+            intersectLon !== undefined &&
             mapRef.linesSource?.value
           ) {
             const markerGeometry = new Point(fromLonLat([intersectLon, intersectLat]));
@@ -150,7 +153,10 @@ export function useLineDrawing(mapRef: MapContainer) {
       return;
     }
 
-    const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
+    const coordinates = lineCoordinates(
+      { lat: startLat, lon: startLon },
+      { lat: endLat, lon: endLon }
+    );
 
     const geometry = new LineString(coordinates);
     const feature = new Feature({
@@ -172,7 +178,7 @@ export function useLineDrawing(mapRef: MapContainer) {
     mapRef.linesSource.value.addFeature(feature);
 
     // For intersection mode, show the intersection point marker
-    if (mode === 'intersection' && intersectLat && intersectLon) {
+    if (mode === 'intersection' && intersectLat !== undefined && intersectLon !== undefined) {
       const markerGeometry = new Point(fromLonLat([intersectLon, intersectLat]));
       const markerFeature = new Feature({
         geometry: markerGeometry,
@@ -256,13 +262,21 @@ export function useLineDrawing(mapRef: MapContainer) {
       distance,
       azimuth,
       intersectionPoint:
-        intersectLat && intersectLon ? { lat: intersectLat, lon: intersectLon } : undefined,
+        intersectLat !== undefined && intersectLon !== undefined
+          ? { lat: intersectLat, lon: intersectLon }
+          : undefined,
       intersectionDistance: intersectDistance,
+      intersectionExtension:
+        intersectLat !== undefined && intersectLon !== undefined
+          ? getDistance([intersectLon, intersectLat], [endLon, endLat]) / 1000
+          : undefined,
       color: DEFAULT_COLOR,
     } as LineSegmentElement;
 
-    // Draw line as simple 2-point straight line
-    const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
+    const coordinates = lineCoordinates(
+      { lat: startLat, lon: startLon },
+      { lat: endLat, lon: endLon }
+    );
 
     // Create OpenLayers feature
     const geometry = new LineString(coordinates);
@@ -303,11 +317,12 @@ export function useLineDrawing(mapRef: MapContainer) {
       }
 
       // Draw the point on the map (this also adds it to the store and creates the label)
-      pointDrawing.drawPoint(endLat, endLon, pointName);
+      const endpoint = pointDrawing.drawPoint(endLat, endLon, pointName);
+      if (endpoint) layersStore.updatePoint(endpoint.id, { construction: { lineId } });
     }
 
     // For intersection mode, show the intersection point marker
-    if (mode === 'intersection' && intersectLat && intersectLon) {
+    if (mode === 'intersection' && intersectLat !== undefined && intersectLon !== undefined) {
       const markerGeometry = new Point(fromLonLat([intersectLon, intersectLat]));
       const markerFeature = new Feature({
         geometry: markerGeometry,
@@ -336,13 +351,12 @@ export function useLineDrawing(mapRef: MapContainer) {
     // Use requestAnimationFrame to ensure the feature is rendered before flying
     if (mapRef.flyToBoundsWithPanels) {
       requestAnimationFrame(() => {
-        const minLat = Math.min(startLat, endLat);
-        const maxLat = Math.max(startLat, endLat);
-        const minLon = Math.min(startLon, endLon);
-        const maxLon = Math.max(startLon, endLon);
+        const extent = geometry.getExtent();
+        const [minLon, minLat] = transform(extent.slice(0, 2), 'EPSG:3857', 'EPSG:4326');
+        const [maxLon, maxLat] = transform(extent.slice(2, 4), 'EPSG:3857', 'EPSG:4326');
         const bounds: [[number, number], [number, number]] = [
-          [minLat, minLon],
-          [maxLat, maxLon],
+          [minLat!, minLon!],
+          [maxLat!, maxLon!],
         ];
         mapRef.flyToBoundsWithPanels(bounds);
       });
@@ -379,8 +393,14 @@ export function useLineDrawing(mapRef: MapContainer) {
       distance,
       azimuth,
       intersectionPoint:
-        intersectLat && intersectLon ? { lat: intersectLat, lon: intersectLon } : undefined,
+        intersectLat !== undefined && intersectLon !== undefined
+          ? { lat: intersectLat, lon: intersectLon }
+          : undefined,
       intersectionDistance: intersectDistance,
+      intersectionExtension:
+        intersectLat !== undefined && intersectLon !== undefined
+          ? getDistance([intersectLon, intersectLat], [endLon, endLat]) / 1000
+          : undefined,
     });
 
     // Remove old line from map
@@ -396,7 +416,10 @@ export function useLineDrawing(mapRef: MapContainer) {
     }
 
     // Redraw line segment
-    const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
+    const coordinates = lineCoordinates(
+      { lat: startLat, lon: startLon },
+      { lat: endLat, lon: endLon }
+    );
 
     const geometry = new LineString(coordinates);
     const newFeature = new Feature({
@@ -418,7 +441,7 @@ export function useLineDrawing(mapRef: MapContainer) {
     mapRef.linesSource.value.addFeature(newFeature);
 
     // For intersection mode, show the intersection point marker
-    if (mode === 'intersection' && intersectLat && intersectLon) {
+    if (mode === 'intersection' && intersectLat !== undefined && intersectLon !== undefined) {
       const markerGeometry = new Point(fromLonLat([intersectLon, intersectLat]));
       const markerFeature = new Feature({
         geometry: markerGeometry,

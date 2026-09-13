@@ -22,12 +22,19 @@ export interface EditingElement {
 
 export interface CreatingElement {
   type: 'circle' | 'lineSegment' | 'point';
-  prefill?: { lat: number; lon: number };
+  prefill?: { lat: number; lon: number; name?: string };
 }
 
 export interface NavigatingElement {
   type: 'circle' | 'lineSegment';
   id: string;
+}
+
+export interface IntersectionLineEdit {
+  lineId: string;
+  name: string;
+  distanceKm: number;
+  snappedTo: string | null;
 }
 
 export interface SearchAlongPanel {
@@ -105,6 +112,7 @@ export const useUIStore = defineStore('ui', () => {
   const creatingElement = ref<CreatingElement | null>(null);
   const circleCenterPreFill = ref<{ lat: number; lon: number } | null>(null);
   const navigatingElement = ref<NavigatingElement | null>(null);
+  const intersectionLineEdit = ref<IntersectionLineEdit | null>(null);
   const showTutorial = ref(false);
   const searchAlongPanel = ref<SearchAlongPanel>({
     isOpen: false,
@@ -157,6 +165,17 @@ export const useUIStore = defineStore('ui', () => {
   const isModalOpen = computed(() => (modalId: string) => openModals.value.has(modalId));
 
   const activeToastCount = computed(() => toasts.value.length);
+  const canInteractWithLines = computed(
+    () =>
+      !freeHandDrawing.value.isDrawing &&
+      !tools.value.activeTool &&
+      !navigatingElement.value &&
+      !viewCaptureState.value.isCapturing &&
+      !animationState.value.isPlaying &&
+      openModals.value.size === 0 &&
+      !bearingsPanel.value.isOpen &&
+      !showTutorial.value
+  );
 
   // Actions
   function openModal(modalId: string): void {
@@ -277,7 +296,7 @@ export const useUIStore = defineStore('ui', () => {
 
   function startCreating(
     type: 'circle' | 'lineSegment' | 'point',
-    prefill?: { lat: number; lon: number }
+    prefill?: CreatingElement['prefill']
   ): void {
     creatingElement.value = { type, prefill };
   }
@@ -479,6 +498,7 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   return {
+    canInteractWithLines,
     // State
     openModals,
     drawingMode,
@@ -494,6 +514,7 @@ export const useUIStore = defineStore('ui', () => {
     creatingElement,
     circleCenterPreFill,
     navigatingElement,
+    intersectionLineEdit,
     showTutorial,
     searchAlongPanel,
     freeHandDrawing,

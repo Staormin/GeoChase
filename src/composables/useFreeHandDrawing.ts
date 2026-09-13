@@ -1,19 +1,17 @@
+import type { useDrawing } from '@/composables/useDrawing';
 /**
  * Composable for free hand drawing mode with mouse tracking and line preview
  */
-
-import type { useDrawing } from '@/composables/useDrawing';
 import type { useMap } from '@/composables/useMap';
 import type { CursorTooltipData } from '@/types/ui';
 import type { MapBrowserEvent } from 'ol';
 import type { Ref, WatchStopHandle } from 'vue';
 import { Feature } from 'ol';
 import { LineString } from 'ol/geom';
-import { fromLonLat, toLonLat } from 'ol/proj';
-import { getDistance } from 'ol/sphere';
+import { toLonLat } from 'ol/proj';
 import { Stroke, Style } from 'ol/style';
 import { watch } from 'vue';
-import { calculateBearing, destinationPoint } from '@/services/geometry';
+import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useUIStore } from '@/stores/ui';
 
 export function useFreeHandDrawing(
@@ -21,6 +19,7 @@ export function useFreeHandDrawing(
   drawing: ReturnType<typeof useDrawing>,
   cursorTooltip: Ref<CursorTooltipData>
 ) {
+  const { getDistance, calculateBearing, destinationPoint, lineCoordinates } = useProjectGeometry();
   const uiStore = useUIStore();
   let previewFeature: Feature<LineString> | null = null;
   let lockedAzimuth: number | null = null;
@@ -140,9 +139,10 @@ export function useFreeHandDrawing(
       }
     }
 
-    // OpenLayers natively renders straight lines in Web Mercator projection
-    // No need for 100-point interpolation - just use start and end points
-    const coordinates = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
+    const coordinates = lineCoordinates(
+      { lat: startLat, lon: startLon },
+      { lat: endLat, lon: endLon }
+    );
 
     const lineGeometry = new LineString(coordinates);
     previewFeature = new Feature({

@@ -120,6 +120,7 @@ describe('storage service', () => {
       expect(project).toEqual({
         id: 'test-uuid-123',
         name: 'New Project',
+        projection: 'mercator',
         data: mockLayerData,
         createdAt: 1_705_320_000_000,
         updatedAt: 1_705_320_000_000,
@@ -255,7 +256,8 @@ describe('storage service', () => {
 
       expect(imported).not.toBeNull();
       expect(imported?.name).toBe('Imported Project');
-      expect(imported?.data).toEqual(mockLayerData);
+      expect(imported?.data).toEqual({ ...mockLayerData, savedCoordinates: undefined });
+      expect(imported?.projection).toBe('mercator');
     });
 
     it('should return null for invalid JSON', () => {

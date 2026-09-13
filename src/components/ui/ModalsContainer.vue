@@ -11,6 +11,7 @@
   <PolygonModal v-if="uiStore.isModalOpen('polygonModal')" />
   <AddPointOnSegmentModal v-if="uiStore.isModalOpen('addPointOnSegmentModal')" />
   <NewProjectModal v-if="uiStore.isModalOpen('newProjectModal')" />
+  <ProjectSettingsModal v-if="uiStore.isModalOpen('projectSettingsModal')" />
   <LoadProjectModal v-if="uiStore.isModalOpen('loadProjectModal')" />
   <BearingsModal v-if="uiStore.bearingsPanel.isOpen" />
   <NoteModal v-if="uiStore.isModalOpen('noteModal')" />
@@ -35,6 +36,7 @@ import NoteModal from '@/components/modals/NoteModal.vue';
 import ParallelLineModal from '@/components/modals/ParallelLineModal.vue';
 import PointModal from '@/components/modals/PointModal.vue';
 import PolygonModal from '@/components/modals/PolygonModal.vue';
+import ProjectSettingsModal from '@/components/modals/ProjectSettingsModal.vue';
 import TutorialModal from '@/components/modals/TutorialModal.vue';
 import TwoPointsLineModal from '@/components/modals/TwoPointsLineModal.vue';
 import { useUIStore } from '@/stores/ui';

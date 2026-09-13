@@ -180,6 +180,8 @@
                     <strong>{{ $t('tutorial.drawingToolsSection.line.azimuth') }}</strong>
                   </li>
 
+                  <li>{{ $t('tutorial.drawingToolsSection.line.angle') }}</li>
+
                   <li>
                     <strong>{{ $t('tutorial.drawingToolsSection.line.intersection') }}</strong>
                   </li>
@@ -196,6 +198,30 @@
                     <strong>{{ $t('tutorial.drawingToolsSection.line.dragDrop') }}</strong>
                   </li>
                 </ul>
+              </div>
+
+              <div class="tutorial-step mb-4" data-testid="intersection-edit-tutorial">
+                <h4 class="mb-2">
+                  {{ $t('tutorial.drawingToolsSection.intersectionEditing.title') }}
+                </h4>
+
+                <ol class="tutorial-list">
+                  <li>{{ $t('tutorial.drawingToolsSection.intersectionEditing.start') }}</li>
+                  <li>{{ $t('tutorial.drawingToolsSection.intersectionEditing.move') }}</li>
+                  <li>{{ $t('tutorial.drawingToolsSection.intersectionEditing.snap') }}</li>
+                  <li>{{ $t('tutorial.drawingToolsSection.intersectionEditing.save') }}</li>
+                </ol>
+
+                <p class="mt-2">
+                  {{ $t('tutorial.drawingToolsSection.intersectionEditing.cancel') }}
+                </p>
+              </div>
+
+              <div class="tutorial-step mb-4" data-testid="crossing-point-tutorial">
+                <h4 class="mb-2">{{ $t('tutorial.drawingToolsSection.crossingPoint.title') }}</h4>
+                <p>{{ $t('tutorial.drawingToolsSection.crossingPoint.hover') }}</p>
+                <p class="mt-2">{{ $t('tutorial.drawingToolsSection.crossingPoint.create') }}</p>
+                <p class="mt-2">{{ $t('tutorial.drawingToolsSection.crossingPoint.endpoints') }}</p>
               </div>
 
               <div class="tutorial-step mb-4">
@@ -479,6 +505,13 @@
             <div class="tutorial-section">
               <h3 class="mb-3">{{ $t('tutorial.projectsSection.heading') }}</h3>
               <p class="mb-3">{{ $t('tutorial.projectsSection.intro') }}</p>
+
+              <div class="mb-4" data-testid="projection-tutorial">
+                <h4 class="mb-2">{{ $t('tutorial.projectsSection.projection.title') }}</h4>
+                <p>{{ $t('tutorial.projectsSection.projection.choice') }}</p>
+                <p class="mt-2">{{ $t('tutorial.projectsSection.projection.settings') }}</p>
+                <p class="mt-2">{{ $t('tutorial.projectsSection.projection.export') }}</p>
+              </div>
 
               <div class="tutorial-step mb-4">
                 <h4 class="mb-2">{{ $t('tutorial.projectsSection.accessing.title') }}</h4>

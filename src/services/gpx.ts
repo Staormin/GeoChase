@@ -1,10 +1,12 @@
-import { downloadFile } from '@/utils/download';
 /**
  * GPX service - Functions for generating GPX files
  * Reused from original application with TypeScript typing
  */
 
-import { destinationPoint, generateCircle } from './geometry';
+import type { LatLon } from './geometry';
+import type { ProjectProjection } from '@/types/project';
+import { downloadFile } from '@/utils/download';
+import { createProjectGeometry } from './projectGeometry';
 
 export interface CircleData {
   lat: number;
@@ -31,120 +33,73 @@ export interface PointData {
 /**
  * Generate line segment tracks for GPX
  */
-export function generateLineSegmentTracks(segments: LineSegmentData[]): string {
-  let gpxTracks = '';
-
-  for (const [segmentIndex, segment] of segments.entries()) {
-    let trackPoints: { lat: number; lon: number }[];
-
-    if (segment.mode === 'coordinate' && segment.endpoint) {
-      trackPoints = [segment.center, segment.endpoint];
-
-      gpxTracks += `  <trk>
-    <name>${segment.name || `Line Segment ${segmentIndex + 1}`}</name>
-    <type>LineSegment</type>
-    <trkseg>
-`;
-      for (const point of trackPoints) {
-        gpxTracks += `      <trkpt lat="${point.lat.toFixed(6)}" lon="${point.lon.toFixed(6)}">
-        <ele>0</ele>
-      </trkpt>
-`;
+export function generateLineSegmentTracks(
+  segments: LineSegmentData[],
+  projection: ProjectProjection = 'mercator'
+): string {
+  const geometry = createProjectGeometry(() => projection);
+  return segments
+    .map((segment, index) => {
+      let points: { lat: number; lon: number }[];
+      if (segment.mode === 'parallel') {
+        points = Array.from({ length: 181 }, (_, i) => ({
+          lat: segment.longitude ?? 0,
+          lon: -180 + i * 2,
+        }));
+      } else {
+        const endpoint =
+          segment.endpoint ??
+          (segment.mode === 'azimuth' &&
+          segment.distance !== undefined &&
+          segment.azimuth !== undefined
+            ? geometry.destinationPoint(
+                segment.center.lat,
+                segment.center.lon,
+                segment.distance,
+                segment.azimuth
+              )
+            : undefined);
+        if (!endpoint) return '';
+        points = geometry.sampleLine(
+          segment.center.lat,
+          segment.center.lon,
+          endpoint.lat,
+          endpoint.lon,
+          100
+        );
       }
-      gpxTracks += `    </trkseg>
+      const parallel = segment.mode === 'parallel';
+      return `  <trk>
+    <name>${escapeXML(segment.name || `${parallel ? 'Parallel' : 'Line Segment'} ${index + 1}`)}</name>
+    <type>${parallel ? 'Parallel' : 'LineSegment'}</type>
+    <trkseg>
+${points.map((point) => trackPointXML(point)).join('')}    </trkseg>
   </trk>
 `;
-    } else {
-      switch (segment.mode) {
-        case 'azimuth': {
-          // Generate intermediate points for smooth curve
-          trackPoints = [];
-          const numPoints = 100;
-          for (let i = 0; i <= numPoints; i++) {
-            const distance = (i / numPoints) * segment.distance!;
-            const point = destinationPoint(
-              segment.center.lat,
-              segment.center.lon,
-              distance,
-              segment.azimuth!
-            );
-            trackPoints.push(point);
-          }
+    })
+    .join('');
+}
 
-          gpxTracks += `  <trk>
-    <name>${segment.name || `Line Segment ${segmentIndex + 1}`}</name>
-    <type>LineSegment</type>
-    <trkseg>
-`;
-          for (const point of trackPoints) {
-            gpxTracks += `      <trkpt lat="${point.lat.toFixed(6)}" lon="${point.lon.toFixed(6)}">
+function trackPointXML(point: LatLon): string {
+  const lat = point.lat.toFixed(6);
+  const lon = normalizeLongitude(point.lon).toFixed(6);
+  return `      <trkpt lat="${lat}" lon="${lon}">
         <ele>0</ele>
       </trkpt>
 `;
-          }
-          gpxTracks += `    </trkseg>
-  </trk>
-`;
+}
 
-          break;
-        }
+function normalizeLongitude(lon: number): number {
+  return lon >= -180 && lon <= 180 ? lon : ((((lon + 180) % 360) + 360) % 360) - 180;
+}
 
-        case 'intersection': {
-          // Endpoint is already calculated and stored
-          if (segment.endpoint) {
-            trackPoints = [segment.center, segment.endpoint];
-
-            gpxTracks += `  <trk>
-    <name>${segment.name || `Line Segment ${segmentIndex + 1}`}</name>
-    <type>LineSegment</type>
-    <trkseg>
-`;
-            for (const point of trackPoints) {
-              gpxTracks += `      <trkpt lat="${point.lat.toFixed(6)}" lon="${point.lon.toFixed(6)}">
-        <ele>0</ele>
-      </trkpt>
-`;
-            }
-            gpxTracks += `    </trkseg>
-  </trk>
-`;
-          }
-
-          break;
-        }
-        case 'parallel': {
-          // Generate parallel line (horizontal) from west to east at constant latitude
-          trackPoints = [];
-          const numPoints = 180;
-          const lat = segment.longitude === undefined ? 0 : segment.longitude;
-          for (let i = 0; i <= numPoints; i++) {
-            const lon = -180 + (i / numPoints) * 360;
-            trackPoints.push({ lat, lon });
-          }
-
-          gpxTracks += `  <trk>
-    <name>${segment.name || `Parallel ${segmentIndex + 1}`}</name>
-    <type>Parallel</type>
-    <trkseg>
-`;
-          for (const point of trackPoints) {
-            gpxTracks += `      <trkpt lat="${point.lat.toFixed(6)}" lon="${point.lon.toFixed(6)}">
-        <ele>0</ele>
-      </trkpt>
-`;
-          }
-          gpxTracks += `    </trkseg>
-  </trk>
-`;
-
-          break;
-        }
-        // No default
-      }
-    }
-  }
-
-  return gpxTracks;
+function escapeXML(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;');
 }
 
 /**
@@ -155,8 +110,10 @@ export function generateCompleteGPX(
   radiiKm: number[],
   numPoints: number,
   segments: LineSegmentData[],
-  layerPoints: PointData[] = []
+  layerPoints: PointData[] = [],
+  projection: ProjectProjection = 'mercator'
 ): string {
+  const { generateCircle } = createProjectGeometry(() => projection);
   const timestamp = new Date().toISOString();
   const radiiDesc =
     radiiKm.length === 1 ? `radius ${radiiKm[0]} km` : `radii ${radiiKm.join(', ')} km`;
@@ -201,7 +158,7 @@ export function generateCompleteGPX(
   for (const point of layerPoints) {
     gpx += `  <wpt lat="${point.coordinates.lat.toFixed(6)}" lon="${point.coordinates.lon.toFixed(6)}">
     <ele>0</ele>
-    <name>${point.name}</name>
+    <name>${escapeXML(point.name || '')}</name>
     <desc>User added point</desc>
     <sym>Flag, Red</sym>
   </wpt>
@@ -220,10 +177,7 @@ export function generateCompleteGPX(
 `;
 
       for (const point of points) {
-        gpx += `      <trkpt lat="${point.lat.toFixed(6)}" lon="${point.lon.toFixed(6)}">
-        <ele>0</ele>
-      </trkpt>
-`;
+        gpx += trackPointXML(point);
       }
 
       gpx += `    </trkseg>
@@ -234,7 +188,7 @@ export function generateCompleteGPX(
 
   // Add line segment tracks
   if (segments.length > 0) {
-    gpx += generateLineSegmentTracks(segments);
+    gpx += generateLineSegmentTracks(segments, projection);
   }
 
   gpx += `</gpx>`;
