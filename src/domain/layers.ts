@@ -8,6 +8,7 @@ import type {
   PointElement,
   PolygonElement,
   ProjectLayerData,
+  ProjectProjection,
 } from '@/types/project';
 import { v4 as uuidv4 } from 'uuid';
 import { isRecord } from '@/utils/guards';
@@ -49,6 +50,15 @@ function validateLineSegment(segment: unknown): segment is LineSegmentElement {
     !Number.isFinite(segment.center.lat) ||
     !Number.isFinite(segment.center.lon) ||
     !isOptionalIdList(segment.pointsOnLine) ||
+    (segment.angleFrom !== undefined &&
+      (!isRecord(segment.angleFrom) ||
+        typeof segment.angleFrom.lineId !== 'string' ||
+        typeof segment.angleFrom.degrees !== 'number' ||
+        !Number.isFinite(segment.angleFrom.degrees))) ||
+    (segment.intersectionExtension !== undefined &&
+      (typeof segment.intersectionExtension !== 'number' ||
+        !Number.isFinite(segment.intersectionExtension) ||
+        segment.intersectionExtension < 0)) ||
     typeof segment.mode !== 'string' ||
     !['coordinate', 'azimuth', 'intersection', 'parallel'].includes(segment.mode)
   ) {
@@ -80,7 +90,16 @@ function validatePoint(point: unknown): point is PointElement {
     typeof point.coordinates.lon === 'number' &&
     Number.isFinite(point.coordinates.lat) &&
     Number.isFinite(point.coordinates.lon) &&
-    isOptionalIdList(point.polygonIds)
+    isOptionalIdList(point.polygonIds) &&
+    (point.construction === undefined ||
+      (isRecord(point.construction) &&
+        typeof point.construction.lineId === 'string' &&
+        (point.construction.distanceKm === undefined ||
+          (typeof point.construction.distanceKm === 'number' &&
+            Number.isFinite(point.construction.distanceKm) &&
+            point.construction.distanceKm >= 0)) &&
+        (point.construction.fromEnd === undefined ||
+          typeof point.construction.fromEnd === 'boolean')))
   );
 }
 
@@ -329,4 +348,17 @@ function isImportPolygon(value: unknown): value is PolygonElement | LegacyPolygo
         Number.isFinite(point.lon)
     )
   );
+}
+
+/** Validate the project setting before callers replace any active drawings. */
+export function parseProjectJSON(json: string): {
+  data: ProjectLayerData;
+  projection: ProjectProjection;
+} {
+  const value: unknown = JSON.parse(json);
+  if (!isRecord(value)) throw new Error('Invalid project format');
+  const projection = value.projection === undefined ? 'mercator' : value.projection;
+  if (projection !== 'mercator' && projection !== 'geodesic')
+    throw new Error('Invalid project projection');
+  return { data: parseLayersJSON(json), projection };
 }

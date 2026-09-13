@@ -76,9 +76,11 @@ import BaseModal from '@/components/shared/BaseModal.vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
 import { useDrawingContext } from '@/composables/mapContext';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
-import { destinationPoint } from '@/services/geometry';
+import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
+
+const { destinationPoint } = useProjectGeometry();
 
 const { t } = useI18n();
 

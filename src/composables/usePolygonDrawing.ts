@@ -1,17 +1,17 @@
+import type { MapContainer } from '@/composables/useMap';
 /**
  * Composable for drawing and managing polygons on the map
  */
-
-import type { MapContainer } from '@/composables/useMap';
 import type { PolygonElement } from '@/types/project';
 import { Feature } from 'ol';
 import { Polygon } from 'ol/geom';
-import { fromLonLat } from 'ol/proj';
 import { Fill, Stroke, Style } from 'ol/style';
 import { v4 as uuidv4 } from 'uuid';
 import { useLayersStore } from '@/stores/layers';
+import { useProjectGeometry } from './useProjectGeometry';
 
 export function usePolygonDrawing(mapRef: MapContainer) {
+  const { polygonCoordinates } = useProjectGeometry();
   const layersStore = useLayersStore();
 
   const generateId = () => uuidv4();
@@ -72,9 +72,7 @@ export function usePolygonDrawing(mapRef: MapContainer) {
     };
 
     // Create OpenLayers polygon coordinates
-    const coordinates = points.map((p) => fromLonLat([p.lon, p.lat]));
-    // Close the polygon by adding the first point at the end
-    coordinates.push(coordinates[0]!);
+    const coordinates = polygonCoordinates(points);
 
     const geometry = new Polygon([coordinates]);
     const feature = new Feature({
@@ -144,9 +142,7 @@ export function usePolygonDrawing(mapRef: MapContainer) {
     }
 
     const polygonColor = color;
-    const coordinates = points.map((p) => fromLonLat([p.lon, p.lat]));
-    // Close the polygon by adding the first point at the end
-    coordinates.push(coordinates[0]!);
+    const coordinates = polygonCoordinates(points);
 
     const geometry = new Polygon([coordinates]);
     const feature = new Feature({

@@ -141,6 +141,7 @@ watch(
       // Apply pre-fill values if they exist
       if (newValue.prefill) {
         const prefill = newValue.prefill;
+        form.value.name = prefill.name ?? '';
         form.value.coordinates = `${prefill.lat.toFixed(6)}, ${prefill.lon.toFixed(6)}`;
       }
     }

@@ -208,7 +208,8 @@
     "deleted": "Point deleted",
     "errors": {
       "invalidCoordinates": "Invalid coordinates"
-    }
+    },
+    "intersectionName": "intersection of line {line1} and {line2}"
   },
   "polygon": {
     "title": "Create Polygon",
@@ -288,6 +289,15 @@
       "loadFailed": "Failed to load project",
       "saveFailed": "Failed to save project",
       "importFailed": "Failed to import project"
+    },
+    "settings": "Project Settings",
+    "projection": {
+      "label": "Projection",
+      "mercator": "Mercator — straight map lines",
+      "geodesic": "Geodesic — WGS84",
+      "hint": "Applies to all drawings and measurements in this project.",
+      "changeHint": "Changing the projection recalculates lines from their saved distances and bearings, and moves generated points. Points entered directly by coordinates stay fixed.",
+      "changeError": "Could not change the projection. Check dependent constructions and distances along lines."
     }
   },
   "animation": {
@@ -431,6 +441,7 @@
         "description": "Draw a line with multiple modes:",
         "twoPoints": "Two Points: Connect two saved points",
         "azimuth": "Azimuth Mode: Create a line at a specific angle (azimuth) and distance",
+        "angle": "Line at Angle: Select a start point, then a reference line passing through it. Crossing points and endpoints are supported; choose the reference when several lines meet there. Enter the angle relative to the line's start-to-end direction and the distance in km. If no line passes through your point, create one first or use Azimuth Line for a compass bearing.",
         "intersection": "Intersection Mode: Draw a line through a point and extend it by the specified distance beyond that point",
         "parallel": "Parallel Mode: Draw a parallel line (latitude) across the map",
         "freeHand": "Free Hand Mode: Draw lines interactively by clicking on the map with optional azimuth lock",
@@ -447,6 +458,20 @@
         "visual": "Visual: Polygons are displayed in light green with semi-transparent fill",
         "extractCenter": "Extract Center: Right-click menu to add the polygon's center as a new point",
         "useCase": "Use Case: Define search areas, mark zones of interest, or visualize boundaries"
+      },
+      "intersectionEditing": {
+        "title": "Adjust an existing intersection line",
+        "start": "Move over the far endpoint of an intersection line. A hand cursor and a blue handle appear. Click once to start editing.",
+        "move": "Move the mouse to shorten or extend the line. The start and imposed intersection stay fixed, and the endpoint follows their direction. It cannot move behind the intersection. This works in both Mercator and Geodesic projects.",
+        "snap": "Near another visible line, the endpoint snaps where that line crosses the constrained path. Nearby start and end points of lines take priority, so you can join two line ends, including one you have just snapped. The imposed direction stays fixed. All line types, circle outlines and polygon edges can be used. The handle turns green and the snapped shape’s name appears.",
+        "save": "The editing panel shows the distance in kilometers beyond the intersection. Click again to confirm and save it. Linked generated endpoints and dependent drawings update too.",
+        "cancel": "Press Escape or click Cancel to restore the original line. Moving the endpoint previews the change; it does not save it."
+      },
+      "crossingPoint": {
+        "title": "Create a point at a crossing",
+        "hover": "Hover where two visible lines cross in their interiors. A pin with a plus sign appears on the cursor, and a marker shows the detected crossing. This works with all line types in Mercator and Geodesic projects.",
+        "create": "Left-click to open the point dialog. The crossing coordinates and a name using both line names are filled in. You can edit the name, then click Add to create the point, or Cancel to leave the project unchanged.",
+        "endpoints": "Crossings at the start or end of either line are excluded. The usual endpoint actions remain available there."
       }
     },
     "searchSection": {
@@ -625,6 +650,12 @@
         "autoSave": "Projects are saved automatically to your browser's local storage",
         "renameDelete": "Rename or delete projects from the Load Project modal",
         "gpxExport": "Export as GPX to use your drawings in other mapping applications"
+      },
+      "projection": {
+        "title": "Choose a project projection",
+        "choice": "Choose Mercator for straight lines on the map, or Geodesic (WGS84) for shortest paths over the curved Earth. Geodesic paths can appear curved on the map. The background map stays the same.",
+        "settings": "Choose the projection when creating a project. Change it later in Project menu → Project Settings. It applies to every drawing, distance and bearing; parallels remain lines of constant latitude.",
+        "export": "Your projection is saved with the project and included in JSON exports. GPX export and searches along lines follow the selected geometry. Older projects without this setting use Mercator."
       }
     },
     "pdfSection": {
@@ -847,20 +878,23 @@
     "angleLine": {
       "title": "Line at Angle",
       "angle": "Angle",
-      "angleHint": "Angle in degrees (0-360)",
+      "angleHint": "Angle in degrees (-360 to 360)",
       "createEndpoint": "Create Endpoint",
-      "distance": "Distance",
+      "distance": "Distance (km)",
       "endpointName": "Endpoint Name",
       "endpointPlaceholder": "Leave empty for auto-generated name",
       "lineName": "Line Name",
       "lineNamePlaceholder": "Enter line name",
-      "pointOnLine": "Point on Line",
-      "onLine": "on {line}",
+      "startPoint": "Start Point",
+      "referenceLine": "Reference Line",
+      "referenceLineHint": "Angle relative to this line's direction from start to end",
+      "noLineAtPoint": "No line passes through this point. Create a line through it first, or use Azimuth Line to choose a compass bearing.",
       "bearingError": "Error calculating bearing",
       "generatedEndpointName": "Endpoint at {angle}° from {pointName}",
       "generatedName": "Line at {angle}° from {pointName}",
       "pointNotFoundError": "Point not found",
-      "selectPointError": "Please select a point on the line",
+      "selectPointError": "Please select a start point",
+      "selectLineError": "Please select a reference line through this point",
       "success": "Line created successfully"
     },
     "bearings": {
@@ -953,5 +987,13 @@
     "download": "Download PDF",
     "thumbnails": "Toggle thumbnails",
     "page": "Page"
+  },
+  "intersectionEdit": {
+    "title": "Editing {name}",
+    "distance": "{distance} km beyond the intersection",
+    "snapped": "Snapped to {name}",
+    "instructions": "Move to adjust · Click to save · Esc to cancel",
+    "saved": "Intersection line distance updated",
+    "error": "Could not update this intersection line. Check its linked constructions."
   }
 }

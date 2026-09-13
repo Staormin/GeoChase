@@ -73,7 +73,8 @@ import { useI18n } from 'vue-i18n';
 import SearchFilters from '@/components/search/SearchFilters.vue';
 import SearchResultsTable from '@/components/search/SearchResultsTable.vue';
 import { useMapContext } from '@/composables/mapContext';
-import { generateLinePointsLinear } from '@/services/geometry';
+import { useProjectGeometry } from '@/composables/useProjectGeometry';
+import { generateLinePointsLinear as generateParallelPoints } from '@/services/geometry';
 import {
   distancePointToSegment,
   haversineDistance,
@@ -82,6 +83,8 @@ import {
 import { createSearchZoneLayer, removeSearchZoneLayer } from '@/services/searchZone';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
+
+const { sampleLine } = useProjectGeometry();
 
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
@@ -195,7 +198,7 @@ const pathPoints = computed(() => {
       const lat = segment.longitude === undefined ? 0 : segment.longitude;
       const westPoint = { lat, lon: -180 };
       const eastPoint = { lat, lon: 180 };
-      return generateLinePointsLinear(
+      return generateParallelPoints(
         westPoint.lat,
         westPoint.lon,
         eastPoint.lat,
@@ -206,7 +209,7 @@ const pathPoints = computed(() => {
       // Generate points along the line segment using linear interpolation
       // This ensures the buffer zone aligns with the displayed straight line in OpenLayers
       // Works for coordinate, azimuth, and intersection modes
-      return generateLinePointsLinear(
+      return sampleLine(
         segment.center.lat,
         segment.center.lon,
         segment.endpoint.lat,

@@ -1,4 +1,6 @@
 import type { CircleElement, LineSegmentElement } from '@/types/project';
+import { fromLonLat } from 'ol/proj';
+import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useNavigation } from '@/composables/useNavigation';
 
@@ -20,6 +22,7 @@ describe('useNavigation', () => {
   let navigation: ReturnType<typeof useNavigation>;
 
   beforeEach(() => {
+    setActivePinia(createPinia());
     navigation = useNavigation();
   });
 
@@ -191,7 +194,10 @@ describe('useNavigation', () => {
 
       const coords = navigation.getSegmentNavigationCoords(mockSegment);
 
-      expect(coords.lat).toBeCloseTo((mockSegment.center.lat + mockSegment.endpoint!.lat) / 2, 5);
+      const projected = fromLonLat([coords.lon, coords.lat]);
+      const start = fromLonLat([mockSegment.center.lon, mockSegment.center.lat]);
+      const end = fromLonLat([mockSegment.endpoint!.lon, mockSegment.endpoint!.lat]);
+      expect(projected[1]).toBeCloseTo((start[1]! + end[1]!) / 2, 5);
       expect(coords.lon).toBeCloseTo((mockSegment.center.lon + mockSegment.endpoint!.lon) / 2, 5);
     });
 

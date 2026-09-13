@@ -1,5 +1,5 @@
 import { useI18n } from 'vue-i18n';
-import { parseLayersJSON } from '@/domain/layers';
+import { parseProjectJSON } from '@/domain/layers';
 import { downloadGPX, generateCompleteGPX, getTimestamp } from '@/services/gpx';
 import { exportProjectAsJSON } from '@/services/storage';
 import { useLayersStore } from '@/stores/layers';
@@ -31,7 +31,14 @@ export function useProjectFiles() {
     }));
     const radii = [...new Set(circles.map((circle) => circle.radius))];
     downloadGPX(
-      generateCompleteGPX(circles, radii, 360, layers.lineSegments, layers.points),
+      generateCompleteGPX(
+        circles,
+        radii,
+        360,
+        layers.lineSegments,
+        layers.points,
+        projects.activeProjection
+      ),
       filename('gpx')
     );
     ui.addToast(t('messages.gpxExported'), 'success');
@@ -42,6 +49,7 @@ export function useProjectFiles() {
       ...projects.activeProject,
       name: projects.activeProject?.name || 'project',
       data: layers.exportLayers(),
+      projection: projects.activeProjection,
     });
     downloadFile(json, filename('json'), 'application/json');
     ui.addToast(t('messages.jsonExported'), 'success');
@@ -58,10 +66,11 @@ export function useProjectFiles() {
         if (!file) return;
         const projectId = projects.activeProjectId;
         try {
-          const data = parseLayersJSON(await file.text());
+          const { data, projection } = parseProjectJSON(await file.text());
           if (projectId !== projects.activeProjectId)
             throw new Error('The active project changed during import');
           noteTooltips.value?.clearAllTooltips();
+          projects.autoSaveActiveProject(data, projection);
           layers.loadLayers(data);
           drawing.redrawAllElements();
           noteTooltips.value?.updateNoteTooltips();

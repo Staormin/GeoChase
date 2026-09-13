@@ -2,9 +2,10 @@
  * Storage service - localStorage management for projects
  */
 
-import type { ProjectData, ProjectLayerData } from '@/types/project';
+import type { ProjectData, ProjectLayerData, ProjectProjection } from '@/types/project';
 
 import { v4 as uuidv4 } from 'uuid';
+import { parseProjectJSON } from '@/domain/layers';
 
 const PROJECTS_STORAGE_KEY = 'geochase_projects';
 
@@ -38,11 +39,16 @@ export function getProject(index: number): ProjectData | null {
 /**
  * Create a new project
  */
-export function createProject(name: string, data: ProjectLayerData): ProjectData {
+export function createProject(
+  name: string,
+  data: ProjectLayerData,
+  projection: ProjectProjection = 'mercator'
+): ProjectData {
   return {
     id: uuidv4(),
     name,
     data,
+    projection,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -51,9 +57,13 @@ export function createProject(name: string, data: ProjectLayerData): ProjectData
 /**
  * Save a new project and return the created project
  */
-export function saveProject(projectName: string, data: ProjectLayerData): ProjectData {
+export function saveProject(
+  projectName: string,
+  data: ProjectLayerData,
+  projection: ProjectProjection = 'mercator'
+): ProjectData {
   const projects = getAllProjects();
-  const newProject = createProject(projectName, data);
+  const newProject = createProject(projectName, data, projection);
   projects.push(newProject);
   saveProjectsToStorage(projects);
   return newProject;
@@ -62,15 +72,19 @@ export function saveProject(projectName: string, data: ProjectLayerData): Projec
 /**
  * Update an existing project
  */
-export function updateProject(index: number, name: string, data: ProjectLayerData): void {
+export function updateProject(
+  index: number,
+  name: string,
+  data: ProjectLayerData,
+  projection?: ProjectProjection
+): void {
   const projects = getAllProjects();
   if (projects[index]) {
     projects[index] = {
-      id: projects[index].id,
+      ...projects[index],
       name,
       data,
-      viewData: projects[index].viewData, // Preserve viewData
-      createdAt: projects[index].createdAt,
+      projection: projection ?? projects[index].projection ?? 'mercator',
       updatedAt: Date.now(),
     };
     saveProjectsToStorage(projects);
@@ -102,6 +116,7 @@ export function exportProjectAsJSON(project: ProjectData): string {
       version: '1.0',
       timestamp: new Date().toISOString(),
       ...project,
+      projection: project.projection ?? 'mercator',
     },
     null,
     2
@@ -119,7 +134,7 @@ export function importProjectFromJSON(jsonString: string): ProjectData | null {
     }
     return {
       name: data.name,
-      data: data.data,
+      ...parseProjectJSON(jsonString),
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     };

@@ -1,6 +1,7 @@
 <template>
   <BaseModal
     :is-open="isOpen"
+    :submit-disabled="!selectedPoint || !form.lineId"
     :submit-text="$t('common.add')"
     :title="$t('modals.angleLine.title')"
     @close="closeModal"
@@ -20,14 +21,35 @@
         v-model="form.pointId"
         class="mb-4"
         density="compact"
-        :items="pointsOnLineItems"
-        :label="$t('modals.angleLine.pointOnLine')"
+        :items="pointItems"
+        :label="$t('modals.angleLine.startPoint')"
         variant="outlined"
       >
         <template #prepend-inner>
           <v-icon size="small">mdi-map-marker</v-icon>
         </template>
       </v-select>
+
+      <v-select
+        v-model="form.lineId"
+        class="mb-4"
+        density="compact"
+        :disabled="referenceLines.length === 0"
+        :hint="$t('modals.angleLine.referenceLineHint')"
+        :items="referenceLineItems"
+        :label="$t('modals.angleLine.referenceLine')"
+        persistent-hint
+        variant="outlined"
+      />
+
+      <v-alert
+        v-if="selectedPoint && referenceLines.length === 0"
+        class="mb-4"
+        density="compact"
+        :text="$t('modals.angleLine.noLineAtPoint')"
+        type="info"
+        variant="tonal"
+      />
 
       <v-text-field
         v-model.number="form.angle"
@@ -75,14 +97,15 @@
 </template>
 
 <script lang="ts" setup>
-import type { PointElement } from '@/types/project';
 import { computed, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import { useDrawingContext } from '@/composables/mapContext';
-import { calculateBearing, destinationPoint } from '@/services/geometry';
+import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
+
+const { destinationPoint, bearingAtPoint, isPointOnLine } = useProjectGeometry();
 
 const { t } = useI18n();
 const uiStore = useUIStore();
@@ -94,24 +117,31 @@ const isOpen = computed(() => uiStore.isModalOpen('angleLineModal'));
 const form = reactive({
   name: '',
   pointId: null as string | null,
+  lineId: null as string | null,
   angle: 90,
   distance: 1,
   createEndpoint: false,
   endpointName: '',
 });
 
-// Get all points that are on a line (have lineId set)
-const pointsOnLineItems = computed(() => {
-  return layersStore.points
-    .filter((point: PointElement) => point.lineId !== undefined)
-    .map((point: PointElement) => {
-      const line = layersStore.lineSegments.find((l) => l.id === point.lineId);
-      const lineName = line?.name || t('common.unknownLine');
-      return {
-        title: `${point.name} (${t('modals.angleLine.onLine', { line: lineName })})`,
-        value: point.id,
-      };
-    });
+const pointItems = computed(() =>
+  layersStore.points.map((point) => ({ title: point.name, value: point.id }))
+);
+const selectedPoint = computed(() => layersStore.points.find((point) => point.id === form.pointId));
+const referenceLines = computed(() => {
+  const point = selectedPoint.value;
+  return isOpen.value && point
+    ? layersStore.lineSegments.filter((line) => isPointOnLine(line, point.coordinates))
+    : [];
+});
+const referenceLineItems = computed(() =>
+  referenceLines.value.map((line) => ({ title: line.name, value: line.id }))
+);
+
+watch(referenceLines, (lines) => {
+  if (!lines.some((line) => line.id === form.lineId)) {
+    form.lineId = lines.length === 1 ? lines[0]!.id : null;
+  }
 });
 
 watch(isOpen, (newVal) => {
@@ -119,6 +149,7 @@ watch(isOpen, (newVal) => {
     // Reset form when opening
     form.name = '';
     form.pointId = null;
+    form.lineId = null;
     form.angle = 90;
     form.distance = 1;
     form.createEndpoint = false;
@@ -126,70 +157,33 @@ watch(isOpen, (newVal) => {
   }
 });
 
-function calculateLineBearingAtPoint(pointId: string): number | null {
-  const point = layersStore.points.find((p) => p.id === pointId);
-  if (!point || !point.lineId) {
-    return null;
-  }
-
-  const line = layersStore.lineSegments.find((l) => l.id === point.lineId);
-  if (!line) {
-    return null;
-  }
-
-  // Get the endpoint of the line
-  let endpoint: { lat: number; lon: number } | null = null;
-
-  switch (line.mode) {
-    case 'coordinate': {
-      endpoint = line.endpoint || null;
-      break;
-    }
-    case 'azimuth': {
-      if (line.distance !== undefined && line.azimuth !== undefined) {
-        endpoint = destinationPoint(line.center.lat, line.center.lon, line.distance, line.azimuth);
-      }
-      break;
-    }
-    case 'intersection': {
-      endpoint = line.endpoint || null;
-      break;
-    }
-    case 'parallel': {
-      // For parallel lines, we don't have a specific endpoint
-      // Use azimuth 90 degrees (perpendicular to longitude)
-      return 90;
-    }
-  }
-
-  if (!endpoint) {
-    return null;
-  }
-
-  return calculateBearing(line.center.lat, line.center.lon, endpoint.lat, endpoint.lon);
-}
-
 function submitForm() {
   if (!form.pointId) {
     uiStore.addToast(t('modals.angleLine.selectPointError'), 'error');
     return;
   }
 
-  const point = layersStore.points.find((p) => p.id === form.pointId);
+  const point = selectedPoint.value;
   if (!point) {
     uiStore.addToast(t('modals.angleLine.pointNotFoundError'), 'error');
     return;
   }
 
-  // Calculate the bearing of the line at this point
-  const lineBearing = calculateLineBearingAtPoint(form.pointId);
+  const referenceLine = referenceLines.value.find((line) => line.id === form.lineId);
+  if (!referenceLine) {
+    uiStore.addToast(t('modals.angleLine.selectLineError'), 'error');
+    return;
+  }
+
+  // Use the selected reference, since a crossing or shared endpoint belongs to several lines.
+  const lineBearing = bearingAtPoint(referenceLine, point.coordinates);
   if (lineBearing === null) {
     uiStore.addToast(t('modals.angleLine.bearingError'), 'error');
     return;
   }
 
   // Calculate the final bearing (line bearing + angle)
-  const finalBearing = (lineBearing + form.angle) % 360;
+  const finalBearing = (lineBearing + form.angle + 360) % 360;
 
   // Calculate the endpoint using the final bearing and distance
   const endpoint = destinationPoint(
@@ -208,15 +202,25 @@ function submitForm() {
       distance: form.distance.toFixed(1),
     });
 
+  const referenceLineId = referenceLine.id;
+
   // Draw the line
-  drawing.drawLineSegment(
+  const createdLine = drawing.drawLineSegment(
     point.coordinates.lat,
     point.coordinates.lon,
     endpoint.lat,
     endpoint.lon,
     lineName,
-    undefined // color
+    'azimuth',
+    form.distance,
+    finalBearing
   );
+
+  if (createdLine && referenceLineId) {
+    layersStore.updateLineSegment(createdLine.id, {
+      angleFrom: { lineId: referenceLineId, degrees: form.angle },
+    });
+  }
 
   // Create endpoint if requested
   if (form.createEndpoint) {
@@ -227,7 +231,9 @@ function submitForm() {
         angle: form.angle,
         distance: form.distance,
       });
-    drawing.drawPoint(endpoint.lat, endpoint.lon, endpointName);
+    const createdPoint = drawing.drawPoint(endpoint.lat, endpoint.lon, endpointName);
+    if (createdPoint && createdLine)
+      layersStore.updatePoint(createdPoint.id, { construction: { lineId: createdLine.id } });
   }
 
   uiStore.addToast(t('modals.angleLine.success'), 'success');
@@ -238,6 +244,7 @@ function closeModal() {
   uiStore.closeModal('angleLineModal');
   form.name = '';
   form.pointId = null;
+  form.lineId = null;
   form.angle = 90;
   form.distance = 1;
   form.createEndpoint = false;

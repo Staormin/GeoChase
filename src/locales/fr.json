@@ -208,7 +208,8 @@
     "deleted": "Point supprimé",
     "errors": {
       "invalidCoordinates": "Coordonnées invalides"
-    }
+    },
+    "intersectionName": "intersection des lignes {line1} et {line2}"
   },
   "polygon": {
     "title": "Créer un polygone",
@@ -288,6 +289,15 @@
       "loadFailed": "Échec du chargement du projet",
       "saveFailed": "Échec de l'enregistrement du projet",
       "importFailed": "Échec de l'importation du projet"
+    },
+    "settings": "Paramètres du projet",
+    "projection": {
+      "label": "Projection",
+      "mercator": "Mercator — lignes droites sur la carte",
+      "geodesic": "Géodésique — WGS84",
+      "hint": "S’applique à tous les tracés et mesures de ce projet.",
+      "changeHint": "Changer de projection recalcule les lignes à partir des distances et azimuts enregistrés, et déplace les points générés. Les points saisis directement par coordonnées restent fixes.",
+      "changeError": "Impossible de changer la projection. Vérifiez les constructions dépendantes et les distances le long des lignes."
     }
   },
   "animation": {
@@ -431,6 +441,7 @@
         "description": "Dessinez une ligne avec plusieurs modes :",
         "twoPoints": "Deux points : Connectez deux points enregistrés",
         "azimuth": "Mode azimut : Créez une ligne avec un angle spécifique (azimut) et une distance",
+        "angle": "Ligne avec angle : Sélectionnez un point de départ, puis une ligne de référence passant par ce point. Les points de croisement et les extrémités sont pris en charge ; choisissez la référence lorsque plusieurs lignes s'y rejoignent. Saisissez l'angle par rapport au sens de la ligne, du départ vers l'arrivée, et la distance en km. Si aucune ligne ne passe par votre point, créez-en une ou utilisez Ligne azimut pour choisir un cap.",
         "intersection": "Mode intersection : Tracez une ligne passant par un point et prolongez-la de la distance indiquée après ce point",
         "parallel": "Mode parallèle : Tracez une ligne parallèle (latitude) sur toute la carte",
         "freeHand": "Mode main levée : Dessinez des lignes de manière interactive en cliquant sur la carte avec verrouillage d'azimut optionnel",
@@ -447,6 +458,20 @@
         "visual": "Visuel : Les polygones sont affichés en vert clair avec un remplissage semi-transparent",
         "extractCenter": "Extraire le centre : Menu clic droit pour ajouter le centre du polygone comme nouveau point",
         "useCase": "Cas d'utilisation : Définir des zones de recherche, marquer des zones d'intérêt ou visualiser des limites"
+      },
+      "intersectionEditing": {
+        "title": "Ajuster une ligne d’intersection existante",
+        "start": "Survolez l’extrémité finale d’une ligne d’intersection. Le curseur devient une main et une poignée bleue apparaît. Cliquez une fois pour commencer la modification.",
+        "move": "Déplacez la souris pour raccourcir ou prolonger la ligne. Le départ et l’intersection imposée restent fixes ; l’extrémité suit leur direction et ne peut pas revenir avant l’intersection. Cela fonctionne en Mercator comme en Géodésique.",
+        "snap": "À proximité d’une autre ligne visible, l’extrémité s’accroche à son croisement avec la direction imposée. Les points de départ et de fin des lignes proches sont prioritaires : vous pouvez ainsi joindre deux extrémités, y compris une que vous venez d’accrocher. La direction imposée reste fixe. Tous les types de lignes, les contours de cercles et les côtés de polygones sont utilisables. La poignée devient verte et le nom de la forme apparaît.",
+        "save": "Le panneau de modification affiche la distance en kilomètres après l’intersection. Cliquez à nouveau pour la confirmer et l’enregistrer. Les extrémités générées liées et les tracés dépendants sont également mis à jour.",
+        "cancel": "Appuyez sur Échap ou cliquez sur Annuler pour rétablir la ligne initiale. Le déplacement est un aperçu ; il n’est pas enregistré."
+      },
+      "crossingPoint": {
+        "title": "Créer un point à un croisement",
+        "hover": "Survolez le croisement de deux lignes visibles, à l’intérieur de leurs tracés. Le curseur devient une épingle avec un signe plus et un repère indique le croisement détecté. Tous les types de lignes sont compatibles, en Mercator comme en Géodésique.",
+        "create": "Cliquez avec le bouton gauche pour ouvrir la fenêtre de création de point. Les coordonnées du croisement et un nom composé des deux noms de lignes sont préremplis. Vous pouvez modifier ce nom, puis cliquer sur Ajouter pour créer le point ou sur Annuler pour conserver le projet en l’état.",
+        "endpoints": "Les croisements situés au début ou à la fin de l’une des lignes sont exclus. Les actions habituelles sur les extrémités restent disponibles à ces endroits."
       }
     },
     "searchSection": {
@@ -625,6 +650,12 @@
         "autoSave": "Les projets sont enregistrés automatiquement dans le stockage local de votre navigateur",
         "renameDelete": "Renommez ou supprimez des projets depuis la modale Charger un projet",
         "gpxExport": "Exportez en GPX pour utiliser vos dessins dans d'autres applications de cartographie"
+      },
+      "projection": {
+        "title": "Choisir la projection du projet",
+        "choice": "Choisissez Mercator pour des lignes droites sur la carte, ou Géodésique (WGS84) pour les plus courts chemins sur la Terre courbe. Les chemins géodésiques peuvent apparaître courbés sur la carte. Le fond de carte reste identique.",
+        "settings": "Choisissez la projection à la création du projet. Modifiez-la ensuite dans le menu Projet → Paramètres du projet. Elle s’applique à tous les tracés, distances et azimuts ; les parallèles restent des lignes de latitude constante.",
+        "export": "La projection est enregistrée avec le projet et incluse dans les exports JSON. Les exports GPX et les recherches le long des lignes suivent la géométrie sélectionnée. Les anciens projets sans ce paramètre utilisent Mercator."
       }
     },
     "pdfSection": {
@@ -847,20 +878,23 @@
     "angleLine": {
       "title": "Ligne à un angle",
       "angle": "Angle",
-      "angleHint": "Angle en degrés (0-360)",
+      "angleHint": "Angle en degrés (-360 à 360)",
       "createEndpoint": "Créer un point d'arrivée",
-      "distance": "Distance",
+      "distance": "Distance (km)",
       "endpointName": "Nom du point d'arrivée",
       "endpointPlaceholder": "Laisser vide pour génération automatique",
       "lineName": "Nom de la ligne",
       "lineNamePlaceholder": "Entrez le nom de la ligne",
-      "pointOnLine": "Point sur la ligne",
-      "onLine": "sur {line}",
+      "startPoint": "Point de départ",
+      "referenceLine": "Ligne de référence",
+      "referenceLineHint": "Angle par rapport au sens de cette ligne, du départ vers l'arrivée",
+      "noLineAtPoint": "Aucune ligne ne passe par ce point. Créez d'abord une ligne qui le traverse, ou utilisez Ligne azimut pour choisir un cap.",
       "bearingError": "Erreur de calcul du relèvement",
       "generatedEndpointName": "Point d'arrivée à {angle}° depuis {pointName}",
       "generatedName": "Ligne à {angle}° depuis {pointName}",
       "pointNotFoundError": "Point introuvable",
-      "selectPointError": "Veuillez sélectionner un point sur la ligne",
+      "selectPointError": "Veuillez sélectionner un point de départ",
+      "selectLineError": "Veuillez sélectionner une ligne de référence passant par ce point",
       "success": "Ligne créée avec succès"
     },
     "bearings": {
@@ -953,5 +987,13 @@
     "download": "Télécharger le PDF",
     "thumbnails": "Afficher les miniatures",
     "page": "Page"
+  },
+  "intersectionEdit": {
+    "title": "Modification de {name}",
+    "distance": "{distance} km après l’intersection",
+    "snapped": "Accroché à {name}",
+    "instructions": "Déplacez pour ajuster · Cliquez pour enregistrer · Échap pour annuler",
+    "saved": "Distance de la ligne d’intersection mise à jour",
+    "error": "Impossible de modifier cette ligne d’intersection. Vérifiez ses constructions liées."
   }
 }

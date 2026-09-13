@@ -7,10 +7,9 @@ import { LineString } from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
-import { getDistance } from 'ol/sphere';
 import { Stroke, Style } from 'ol/style';
 import { watch } from 'vue';
-import { calculateBearing } from '@/services/geometry';
+import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useUIStore } from '@/stores/ui';
 
 type RulerPhase = 'idle' | 'placed-first';
@@ -64,6 +63,7 @@ export function useRuler(
   mapContainer: ReturnType<typeof useMap>,
   cursorTooltip: Ref<CursorTooltipData>
 ) {
+  const { getDistance, calculateBearing, lineCoordinates } = useProjectGeometry();
   const uiStore = useUIStore();
 
   let phase: RulerPhase = 'idle';
@@ -96,7 +96,7 @@ export function useRuler(
     endLon: number
   ) => {
     if (!rulerSource) return;
-    const coords = [fromLonLat([startLon, startLat]), fromLonLat([endLon, endLat])];
+    const coords = lineCoordinates({ lat: startLat, lon: startLon }, { lat: endLat, lon: endLon });
     if (previewFeature) {
       previewFeature.getGeometry()?.setCoordinates(coords);
     } else {
@@ -115,7 +115,7 @@ export function useRuler(
     if (!firstPoint) return;
     const distanceKm = getDistance([firstPoint.lon, firstPoint.lat], [endLon, endLat]) / 1000;
     const bearing = calculateBearing(firstPoint.lat, firstPoint.lon, endLat, endLon);
-    const inverse = (bearing + 180) % 360;
+    const inverse = calculateBearing(endLat, endLon, firstPoint.lat, firstPoint.lon);
     cursorTooltip.value.x = screenX + 20;
     cursorTooltip.value.y = screenY + 20;
     cursorTooltip.value.distance = `${distanceKm.toFixed(3)} km`;
@@ -133,7 +133,7 @@ export function useRuler(
     const map = mapContainer.map?.value;
     if (!map || !rulerSource || !firstPoint) return;
 
-    const coords = [fromLonLat([firstPoint.lon, firstPoint.lat]), fromLonLat([endLon, endLat])];
+    const coords = lineCoordinates(firstPoint, { lat: endLat, lon: endLon });
     // Reuse the preview feature as the finalized one; the next measurement
     // gets a fresh preview feature of its own.
     let feature = previewFeature;
@@ -148,7 +148,7 @@ export function useRuler(
 
     const distanceKm = getDistance([firstPoint.lon, firstPoint.lat], [endLon, endLat]) / 1000;
     const bearing = calculateBearing(firstPoint.lat, firstPoint.lon, endLat, endLon);
-    const inverse = (bearing + 180) % 360;
+    const inverse = calculateBearing(endLat, endLon, firstPoint.lat, firstPoint.lon);
 
     const element = buildMeasurementElement(distanceKm, bearing, inverse);
     // Anchor the overlay to the endpoint in map coordinates so OL keeps it

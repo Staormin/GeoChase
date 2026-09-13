@@ -61,6 +61,7 @@
 
   <!-- Free hand drawing cursor tooltip -->
   <CursorTooltip :tooltip="cursorTooltip" />
+  <IntersectionLineEditStatus />
 
   <!-- Precision mode indicator -->
   <PrecisionModeIndicator :precision-lens="precisionLens" />
@@ -86,6 +87,7 @@ import SearchAlongPanelInline from '@/components/search/SearchAlongPanel.vue';
 import AnimationCountdown from '@/components/shared/AnimationCountdown.vue';
 import SidebarLayersPanel from '@/components/sidebar/SidebarLayersPanel.vue';
 import CursorTooltip from '@/components/ui/CursorTooltip.vue';
+import IntersectionLineEditStatus from '@/components/ui/IntersectionLineEditStatus.vue';
 import ModalsContainer from '@/components/ui/ModalsContainer.vue';
 import PdfViewer from '@/components/ui/PdfViewer.vue';
 import PrecisionModeIndicator from '@/components/ui/PrecisionModeIndicator.vue';

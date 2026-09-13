@@ -66,16 +66,17 @@
 
 <script lang="ts" setup>
 import type { LatLon } from '@/services/geometry';
-import { getDistance } from 'ol/sphere';
 import { computed, reactive, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BaseModal from '@/components/shared/BaseModal.vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
 import { useDrawingContext } from '@/composables/mapContext';
 import { useLineNameGeneration } from '@/composables/useLineNameGeneration';
-import { endpointFromIntersection } from '@/services/geometry';
+import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
+
+const { getDistance, endpointFromIntersection } = useProjectGeometry();
 
 const { t } = useI18n();
 const uiStore = useUIStore();

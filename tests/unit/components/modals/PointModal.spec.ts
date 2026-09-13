@@ -61,6 +61,17 @@ describe('PointModal reverse geocoding', () => {
     expect(drawPoint).toHaveBeenCalledExactlyOnceWith(48.8584, 2.2945, 'My landmark');
   });
 
+  it('uses an editable prefilled intersection name without reverse geocoding', async () => {
+    useUIStore().startCreating('point', { lat: 47, lon: 2, name: 'intersection of line A and B' });
+    await flushPromises();
+    expect(wrapper.findAllComponents(VTextField)[0]!.props('modelValue')).toBe(
+      'intersection of line A and B'
+    );
+    await clickButton('Add');
+    expect(getReverseGeocodeAddress).not.toHaveBeenCalled();
+    expect(drawPoint).toHaveBeenCalledExactlyOnceWith(47, 2, 'intersection of line A and B');
+  });
+
   it.each([
     { address: null },
     { address: 'Avenue Anatole France, 75007' },

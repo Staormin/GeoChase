@@ -2,7 +2,7 @@
  * Projects store - Manages project save/load operations
  */
 
-import type { ProjectData, ProjectLayerData, ViewData } from '@/types/project';
+import type { ProjectData, ProjectLayerData, ProjectProjection, ViewData } from '@/types/project';
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 import * as pdfStorage from '@/services/pdfStorage';
@@ -61,6 +61,10 @@ export const useProjectsStore = defineStore('projects', () => {
     return projects.value.find((p) => p.id === activeProjectId.value) || null;
   });
 
+  const activeProjection = computed<ProjectProjection>(
+    () => activeProject.value?.projection ?? 'mercator'
+  );
+
   // Actions
   function loadProjects(): void {
     projects.value = storage.getAllProjects();
@@ -71,15 +75,19 @@ export const useProjectsStore = defineStore('projects', () => {
     localStorage.setItem('geochase_activeProjectId', projectId || '');
   }
 
-  function createAndSwitchProject(name: string): void {
+  function createAndSwitchProject(name: string, projection: ProjectProjection = 'mercator'): void {
     // Create new project with empty state and get the returned project
-    const newProject = storage.saveProject(name, {
-      circles: [],
-      lineSegments: [],
-      points: [],
-      polygons: [],
-      notes: [],
-    });
+    const newProject = storage.saveProject(
+      name,
+      {
+        circles: [],
+        lineSegments: [],
+        points: [],
+        polygons: [],
+        notes: [],
+      },
+      projection
+    );
 
     // Add to local projects array
     projects.value.push(newProject);
@@ -90,7 +98,10 @@ export const useProjectsStore = defineStore('projects', () => {
     }
   }
 
-  function autoSaveActiveProject(data: ProjectLayerData): void {
+  function autoSaveActiveProject(
+    data: ProjectLayerData,
+    projection = activeProjection.value
+  ): void {
     if (!activeProjectId.value) {
       return;
     }
@@ -98,15 +109,16 @@ export const useProjectsStore = defineStore('projects', () => {
     if (currentProject) {
       const index = projects.value.indexOf(currentProject);
       if (index !== -1) {
+        // Persist first so a storage error leaves the active project untouched.
+        storage.updateProject(index, currentProject.name, data, projection);
+
         // Update project in-place without full reload
         projects.value[index] = {
           ...currentProject,
           data,
+          projection,
           updatedAt: Date.now(),
         };
-
-        // Save to storage
-        storage.updateProject(index, currentProject.name, data);
       }
     }
   }
@@ -173,11 +185,8 @@ export const useProjectsStore = defineStore('projects', () => {
         if (storageIndex !== -1 && allProjects[storageIndex]) {
           const project = allProjects[storageIndex];
           allProjects[storageIndex] = {
-            id: project.id,
-            name: project.name,
-            data: project.data,
+            ...project,
             viewData,
-            createdAt: project.createdAt,
             updatedAt: Date.now(),
           };
           storage.saveProjectsToStorage(allProjects);
@@ -268,6 +277,7 @@ export const useProjectsStore = defineStore('projects', () => {
     projectCount,
     sortedProjects,
     activeProject,
+    activeProjection,
 
     // Actions
     loadProjects,

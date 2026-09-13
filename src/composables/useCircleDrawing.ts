@@ -1,19 +1,35 @@
+import type { MapContainer } from '@/composables/useMap';
+import type { CircleElement } from '@/types/project';
 /**
  * Composable for drawing and managing circles on the map
  */
 
-import type { MapContainer } from '@/composables/useMap';
-import type { CircleElement } from '@/types/project';
 import { Feature } from 'ol';
 import { LineString } from 'ol/geom';
 import { circular as circularPolygon } from 'ol/geom/Polygon';
+import { fromLonLat } from 'ol/proj';
 import { Stroke, Style } from 'ol/style';
 import { v4 as uuidv4 } from 'uuid';
 import { useLayersStore } from '@/stores/layers';
+import { useProjectGeometry } from './useProjectGeometry';
 
 const DEFAULT_COLOR = '#000000';
 
 export function useCircleDrawing(mapRef: MapContainer) {
+  const { isGeodesic, generateCircle } = useProjectGeometry();
+  function circleCoordinates(lat: number, lon: number, radiusKm: number) {
+    if (isGeodesic()) {
+      let previousLon = lon;
+      return generateCircle(lat, lon, radiusKm, 128).map((point) => {
+        const unwrappedLon = point.lon + Math.round((previousLon - point.lon) / 360) * 360;
+        previousLon = unwrappedLon;
+        return fromLonLat([unwrappedLon, point.lat]);
+      });
+    }
+    const polygon = circularPolygon([lon, lat], radiusKm * 1000, 64);
+    polygon.transform('EPSG:4326', 'EPSG:3857');
+    return polygon.getLinearRing(0)!.getCoordinates();
+  }
   const layersStore = useLayersStore();
 
   const generateId = () => uuidv4();
@@ -30,16 +46,7 @@ export function useCircleDrawing(mapRef: MapContainer) {
       return;
     }
 
-    // Use OpenLayers native geodesic circle generation
-    // Note: circular() expects center in lon/lat (EPSG:4326), not Web Mercator
-    const radiusMeters = radiusKm * 1000; // Convert km to meters
-    const circlePolygon = circularPolygon([centerLon, centerLat], radiusMeters, 64);
-
-    // Transform from EPSG:4326 to EPSG:3857 (Web Mercator) for the map
-    circlePolygon.transform('EPSG:4326', 'EPSG:3857');
-
-    // Get the coordinates from the polygon's linear ring
-    const coordinates = circlePolygon.getLinearRing(0)!.getCoordinates();
+    const coordinates = circleCoordinates(centerLat, centerLon, radiusKm);
 
     const geometry = new LineString(coordinates);
     const feature = new Feature({
@@ -76,16 +83,7 @@ export function useCircleDrawing(mapRef: MapContainer) {
       color: DEFAULT_COLOR,
     };
 
-    // Use OpenLayers native geodesic circle generation
-    // Note: circular() expects center in lon/lat (EPSG:4326), not Web Mercator
-    const radiusMeters = radiusKm * 1000; // Convert km to meters
-    const circlePolygon = circularPolygon([centerLon, centerLat], radiusMeters, 64);
-
-    // Transform from EPSG:4326 to EPSG:3857 (Web Mercator) for the map
-    circlePolygon.transform('EPSG:4326', 'EPSG:3857');
-
-    // Get the coordinates from the polygon's linear ring
-    const coordinates = circlePolygon.getLinearRing(0)!.getCoordinates();
+    const coordinates = circleCoordinates(centerLat, centerLon, radiusKm);
 
     // Create OpenLayers feature
     const geometry = new LineString(coordinates);

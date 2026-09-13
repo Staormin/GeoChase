@@ -1,9 +1,8 @@
 <template>
   <v-dialog
     v-model="isOpen"
-    max-width="400px"
+    max-width="480px"
     @click:outside="closeModal"
-    @keydown.enter="submitForm"
     @keydown.esc="closeModal"
   >
     <v-card>
@@ -20,7 +19,10 @@
             :label="$t('project.projectName')"
             :placeholder="$t('project.projectName')"
             variant="outlined"
+            @keydown.enter.prevent="submitForm"
           />
+
+          <ProjectionSelect v-model="projection" />
         </v-form>
       </v-card-text>
 
@@ -40,8 +42,10 @@
 </template>
 
 <script lang="ts" setup>
+import type { ProjectProjection } from '@/types/project';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ProjectionSelect from '@/components/shared/ProjectionSelect.vue';
 import { useMapContext } from '@/composables/mapContext';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
@@ -54,6 +58,7 @@ const mapContainer = useMapContext();
 const { t } = useI18n();
 
 const projectName = ref('');
+const projection = ref<ProjectProjection>('mercator');
 
 const isOpen = computed({
   get: () => uiStore.isModalOpen('newProjectModal'),
@@ -86,7 +91,7 @@ function submitForm() {
     }
 
     // Create and switch to new project
-    projectsStore.createAndSwitchProject(projectName.value);
+    projectsStore.createAndSwitchProject(projectName.value, projection.value);
 
     // Clear the current view
     layersStore.clearLayers();

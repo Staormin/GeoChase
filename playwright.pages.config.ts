@@ -5,9 +5,12 @@ import config from './playwright.config';
 export default defineConfig(config, {
   testMatch: [
     '**/deployment.spec.ts',
+    '**/data/project-projection.spec.ts',
     '**/ui/responsive-layout.spec.ts',
     '**/drawing/point-geocoding.spec.ts',
     '**/drawing/intersection-distance.spec.ts',
+    '**/drawing/intersection-edit-pages.spec.ts',
+    '**/drawing/crossing-point.spec.ts',
   ],
   testIgnore: [],
   workers: 2,

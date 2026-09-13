@@ -1,7 +1,7 @@
 import type { CircleElement, LineSegmentElement } from '@/types/project';
-import { getDistance } from 'ol/sphere';
 import { computed, ref } from 'vue';
-import { destinationPoint, toRadians } from '@/services/geometry';
+import { useProjectGeometry } from '@/composables/useProjectGeometry';
+import { toRadians } from '@/services/geometry';
 
 export interface NavigationState {
   active: boolean;
@@ -12,6 +12,8 @@ export interface NavigationState {
 }
 
 export function useNavigation() {
+  const { getDistance, destinationPoint, getSegmentEndpoint, interpolateLine, isGeodesic } =
+    useProjectGeometry();
   const navigationState = ref<NavigationState>({
     active: false,
     elementType: null,
@@ -40,16 +42,7 @@ export function useNavigation() {
    * Calculate the length of a line segment in km
    */
   function calculateSegmentLength(segment: LineSegmentElement): number {
-    let segmentEndpoint = segment.endpoint;
-
-    if (segment.mode === 'azimuth' && segment.distance && segment.azimuth !== undefined) {
-      segmentEndpoint = destinationPoint(
-        segment.center.lat,
-        segment.center.lon,
-        segment.distance,
-        segment.azimuth
-      );
-    }
+    const segmentEndpoint = getSegmentEndpoint(segment);
 
     if (!segmentEndpoint) {
       return 0;
@@ -154,6 +147,13 @@ export function useNavigation() {
    * Calculate coordinates on a circle based on angle position
    */
   function getCircleNavigationCoords(circle: CircleElement): { lat: number; lon: number } {
+    if (isGeodesic())
+      return destinationPoint(
+        circle.center.lat,
+        circle.center.lon,
+        circle.radius,
+        navigationState.value.anglePosition
+      );
     const radians = toRadians(navigationState.value.anglePosition);
     const degreesPerKm = 1 / (111 * Math.cos(toRadians(circle.center.lat)));
     const newLat = circle.center.lat + (circle.radius / 111) * Math.cos(radians);
@@ -166,27 +166,13 @@ export function useNavigation() {
    * Calculate coordinates on a line segment based on progress
    */
   function getSegmentNavigationCoords(segment: LineSegmentElement): { lat: number; lon: number } {
-    let segmentEndpoint = segment.endpoint;
-
-    if (segment.mode === 'azimuth' && segment.distance && segment.azimuth !== undefined) {
-      segmentEndpoint = destinationPoint(
-        segment.center.lat,
-        segment.center.lon,
-        segment.distance,
-        segment.azimuth
-      );
-    }
+    const segmentEndpoint = getSegmentEndpoint(segment);
 
     if (!segmentEndpoint) {
       return { lat: segment.center.lat, lon: segment.center.lon };
     }
 
-    // Linear interpolation between start and end points
-    const progress = navigationState.value.progress;
-    const lat = segment.center.lat + (segmentEndpoint.lat - segment.center.lat) * progress;
-    const lon = segment.center.lon + (segmentEndpoint.lon - segment.center.lon) * progress;
-
-    return { lat, lon };
+    return interpolateLine(segment.center, segmentEndpoint, navigationState.value.progress);
   }
 
   return {

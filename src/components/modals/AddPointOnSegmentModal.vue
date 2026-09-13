@@ -62,15 +62,14 @@
 </template>
 
 <script lang="ts" setup>
-import type { LineSegmentElement } from '@/types/project';
-import { fromLonLat, toLonLat } from 'ol/proj';
-import { getDistance } from 'ol/sphere';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDrawingContext } from '@/composables/mapContext';
-import { destinationPoint } from '@/services/geometry';
+import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
+
+const { getDistance, getSegmentEndpoint, pointAtDistance } = useProjectGeometry();
 
 const { t } = useI18n();
 const uiStore = useUIStore();
@@ -98,28 +97,6 @@ const isOpen = computed({
 });
 
 const selectedSegmentId = computed(() => uiStore.selectedSegmentForPointCreation);
-
-function getSegmentEndpoint(segment: LineSegmentElement) {
-  switch (segment.mode) {
-    case 'coordinate': {
-      return segment.endpoint;
-    }
-    case 'azimuth': {
-      if (segment.distance === undefined || segment.azimuth === undefined) return null;
-      return destinationPoint(
-        segment.center.lat,
-        segment.center.lon,
-        segment.distance,
-        segment.azimuth
-      );
-    }
-    case 'intersection': {
-      return segment.endpoint;
-    }
-    // No default
-  }
-  return null;
-}
 
 function calculateMidpoint() {
   if (!selectedSegmentId.value) {
@@ -176,104 +153,17 @@ function submitForm() {
     return;
   }
 
-  if (form.value.distance < 0) {
+  if (!Number.isFinite(form.value.distance) || form.value.distance < 0) {
     uiStore.addToast(t('modals.addPointOnSegment.distancePositive'), 'error');
     return;
   }
 
-  // Find point on the Web Mercator line that corresponds to the target Haversine distance
-  // Use binary search in Web Mercator space to find the exact point
-  const startProj = fromLonLat([segment.center.lon, segment.center.lat]);
-  const startProjX = startProj[0]!;
-  const startProjY = startProj[1]!;
-  const endProj = fromLonLat([endpoint.lon, endpoint.lat]);
-  const endProjX = endProj[0]!;
-  const endProjY = endProj[1]!;
-  const dx = endProjX - startProjX;
-  const dy = endProjY - startProjY;
-
-  let pointOnSegment;
-
-  if (form.value.distanceFrom === 'start') {
-    // Binary search to find fraction that matches target haversine distance
-    let minFraction = 0;
-    let maxFraction = 1;
-    let targetFraction = 0.5;
-    let iterations = 0;
-    const maxIterations = 30;
-
-    while (iterations < maxIterations) {
-      const testProjX = startProjX + targetFraction * dx;
-      const testProjY = startProjY + targetFraction * dy;
-      const testCoords = toLonLat([testProjX, testProjY]);
-      const testPoint = { lat: testCoords[1]!, lon: testCoords[0]! };
-
-      // getDistance returns meters, convert to km
-      const testDistance =
-        getDistance([segment.center.lon, segment.center.lat], [testPoint.lon, testPoint.lat]) /
-        1000;
-      const tolerance = 0.0001; // 0.1 meter tolerance
-
-      if (Math.abs(testDistance - form.value.distance) < tolerance) {
-        pointOnSegment = testPoint;
-        break;
-      } else if (testDistance < form.value.distance) {
-        minFraction = targetFraction;
-      } else {
-        maxFraction = targetFraction;
-      }
-
-      targetFraction = (minFraction + maxFraction) / 2;
-      iterations++;
-    }
-
-    // If we didn't converge, use the last calculated point
-    if (!pointOnSegment) {
-      const projX = startProjX + targetFraction * dx;
-      const projY = startProjY + targetFraction * dy;
-      const coords = toLonLat([projX, projY]);
-      pointOnSegment = { lat: coords[1]!, lon: coords[0]! };
-    }
-  } else {
-    // Binary search from endpoint
-    let minFraction = 0;
-    let maxFraction = 1;
-    let targetFraction = 0.5;
-    let iterations = 0;
-    const maxIterations = 30;
-
-    while (iterations < maxIterations) {
-      const testProjX = endProjX - targetFraction * dx;
-      const testProjY = endProjY - targetFraction * dy;
-      const testCoords = toLonLat([testProjX, testProjY]);
-      const testPoint = { lat: testCoords[1]!, lon: testCoords[0]! };
-
-      // getDistance returns meters, convert to km
-      const testDistance =
-        getDistance([endpoint.lon, endpoint.lat], [testPoint.lon, testPoint.lat]) / 1000;
-      const tolerance = 0.0001; // 0.1 meter tolerance
-
-      if (Math.abs(testDistance - form.value.distance) < tolerance) {
-        pointOnSegment = testPoint;
-        break;
-      } else if (testDistance < form.value.distance) {
-        minFraction = targetFraction;
-      } else {
-        maxFraction = targetFraction;
-      }
-
-      targetFraction = (minFraction + maxFraction) / 2;
-      iterations++;
-    }
-
-    // If we didn't converge, use the last calculated point
-    if (!pointOnSegment) {
-      const projX = endProjX - targetFraction * dx;
-      const projY = endProjY - targetFraction * dy;
-      const coords = toLonLat([projX, projY]);
-      pointOnSegment = { lat: coords[1]!, lon: coords[0]! };
-    }
-  }
+  const pointOnSegment = pointAtDistance(
+    segment.center,
+    endpoint,
+    form.value.distance,
+    form.value.distanceFrom === 'end'
+  );
 
   // Auto-generate clever name based on position
   let name = form.value.name.trim();
@@ -319,6 +209,11 @@ function submitForm() {
       const pointInStore = layersStore.points.find((p) => p.id === newPoint.id);
       if (pointInStore) {
         pointInStore.lineId = selectedSegmentId.value;
+        pointInStore.construction = {
+          lineId: selectedSegmentId.value,
+          distanceKm: form.value.distance,
+          fromEnd: form.value.distanceFrom === 'end',
+        };
       }
     }
   }

@@ -337,13 +337,14 @@ import type {
   PointElement,
   PolygonElement,
 } from '@/types/project';
-import { getDistance } from 'ol/sphere';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import LayerContextMenu from '@/components/layers/LayerContextMenu.vue';
 import { useDrawingContext, useMapContext } from '@/composables/mapContext';
-import { calculateBearing } from '@/services/geometry';
+import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
+
+const { getDistance, calculateBearing } = useProjectGeometry();
 
 const layersStore = useLayersStore();
 const uiStore = useUIStore();
