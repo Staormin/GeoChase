@@ -996,5 +996,12 @@
     "instructions": "Déplacez pour ajuster · Cliquez pour enregistrer · Échap pour annuler",
     "saved": "Distance de la ligne d’intersection mise à jour",
     "error": "Impossible de modifier cette ligne d’intersection. Vérifiez ses constructions liées."
+  },
+  "drawingColor": {
+    "title": "Couleur du tracé",
+    "palette": "Palette",
+    "recent": "Dernières couleurs",
+    "custom": "Couleur personnalisée",
+    "invalid": "Utilisez un code hexadécimal à 6 caractères, par exemple #6366F1."
   }
 }

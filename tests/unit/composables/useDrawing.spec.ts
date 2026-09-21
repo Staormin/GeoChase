@@ -1,3 +1,5 @@
+import { Feature } from 'ol';
+import { Fill, Stroke, Style } from 'ol/style';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
@@ -75,6 +77,33 @@ describe('useDrawing', () => {
   let mockClear: ReturnType<typeof vi.fn>;
   let mockRemoveOverlay: ReturnType<typeof vi.fn>;
   let overlaysArray: any[];
+
+  it('updates the polygon stroke and translucent fill without replacing its geometry', () => {
+    layersStore.addPolygon({ id: 'poly', name: 'Area', pointIds: [], color: '#000000' });
+    const feature = new Feature();
+    feature.setStyle(
+      new Style({
+        stroke: new Stroke({ color: '#000000', width: 3 }),
+        fill: new Fill({ color: '#00000033' }),
+      })
+    );
+    mockGetFeatureById.mockReturnValue(feature);
+    const drawing = useDrawing(mockMapRef);
+    drawing.updateElementColor('polygon', 'poly', '#6366F1');
+    expect(layersStore.polygons[0]?.color).toBe('#6366F1');
+    const style = feature.getStyle() as Style;
+    expect(style.getStroke()?.getColor()).toBe('#6366F1');
+    expect(style.getFill()?.getColor()).toBe('#6366F133');
+    expect(mockRemoveFeature).not.toHaveBeenCalled();
+  });
+
+  it('stores a hidden drawing color without making it visible', () => {
+    layersStore.addCircle({ id: 'circle', name: 'Circle', center: { lat: 48, lon: 2 }, radius: 1 });
+    mockGetFeatureById.mockReturnValue(null);
+    useDrawing(mockMapRef).updateElementColor('circle', 'circle', '#0891B2');
+    expect(layersStore.circles[0]?.color).toBe('#0891B2');
+    expect(mockRedrawCircleOnMap).not.toHaveBeenCalled();
+  });
 
   beforeEach(() => {
     setActivePinia(createPinia());

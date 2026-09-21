@@ -996,5 +996,12 @@
     "instructions": "Move to adjust · Click to save · Esc to cancel",
     "saved": "Intersection line distance updated",
     "error": "Could not update this intersection line. Check its linked constructions."
+  },
+  "drawingColor": {
+    "title": "Drawing color",
+    "palette": "Palette",
+    "recent": "Recent colors",
+    "custom": "Custom color",
+    "invalid": "Use a 6-digit hex color, for example #6366F1."
   }
 }

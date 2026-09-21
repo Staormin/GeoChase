@@ -150,7 +150,13 @@ export function useCircleDrawing(mapRef: MapContainer) {
     }
 
     // Redraw circle
-    redrawCircleOnMap(circleId, centerLat, centerLon, radiusKm, DEFAULT_COLOR);
+    redrawCircleOnMap(
+      circleId,
+      centerLat,
+      centerLon,
+      radiusKm,
+      layersStore.circles.find((circle) => circle.id === circleId)?.color
+    );
   };
 
   return {

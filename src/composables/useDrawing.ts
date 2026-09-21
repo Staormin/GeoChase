@@ -5,6 +5,7 @@
 import type { MapContainer } from '@/composables/useMap';
 import type { LineSegmentElement } from '@/types/project';
 import type VectorSource from 'ol/source/Vector';
+import { Style } from 'ol/style';
 import { useLayersStore } from '@/stores/layers';
 import { useCircleDrawing } from './useCircleDrawing';
 import { useLineDrawing } from './useLineDrawing';
@@ -475,7 +476,38 @@ export function useDrawing(mapRef: MapContainer) {
     }
   };
 
+  function updateElementColor(elementType: string, elementId: string, color: string) {
+    if (!/^#[\da-f]{6}$/i.test(color)) return;
+    switch (elementType) {
+      case 'circle': {
+        layersStore.updateCircle(elementId, { color });
+        break;
+      }
+      case 'lineSegment': {
+        layersStore.updateLineSegment(elementId, { color });
+        break;
+      }
+      case 'polygon': {
+        layersStore.updatePolygon(elementId, { color });
+        break;
+      }
+      default: {
+        return;
+      }
+    }
+    // Hidden elements have no feature; their stored color is used when shown again.
+    const feature = getSourceForElementType(elementType)?.getFeatureById(elementId);
+    const style = feature?.getStyle();
+    if (style instanceof Style) {
+      const updatedStyle = style.clone();
+      updatedStyle.getStroke()?.setColor(color);
+      updatedStyle.getFill()?.setColor(`${color}33`);
+      feature?.setStyle(updatedStyle);
+    }
+  }
+
   return {
+    updateElementColor,
     // Circle methods
     drawCircle: circleDrawing.drawCircle,
     updateCircle: circleDrawing.updateCircle,

@@ -90,6 +90,11 @@
         <v-list-item-title>{{ $t('contextMenu.edit') }}</v-list-item-title>
       </v-list-item>
 
+      <v-list-item v-if="elementType !== 'point'" @click="openColorPicker">
+        <template #prepend><v-icon icon="mdi-palette" size="small" /></template>
+        <v-list-item-title>{{ $t('drawingColor.title') }}</v-list-item-title>
+      </v-list-item>
+
       <!-- Delete -->
       <v-list-item class="text-error" @click="handleDelete">
         <template #prepend>
@@ -100,6 +105,12 @@
       </v-list-item>
     </v-list>
   </v-menu>
+
+  <DrawingColorDialog
+    v-model="colorPickerOpen"
+    :color="getElement()?.color || (elementType === 'polygon' ? '#90EE90' : '#000000')"
+    @save="saveColor"
+  />
 </template>
 
 <script lang="ts" setup>
@@ -111,6 +122,7 @@ import type {
 } from '@/types/project';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import DrawingColorDialog from '@/components/layers/DrawingColorDialog.vue';
 import { useDrawingContext } from '@/composables/mapContext';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -127,6 +139,16 @@ const emit = defineEmits<{
 }>();
 
 const isOpen = ref(false);
+const colorPickerOpen = ref(false);
+
+function openColorPicker() {
+  isOpen.value = false;
+  colorPickerOpen.value = true;
+}
+
+function saveColor(color: string) {
+  drawing.updateElementColor(props.elementType, props.elementId, color);
+}
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const drawing = useDrawingContext();

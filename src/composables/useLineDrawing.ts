@@ -432,7 +432,8 @@ export function useLineDrawing(mapRef: MapContainer) {
     newFeature.setStyle(
       new Style({
         stroke: new Stroke({
-          color: DEFAULT_COLOR,
+          color:
+            layersStore.lineSegments.find((line) => line.id === lineId)?.color || DEFAULT_COLOR,
           width: 3,
         }),
       })
@@ -558,7 +559,8 @@ export function useLineDrawing(mapRef: MapContainer) {
     newFeature.setStyle(
       new Style({
         stroke: new Stroke({
-          color: DEFAULT_COLOR,
+          color:
+            layersStore.lineSegments.find((line) => line.id === lineId)?.color || DEFAULT_COLOR,
           width: 3,
         }),
       })
