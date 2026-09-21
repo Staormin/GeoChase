@@ -480,24 +480,20 @@ function getLineInfo(line: LineSegmentElement) {
     return `${line.mode} • (incomplete)`;
   }
 
-  let azimuth: number;
-  let segmentLength: number;
-  if (line.mode === 'azimuth' && line.distance !== undefined && line.azimuth !== undefined) {
-    azimuth = line.azimuth;
-    segmentLength = line.distance;
-  } else {
-    // getDistance returns meters, convert to km
-    segmentLength =
-      getDistance([line.center.lon, line.center.lat], [line.endpoint.lon, line.endpoint.lat]) /
-      1000;
-    azimuth = calculateBearing(
-      line.center.lat,
-      line.center.lon,
-      line.endpoint.lat,
-      line.endpoint.lon
-    );
-  }
-  const inverseAzimuth = (azimuth + 180) % 360;
+  const segmentLength =
+    getDistance([line.center.lon, line.center.lat], [line.endpoint.lon, line.endpoint.lat]) / 1000;
+  const azimuth = calculateBearing(
+    line.center.lat,
+    line.center.lon,
+    line.endpoint.lat,
+    line.endpoint.lon
+  );
+  const inverseAzimuth = calculateBearing(
+    line.endpoint.lat,
+    line.endpoint.lon,
+    line.center.lat,
+    line.center.lon
+  );
   const modeLabel =
     line.mode === 'coordinate'
       ? 'coordinate'
@@ -758,7 +754,12 @@ function handleDrop(targetPoint: PointElement) {
     targetPoint.coordinates.lat,
     targetPoint.coordinates.lon
   );
-  const inverseAzimuth = (azimuth + 180) % 360;
+  const inverseAzimuth = calculateBearing(
+    targetPoint.coordinates.lat,
+    targetPoint.coordinates.lon,
+    startPoint.coordinates.lat,
+    startPoint.coordinates.lon
+  );
   const lineName = `${startPoint.name} → ${targetPoint.name}`;
 
   drawing.drawLineSegment(

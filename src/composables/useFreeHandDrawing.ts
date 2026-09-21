@@ -12,6 +12,7 @@ import { toLonLat } from 'ol/proj';
 import { Stroke, Style } from 'ol/style';
 import { watch } from 'vue';
 import { useProjectGeometry } from '@/composables/useProjectGeometry';
+import { i18n } from '@/plugins/i18n';
 import { useUIStore } from '@/stores/ui';
 
 export function useFreeHandDrawing(
@@ -84,14 +85,13 @@ export function useFreeHandDrawing(
     bearing: number,
     azimuth: number | undefined,
     isAltPressed: boolean,
-    isCtrlPressed: boolean
+    isCtrlPressed: boolean,
+    inverseBearing: number
   ): void => {
-    const inverseBearing = (bearing + 180) % 360;
-
     cursorTooltip.value.distance = `${distance.toFixed(3)} km${isCtrlPressed && azimuth === undefined ? ' (locked)' : ''}`;
 
     if (azimuth !== undefined) {
-      const inverseAzimuth = (azimuth + 180) % 360;
+      const inverseAzimuth = inverseBearing;
       cursorTooltip.value.azimuth = `${azimuth.toFixed(2)}° / ${inverseAzimuth.toFixed(2)}° (locked)`;
     } else if (isAltPressed) {
       cursorTooltip.value.azimuth = `${bearing.toFixed(2)}° / ${inverseBearing.toFixed(2)}° (Alt)`;
@@ -217,21 +217,33 @@ export function useFreeHandDrawing(
       azimuth
     );
 
-    // Update tooltip content
-    updateTooltipContent(distance, bearing, azimuth, isAltPressed, isCtrlPressed);
-    cursorTooltip.value.visible = true;
-
-    // Calculate endpoint
-    const endpoint = calculateEndpoint(
+    let endpoint;
+    try {
+      // Calculate endpoint
+      endpoint = calculateEndpoint(
+        startCoords.lat,
+        startCoords.lon,
+        lat,
+        lng,
+        distance,
+        bearing,
+        azimuth,
+        isCtrlPressed
+      );
+    } catch {
+      cursorTooltip.value.visible = false;
+      if (previewFeature) mapContainer.linesSource?.value?.removeFeature(previewFeature);
+      previewFeature = null;
+      return;
+    }
+    const inverseBearing = calculateBearing(
+      endpoint.lat,
+      endpoint.lon,
       startCoords.lat,
-      startCoords.lon,
-      lat,
-      lng,
-      distance,
-      bearing,
-      azimuth,
-      isCtrlPressed
+      startCoords.lon
     );
+    updateTooltipContent(distance, bearing, azimuth, isAltPressed, isCtrlPressed, inverseBearing);
+    cursorTooltip.value.visible = true;
 
     // Draw preview line
     drawPreviewLine(startCoords.lat, startCoords.lon, endpoint.lat, endpoint.lon);
@@ -277,7 +289,7 @@ export function useFreeHandDrawing(
       }
     } else {
       // Set start point on first click
-      uiStore.freeHandDrawing.startCoord = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      uiStore.freeHandDrawing.startCoord = `${lat}, ${lng}`;
       uiStore.addToast('Start point set. Click again to set the endpoint.', 'info');
       return;
     }
@@ -287,33 +299,38 @@ export function useFreeHandDrawing(
     let distance = getDistance([startLon, startLat], [lng, lat]) / 1000;
     let bearing = calculateBearing(startLat, startLon, lat, lng);
 
-    // Calculate endpoint based on constraints
-    if (azimuth === undefined) {
-      if (isAltPressed && lockedAzimuth !== null) {
-        bearing = lockedAzimuth;
-      }
-      if (isCtrlPressed && lockedDistance !== null) {
-        distance = lockedDistance;
-      }
+    try {
+      // Calculate endpoint based on constraints
+      if (azimuth === undefined) {
+        if (isAltPressed && lockedAzimuth !== null) {
+          bearing = lockedAzimuth;
+        }
+        if (isCtrlPressed && lockedDistance !== null) {
+          distance = lockedDistance;
+        }
 
-      if (isAltPressed && lockedAzimuth !== null) {
-        const endpoint = destinationPoint(startLat, startLon, distance, lockedAzimuth);
-        endLat = endpoint.lat;
-        endLon = endpoint.lon;
-      } else if (isCtrlPressed && lockedDistance !== null) {
-        const endpoint = destinationPoint(startLat, startLon, lockedDistance, bearing);
-        endLat = endpoint.lat;
-        endLon = endpoint.lon;
+        if (isAltPressed && lockedAzimuth !== null) {
+          const endpoint = destinationPoint(startLat, startLon, distance, lockedAzimuth);
+          endLat = endpoint.lat;
+          endLon = endpoint.lon;
+        } else if (isCtrlPressed && lockedDistance !== null) {
+          const endpoint = destinationPoint(startLat, startLon, lockedDistance, bearing);
+          endLat = endpoint.lat;
+          endLon = endpoint.lon;
+        } else {
+          endLat = lat;
+          endLon = lng;
+        }
       } else {
-        endLat = lat;
-        endLon = lng;
+        // getDistance returns meters, convert to km
+        const dist = getDistance([startLon, startLat], [lng, lat]) / 1000;
+        const endpoint = destinationPoint(startLat, startLon, dist, azimuth);
+        endLat = endpoint.lat;
+        endLon = endpoint.lon;
       }
-    } else {
-      // getDistance returns meters, convert to km
-      const dist = getDistance([startLon, startLat], [lng, lat]) / 1000;
-      const endpoint = destinationPoint(startLat, startLon, dist, azimuth);
-      endLat = endpoint.lat;
-      endLon = endpoint.lon;
+    } catch {
+      uiStore.addToast(i18n.global.t('line.errors.unreachableDestination'), 'error');
+      return;
     }
 
     // Remove preview layer
@@ -331,7 +348,7 @@ export function useFreeHandDrawing(
       // getDistance returns meters, convert to km
       const dist = getDistance([startLon, startLat], [endLon, endLat]) / 1000;
       const finalBearing = calculateBearing(startLat, startLon, endLat, endLon);
-      const inverseBearing = (finalBearing + 180) % 360;
+      const inverseBearing = calculateBearing(endLat, endLon, startLat, startLon);
       lineName = `Line ${dist.toFixed(1)}km • ${finalBearing.toFixed(1)}°/${inverseBearing.toFixed(1)}°`;
     }
 

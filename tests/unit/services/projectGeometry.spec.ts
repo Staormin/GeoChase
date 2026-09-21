@@ -13,6 +13,63 @@ const start = { lat: 60, lon: -60 };
 const end = { lat: 60, lon: 60 };
 
 describe('project geometry', () => {
+  it('bisects WGS84 distances in both directions across varied and global segments', () => {
+    const cases = [
+      [
+        { lat: 48.3904, lon: -4.4861 },
+        { lat: 50.4501, lon: 30.5234 },
+      ],
+      [
+        { lat: 30, lon: 179 },
+        { lat: 30, lon: -179 },
+      ],
+      [
+        { lat: 85, lon: -60 },
+        { lat: 85, lon: 120 },
+      ],
+      [
+        { lat: 0, lon: 0 },
+        { lat: 0.01, lon: 179.99 },
+      ],
+      [
+        { lat: -40, lon: -70 },
+        { lat: -20, lon: 130 },
+      ],
+      [
+        { lat: 48, lon: 2 },
+        { lat: 48.000001, lon: 2.000001 },
+      ],
+      [
+        { lat: 48, lon: 2 },
+        { lat: 48, lon: 2 },
+      ],
+    ];
+    let seed = 123_456;
+    const random = () => {
+      seed = (Math.imul(seed, 1_664_525) + 1_013_904_223) >>> 0;
+      return seed / 2 ** 32;
+    };
+    for (let i = 0; i < 1000; i++) {
+      cases.push([
+        { lat: random() * 178 - 89, lon: random() * 360 - 180 },
+        { lat: random() * 178 - 89, lon: random() * 360 - 180 },
+      ]);
+    }
+    const distance = (a: typeof start, b: typeof start) =>
+      geo.getDistance([a.lon, a.lat], [b.lon, b.lat]);
+    for (const [a, b] of cases) {
+      const total = distance(a!, b!);
+      const midpoint = geo.interpolateLine(a!, b!, 0.5);
+      const reverse = geo.interpolateLine(b!, a!, 0.5);
+      expect(Math.abs(distance(a!, midpoint) - total / 2)).toBeLessThan(0.00001);
+      expect(Math.abs(distance(midpoint, b!) - total / 2)).toBeLessThan(0.00001);
+      expect(distance(midpoint, reverse)).toBeLessThan(0.00001);
+      // The form measures the midpoint, then reconstructs it when submitted.
+      const submitted = geo.pointAtDistance(a!, b!, distance(a!, midpoint) / 1000);
+      expect(distance(midpoint, submitted)).toBeLessThan(0.00001);
+    }
+  });
+
   describe('points on lines', () => {
     const line: LineSegmentElement = {
       id: 'reference',
@@ -195,7 +252,7 @@ describe('project geometry', () => {
       const flatLatitudes = [...flatXML.matchAll(/lat="([\d.-]+)"/g)].map((match) =>
         Number(match[1])
       );
-      expect(flatLatitudes).toHaveLength(101);
+      expect(flatLatitudes).toHaveLength(2);
       expect(flatLatitudes.every((lat) => lat === 60)).toBe(true);
     }
     const xml = generateLineSegmentTracks(

@@ -12,8 +12,7 @@ export interface NavigationState {
 }
 
 export function useNavigation() {
-  const { getDistance, destinationPoint, getSegmentEndpoint, interpolateLine, isGeodesic } =
-    useProjectGeometry();
+  const { getDistance, circlePoint, getSegmentEndpoint, interpolateLine } = useProjectGeometry();
   const navigationState = ref<NavigationState>({
     active: false,
     elementType: null,
@@ -147,19 +146,12 @@ export function useNavigation() {
    * Calculate coordinates on a circle based on angle position
    */
   function getCircleNavigationCoords(circle: CircleElement): { lat: number; lon: number } {
-    if (isGeodesic())
-      return destinationPoint(
-        circle.center.lat,
-        circle.center.lon,
-        circle.radius,
-        navigationState.value.anglePosition
-      );
-    const radians = toRadians(navigationState.value.anglePosition);
-    const degreesPerKm = 1 / (111 * Math.cos(toRadians(circle.center.lat)));
-    const newLat = circle.center.lat + (circle.radius / 111) * Math.cos(radians);
-    const newLon = circle.center.lon + circle.radius * degreesPerKm * Math.sin(radians);
-
-    return { lat: newLat, lon: newLon };
+    return circlePoint(
+      circle.center.lat,
+      circle.center.lon,
+      circle.radius,
+      navigationState.value.anglePosition
+    );
   }
 
   /**

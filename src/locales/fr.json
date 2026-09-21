@@ -185,6 +185,7 @@
     "errors": {
       "invalidCoordinates": "Coordonnées invalides",
       "invalidAzimuth": "L'azimut doit être entre 0 et 360",
+      "unreachableDestination": "Impossible de construire une ligne avec cette distance et cet azimut depuis ce point.",
       "invalidDistance": "La distance doit être supérieure à 0",
       "noLineSelected": "Veuillez sélectionner une ligne",
       "noPointSelected": "Veuillez sélectionner un point",
@@ -653,7 +654,7 @@
       },
       "projection": {
         "title": "Choisir la projection du projet",
-        "choice": "Choisissez Mercator pour des lignes droites sur la carte, ou Géodésique (WGS84) pour les plus courts chemins sur la Terre courbe. Les chemins géodésiques peuvent apparaître courbés sur la carte. Le fond de carte reste identique.",
+        "choice": "Choisissez Mercator pour des lignes droites sur la carte et des azimuts calculés comme dans cartes.gouv.fr, ou Géodésique (WGS84) pour les plus courts chemins sur la Terre courbe. Les chemins géodésiques peuvent apparaître courbés sur la carte. Le fond de carte reste identique.",
         "settings": "Choisissez la projection à la création du projet. Modifiez-la ensuite dans le menu Projet → Paramètres du projet. Elle s’applique à tous les tracés, distances et azimuts ; les parallèles restent des lignes de latitude constante.",
         "export": "La projection est enregistrée avec le projet et incluse dans les exports JSON. Les exports GPX et les recherches le long des lignes suivent la géométrie sélectionnée. Les anciens projets sans ce paramètre utilisent Mercator."
       }

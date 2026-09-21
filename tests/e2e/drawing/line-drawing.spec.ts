@@ -29,7 +29,9 @@ test.describe('Line Drawing', () => {
       await page.waitForTimeout(500);
 
       // Verify line appears in layers panel
-      await expect(page.locator('.layer-item').filter({ hasText: /Line/i })).toBeVisible();
+      await expect(
+        page.locator('.layer-item').filter({ hasText: /coordinate|azimuth|intersection/i })
+      ).toBeVisible();
     });
 
     test('should create a line with custom name', async ({ page, blankProject }) => {
@@ -212,12 +214,16 @@ test.describe('Line Drawing', () => {
       await page.waitForTimeout(200);
 
       // Line should still be in list
-      await expect(page.locator('.layer-item').filter({ hasText: /Line/i })).toBeVisible();
+      await expect(
+        page.locator('.layer-item').filter({ hasText: /coordinate|azimuth|intersection/i })
+      ).toBeVisible();
 
       // Click again to show
       await visibilityBtn.click();
       await page.waitForTimeout(200);
-      await expect(page.locator('.layer-item').filter({ hasText: /Line/i })).toBeVisible();
+      await expect(
+        page.locator('.layer-item').filter({ hasText: /coordinate|azimuth|intersection/i })
+      ).toBeVisible();
     });
 
     test('should create multiple lines', async ({ page, blankProject }) => {

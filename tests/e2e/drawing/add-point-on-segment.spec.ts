@@ -15,8 +15,8 @@ async function createLine(page: any) {
   await page.locator('.v-select__content').waitFor({ state: 'hidden', timeout: 5000 });
   await page.waitForTimeout(300);
 
-  // Set distance (default is 1km which is fine)
-  // Set azimuth (default is fine)
+  // Explicitly create a non-zero segment.
+  await dialog.getByRole('spinbutton', { name: /Distance/ }).fill('1');
 
   // Click add
   await page

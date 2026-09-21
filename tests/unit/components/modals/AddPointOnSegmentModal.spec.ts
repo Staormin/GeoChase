@@ -1,10 +1,15 @@
 import { flushPromises, mount } from '@vue/test-utils';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AddPointOnSegmentModal from '@/components/modals/AddPointOnSegmentModal.vue';
 import { drawingKey } from '@/composables/mapContext';
+import { geodesicIntermediate, geodesicInverse } from '@/services/geodesy';
 import { useLayersStore } from '@/stores/layers';
+import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
+
+vi.unmock('ol/proj');
 
 describe('AddPointOnSegmentModal.vue', () => {
   let wrapper: any;
@@ -160,11 +165,47 @@ describe('AddPointOnSegmentModal.vue', () => {
   });
 
   describe('Point calculation', () => {
+    it.each(['mercator', 'geodesic'] as const)(
+      'creates the same Brest–Kyiv midpoint in both directions in %s',
+      async (projection) => {
+        useProjectsStore().createAndSwitchProject('Midpoint regression', projection);
+        const brest = { lat: 48.3904, lon: -4.4861 };
+        const kyiv = { lat: 50.4501, lon: 30.5234 };
+        const a = fromLonLat([brest.lon, brest.lat]);
+        const b = fromLonLat([kyiv.lon, kyiv.lat]);
+        const [lon, lat] = toLonLat([(a[0]! + b[0]!) / 2, (a[1]! + b[1]!) / 2]);
+        const expected =
+          projection === 'mercator' ? { lat, lon } : geodesicIntermediate(brest, kyiv, 0.5);
+
+        for (const [center, endpoint] of [
+          [brest, kyiv],
+          [kyiv, brest],
+        ]) {
+          const segment = layersStore.lineSegments.find((line: any) => line.id === 'line-456');
+          segment.center = center;
+          segment.endpoint = endpoint;
+          uiStore.openModal('addPointOnSegmentModal');
+          uiStore.setSelectedSegmentForPointCreation(segment.id);
+          await wrapper.vm.calculateMidpoint();
+          await wrapper.vm.submitForm();
+
+          const [actualLat, actualLon] = mockDrawing.drawPoint.mock.calls.at(-1);
+          expect(actualLat).toBeCloseTo(expected.lat!, 7);
+          expect(actualLon).toBeCloseTo(expected.lon!, 7);
+          if (projection === 'geodesic') {
+            const actual = { lat: actualLat, lon: actualLon };
+            const half = geodesicInverse(brest, kyiv).distance / 2;
+            expect(geodesicInverse(brest, actual).distance).toBeCloseTo(half, 5);
+            expect(geodesicInverse(actual, kyiv).distance).toBeCloseTo(half, 5);
+          }
+        }
+      }
+    );
+
     it('calculates midpoint correctly', async () => {
       await (wrapper.vm as any).calculateMidpoint();
 
-      // The distance should be half of the total haversine distance
-      // Total distance between (48.8566, 2.3522) and (48.86, 2.355) is approximately 0.3 km
+      // The distance is measured from the start to the selected path's midpoint.
       expect((wrapper.vm as any).form.distance).toBeGreaterThan(0);
       expect((wrapper.vm as any).form.distanceFrom).toBe('start');
       // Name uses i18n translation: "Midpoint of {segment}" where segment is "Test Line"

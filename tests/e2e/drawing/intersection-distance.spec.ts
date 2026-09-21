@@ -2,24 +2,25 @@ import type { LineSegmentElement, ProjectData } from '../../../src/types/project
 import type { Page } from '@playwright/test';
 import { getDistance } from 'ol/sphere.js';
 import { expect, test } from '../fixtures';
+import { reloadWithProjects } from '../helpers/intersection';
 
 const start = { lat: 43.208829, lon: 2.35458 };
 const intersection = { lat: 46.69318, lon: -1.926687 };
 const lineName = 'Intersection extension test';
 
 test.beforeEach(async ({ page, blankProject }) => {
-  await page.evaluate(
+  const projects = await page.evaluate(
     ({ start, intersection }) => {
       const projects: ProjectData[] = JSON.parse(localStorage.getItem('geochase_projects')!);
       projects[0]!.data.points = [
         { id: 'start', name: 'Carcassonne', coordinates: start },
         { id: 'through', name: 'Saint-Gilles-Croix-de-Vie', coordinates: intersection },
       ];
-      localStorage.setItem('geochase_projects', JSON.stringify(projects));
+      return projects;
     },
     { start, intersection }
   );
-  await page.reload();
+  await reloadWithProjects(page, projects);
 });
 
 async function openLineForm(page: Page, distance: string) {

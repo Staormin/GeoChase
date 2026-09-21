@@ -1,4 +1,5 @@
 import type { CircleElement, LineSegmentElement } from '@/types/project';
+import type * as OlSphere from 'ol/sphere';
 import { fromLonLat } from 'ol/proj';
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -14,8 +15,13 @@ vi.mock('@/services/geometry', () => ({
 }));
 
 // Mock ol/sphere
-vi.mock('ol/sphere', () => ({
+vi.mock('ol/sphere', async (importOriginal) => ({
+  ...(await importOriginal<typeof OlSphere>()),
   getDistance: vi.fn(() => 10_000), // Always return 10km
+}));
+
+vi.mock('@/services/cartesGouvGeometry', () => ({
+  cartesGouvDestination: vi.fn((from) => ({ lat: from.lat + 1, lon: from.lon + 1 })),
 }));
 
 describe('useNavigation', () => {

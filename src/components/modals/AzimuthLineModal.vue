@@ -80,7 +80,7 @@ import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
-const { destinationPoint } = useProjectGeometry();
+const { destinationPoint, calculateBearing, getDistance } = useProjectGeometry();
 
 const { t } = useI18n();
 
@@ -114,8 +114,20 @@ watch(isOpen, (newVal) => {
       if (element) {
         form.name = element.name;
         form.startCoord = `${element.center.lat},${element.center.lon}`;
-        form.azimuth = element.azimuth || 0;
-        form.distance = element.distance || 0;
+        form.azimuth = element.endpoint
+          ? calculateBearing(
+              element.center.lat,
+              element.center.lon,
+              element.endpoint.lat,
+              element.endpoint.lon
+            )
+          : element.azimuth || 0;
+        form.distance = element.endpoint
+          ? getDistance(
+              [element.center.lon, element.center.lat],
+              [element.endpoint.lon, element.endpoint.lat]
+            ) / 1000
+          : element.distance || 0;
       }
     } else {
       form.name = '';
@@ -150,7 +162,13 @@ async function submitForm() {
   }
 
   // Calculate endpoint from azimuth and distance
-  const endpoint = destinationPoint(startLat, startLon, form.distance, form.azimuth);
+  let endpoint;
+  try {
+    endpoint = destinationPoint(startLat, startLon, form.distance, form.azimuth);
+  } catch {
+    uiStore.addToast(t('line.errors.unreachableDestination'), 'error');
+    return;
+  }
 
   if (isEditing.value && uiStore.editingElement) {
     drawing.updateLineSegment(

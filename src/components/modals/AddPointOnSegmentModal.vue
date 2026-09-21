@@ -69,7 +69,7 @@ import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
-const { getDistance, getSegmentEndpoint, pointAtDistance } = useProjectGeometry();
+const { getDistance, getSegmentEndpoint, interpolateLine, pointAtDistance } = useProjectGeometry();
 
 const { t } = useI18n();
 const uiStore = useUIStore();
@@ -113,13 +113,11 @@ function calculateMidpoint() {
     return;
   }
 
-  // Calculate total haversine distance (getDistance returns meters, convert to km)
-  const totalDistance =
-    getDistance([segment.center.lon, segment.center.lat], [endpoint.lon, endpoint.lat]) / 1000;
-
-  // The midpoint distance is half of total haversine distance
-  // This will be placed using binary search in submitForm to ensure consistency
-  form.value.distance = totalDistance / 2;
+  // Locate the midpoint on the selected path before measuring its distance.
+  // Half the endpoint distance does not give the midpoint of a Mercator line.
+  const midpoint = interpolateLine(segment.center, endpoint, 0.5);
+  form.value.distance =
+    getDistance([segment.center.lon, segment.center.lat], [midpoint.lon, midpoint.lat]) / 1000;
   form.value.distanceFrom = 'start';
 
   // Auto-name the point as "{line name} - Midpoint"

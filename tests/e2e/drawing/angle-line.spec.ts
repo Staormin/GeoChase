@@ -129,12 +129,10 @@ test.describe('Angle Line', () => {
       await page.locator('button .mdi-angle-acute').locator('..').click();
       await page.waitForTimeout(300);
 
-      // Try to add without selecting a point
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(300);
+      // Submission is prevented before any selection is made.
+      await expect(
+        page.getByRole('dialog').getByRole('button', { name: 'Add', exact: true })
+      ).toBeDisabled();
 
       // Modal should still be open (validation failed) or error toast shown
       const modal = page.locator('.v-dialog');

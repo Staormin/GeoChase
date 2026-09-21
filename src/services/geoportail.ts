@@ -4,6 +4,9 @@
 
 import type { Feature, MultiPolygon, Polygon } from 'geojson';
 import { booleanPointInPolygon } from '@turf/turf';
+import { LineString } from 'ol/geom';
+import { fromLonLat, toLonLat } from 'ol/proj';
+import { DEFAULT_RADIUS, getDistance } from 'ol/sphere';
 
 type SearchPolygon = Feature<Polygon | MultiPolygon> | Polygon | MultiPolygon;
 export interface GeoportailResult {
@@ -245,13 +248,33 @@ function calculateBbox(points: Array<{ lat: number; lon: number }>, bufferKm = 0
     maxLat = Math.max(maxLat, point.lat);
   }
 
-  // Convert km buffer to approximate degrees (1 degree ≈ 111.32 km)
-  const bufferDegrees = bufferKm / 111.32;
-
-  minLon -= bufferDegrees;
-  maxLon += bufferDegrees;
-  minLat -= bufferDegrees;
-  maxLat += bufferDegrees;
+  // Bound a spherical distance buffer using the same Earth radius as measurements.
+  // Longitude degrees shrink with latitude; a fixed km/degree conversion misses
+  // valid results to the east/west. A cap touching a pole spans all longitudes.
+  const angularRadius = Math.min(Math.PI, Math.max(0, (bufferKm * 1000) / DEFAULT_RADIUS));
+  const latitudePadding = (angularRadius * 180) / Math.PI;
+  const extremeLatitude = Math.max(Math.abs(minLat), Math.abs(maxLat));
+  minLat = Math.max(-90, minLat - latitudePadding);
+  maxLat = Math.min(90, maxLat + latitudePadding);
+  if (extremeLatitude + latitudePadding >= 90) {
+    minLon = -180;
+    maxLon = 180;
+  } else {
+    const longitudePadding =
+      (Math.asin(
+        Math.min(1, Math.sin(angularRadius) / Math.cos((extremeLatitude * Math.PI) / 180))
+      ) *
+        180) /
+      Math.PI;
+    minLon -= longitudePadding;
+    maxLon += longitudePadding;
+    // Overpass needs a valid bounding rectangle. Cover both sides of a dateline
+    // crossing, then use the existing exact search-zone filter on the results.
+    if (minLon < -180 || maxLon > 180) {
+      minLon = -180;
+      maxLon = 180;
+    }
+  }
 
   return `${minLon},${minLat},${maxLon},${maxLat}`;
 }
@@ -263,18 +286,7 @@ export function haversineDistance(
   point1: { lat: number; lon: number },
   point2: { lat: number; lon: number }
 ): number {
-  const R = 6371; // Earth radius in km
-  const lat1 = (point1.lat * Math.PI) / 180;
-  const lat2 = (point2.lat * Math.PI) / 180;
-  const dLat = ((point2.lat - point1.lat) * Math.PI) / 180;
-  const dLon = ((point2.lon - point1.lon) * Math.PI) / 180;
-
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  return getDistance([point1.lon, point1.lat], [point2.lon, point2.lat]) / 1000;
 }
 
 /**
@@ -285,17 +297,14 @@ export function distancePointToSegment(
   segStart: { lat: number; lon: number },
   segEnd: { lat: number; lon: number }
 ): number {
-  // Simple approximation: use Haversine to start/end and interpolation points
-  const distances = [haversineDistance(point, segStart), haversineDistance(point, segEnd)];
-
-  // Check midpoint for better accuracy
-  const mid = {
-    lat: (segStart.lat + segEnd.lat) / 2,
-    lon: (segStart.lon + segEnd.lon) / 2,
-  };
-  distances.push(haversineDistance(point, mid));
-
-  return Math.min(...distances);
+  // Search paths are sampled in the active geometry. Find the closest point on
+  // each rendered piece, rather than checking only its endpoints and midpoint.
+  const line = new LineString([
+    fromLonLat([segStart.lon, segStart.lat]),
+    fromLonLat([segEnd.lon, segEnd.lat]),
+  ]);
+  const closest = toLonLat(line.getClosestPoint(fromLonLat([point.lon, point.lat])));
+  return getDistance([point.lon, point.lat], closest) / 1000;
 }
 
 /**

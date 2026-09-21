@@ -1,3 +1,5 @@
+import { fromLonLat, toLonLat } from 'ol/proj';
+import { offset } from 'ol/sphere';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   DEFAULT_MAP_CENTER,
@@ -9,6 +11,8 @@ import {
   searchAddress,
   searchLocationsNearPath,
 } from '@/services/geoportail';
+
+vi.unmock('ol/proj');
 
 describe('geoportail service', () => {
   describe('getMapTilesUrl', () => {
@@ -117,6 +121,15 @@ describe('geoportail service', () => {
   });
 
   describe('distancePointToSegment', () => {
+    it('finds a point between samples on the drawn line', () => {
+      const start = { lat: 48, lon: 2 };
+      const end = { lat: 49, lon: 4 };
+      const a = fromLonLat([start.lon, start.lat]),
+        b = fromLonLat([end.lon, end.lat]);
+      const [lon, lat] = toLonLat([a[0]! + (b[0]! - a[0]!) * 0.25, a[1]! + (b[1]! - a[1]!) * 0.25]);
+      expect(distancePointToSegment({ lat: lat!, lon: lon! }, start, end)).toBeLessThan(0.000001);
+    });
+
     it('should return distance to start point when closest', () => {
       const point = { lat: 48.8566, lon: 2.3522 };
       const segStart = { lat: 48.86, lon: 2.3522 };
@@ -329,6 +342,34 @@ describe('geoportail service', () => {
     afterEach(() => {
       vi.unstubAllGlobals();
     });
+
+    it.each([
+      { lat: 60, lon: 12, radius: 100 },
+      { lat: 89, lon: 0, radius: 200 },
+      { lat: 45, lon: 179, radius: 300 },
+    ])(
+      'includes the entire search radius in the request bounds at $lat, $lon',
+      async ({ lat, lon, radius }) => {
+        vi.mocked(fetch).mockResolvedValueOnce({
+          ok: true,
+          text: async () => '<osm />',
+        } as Response);
+        await searchLocationsNearPath([{ lat, lon }], radius);
+        const body = String(vi.mocked(fetch).mock.calls[0]![1]!.body);
+        const bounds = body
+          .match(/\[bbox:([^\]]+)\]/)![1]!
+          .split(',')
+          .map(Number);
+        for (let bearing = 0; bearing < 360; bearing += 5) {
+          const p = offset([lon, lat], radius * 1000, (bearing * Math.PI) / 180);
+          const longitude = ((((p[0]! + 180) % 360) + 360) % 360) - 180;
+          expect(p[1]!).toBeGreaterThanOrEqual(bounds[0]! - 1e-9);
+          expect(p[1]!).toBeLessThanOrEqual(bounds[2]! + 1e-9);
+          expect(longitude).toBeGreaterThanOrEqual(bounds[1]! - 1e-9);
+          expect(longitude).toBeLessThanOrEqual(bounds[3]! + 1e-9);
+        }
+      }
+    );
 
     it('should return empty array for empty path', async () => {
       const results = await searchLocationsNearPath([]);

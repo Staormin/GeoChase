@@ -36,6 +36,12 @@ vi.mock('@/services/geometry', () => ({
   })),
 }));
 
+// Geometry itself is covered with real projections in the service tests.
+vi.mock('@/services/cartesGouvGeometry', () => ({
+  cartesGouvBearing: vi.fn(() => 45),
+  cartesGouvDestination: vi.fn((from) => ({ lat: from.lat + 0.01, lon: from.lon + 0.01 })),
+}));
+
 describe('useFreeHandDrawing', () => {
   let mockMapContainer: any;
   let mockDrawing: any;

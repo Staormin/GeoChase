@@ -186,12 +186,18 @@ function submitForm() {
   const finalBearing = (lineBearing + form.angle + 360) % 360;
 
   // Calculate the endpoint using the final bearing and distance
-  const endpoint = destinationPoint(
-    point.coordinates.lat,
-    point.coordinates.lon,
-    form.distance,
-    finalBearing
-  );
+  let endpoint;
+  try {
+    endpoint = destinationPoint(
+      point.coordinates.lat,
+      point.coordinates.lon,
+      form.distance,
+      finalBearing
+    );
+  } catch {
+    uiStore.addToast(t('line.errors.unreachableDestination'), 'error');
+    return;
+  }
 
   // Generate line name if not provided
   const lineName =

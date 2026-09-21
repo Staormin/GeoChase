@@ -185,6 +185,7 @@
     "errors": {
       "invalidCoordinates": "Invalid coordinates",
       "invalidAzimuth": "Azimuth must be between 0 and 360",
+      "unreachableDestination": "Cannot construct a line with this distance and azimuth from this point.",
       "invalidDistance": "Distance must be greater than 0",
       "noLineSelected": "Please select a line",
       "noPointSelected": "Please select a point",
@@ -653,7 +654,7 @@
       },
       "projection": {
         "title": "Choose a project projection",
-        "choice": "Choose Mercator for straight lines on the map, or Geodesic (WGS84) for shortest paths over the curved Earth. Geodesic paths can appear curved on the map. The background map stays the same.",
+        "choice": "Choose Mercator for straight lines on the map and bearings calculated as in cartes.gouv.fr, or Geodesic (WGS84) for shortest paths over the curved Earth. Geodesic paths can appear curved on the map. The background map stays the same.",
         "settings": "Choose the projection when creating a project. Change it later in Project menu → Project Settings. It applies to every drawing, distance and bearing; parallels remain lines of constant latitude.",
         "export": "Your projection is saved with the project and included in JSON exports. GPX export and searches along lines follow the selected geometry. Older projects without this setting use Mercator."
       }

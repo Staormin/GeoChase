@@ -31,10 +31,10 @@ describe('gpx service', () => {
       expect(result).toContain('<trk>');
       expect(result).toContain('<name>Test Segment</name>');
       expect(result).toContain('<type>LineSegment</type>');
-      expect(result).toContain('lat="48.856600"');
-      expect(result).toContain('lon="2.352200"');
-      expect(result).toContain('lat="49.856600"');
-      expect(result).toContain('lon="3.352200"');
+      expect(result).toContain('lat="48.856600000000"');
+      expect(result).toContain('lon="2.352200000000"');
+      expect(result).toContain('lat="49.856600000000"');
+      expect(result).toContain('lon="3.352200000000"');
     });
 
     it('should use default name for unnamed coordinate segment', () => {
@@ -69,7 +69,7 @@ describe('gpx service', () => {
       expect(result).toContain('<type>LineSegment</type>');
       // Should have multiple track points (100 intermediate points)
       const trkptMatches = result.match(/<trkpt/g);
-      expect(trkptMatches?.length).toBe(101); // 0 to 100 inclusive
+      expect(trkptMatches?.length).toBe(2); // Preserve the original Mercator segment
     });
 
     it('should use default name for unnamed azimuth segment', () => {
@@ -147,10 +147,10 @@ describe('gpx service', () => {
       expect(result).toContain('<trk>');
       expect(result).toContain('<name>Parallel Segment</name>');
       expect(result).toContain('<type>Parallel</type>');
-      expect(result).toContain('lat="45.500000"');
+      expect(result).toContain('lat="45.500000000000"');
       // Should span from -180 to 180 longitude
-      expect(result).toContain('lon="-180.000000"');
-      expect(result).toContain('lon="180.000000"');
+      expect(result).toContain('lon="-180.000000000000"');
+      expect(result).toContain('lon="180.000000000000"');
     });
 
     it('should use default name for unnamed parallel segment', () => {
@@ -177,7 +177,7 @@ describe('gpx service', () => {
 
       const result = generateLineSegmentTracks(segments);
 
-      expect(result).toContain('lat="0.000000"');
+      expect(result).toContain('lat="0.000000000000"');
     });
 
     it('should handle multiple segments of different types', () => {
@@ -221,7 +221,7 @@ describe('gpx service', () => {
     it('should include center waypoint', () => {
       const gpx = generateCompleteGPX(centers, radii, 10, []);
 
-      expect(gpx).toContain('<wpt lat="48.856600" lon="2.352200">');
+      expect(gpx).toContain('<wpt lat="48.856600000000" lon="2.352200000000">');
       expect(gpx).toContain('<name>Center 1</name>');
       expect(gpx).toContain('<sym>Flag, Blue</sym>');
     });
@@ -285,7 +285,7 @@ describe('gpx service', () => {
       const gpx = generateCompleteGPX(centers, radii, 10, [], points);
 
       expect(gpx).toContain('plus 1 point(s)');
-      expect(gpx).toContain('<wpt lat="48.900000" lon="2.400000">');
+      expect(gpx).toContain('<wpt lat="48.900000000000" lon="2.400000000000">');
       expect(gpx).toContain('<name>Test Point</name>');
       expect(gpx).toContain('<sym>Flag, Red</sym>');
     });

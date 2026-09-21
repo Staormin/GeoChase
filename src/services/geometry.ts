@@ -11,7 +11,7 @@ export interface LatLon {
   lon: number;
 }
 
-const EARTH_RADIUS_KM = 6371; // Earth's radius in km
+const EARTH_RADIUS_KM = 6371.0088; // OpenLayers / cartes.gouv.fr mean Earth radius
 
 /**
  * Convert degrees to radians

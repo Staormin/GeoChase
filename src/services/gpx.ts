@@ -60,13 +60,15 @@ export function generateLineSegmentTracks(
               )
             : undefined);
         if (!endpoint) return '';
-        points = geometry.sampleLine(
-          segment.center.lat,
-          segment.center.lon,
-          endpoint.lat,
-          endpoint.lon,
-          100
-        );
+        points = geometry.isGeodesic()
+          ? geometry.sampleLine(
+              segment.center.lat,
+              segment.center.lon,
+              endpoint.lat,
+              endpoint.lon,
+              100
+            )
+          : [segment.center, endpoint];
       }
       const parallel = segment.mode === 'parallel';
       return `  <trk>
@@ -81,8 +83,8 @@ ${points.map((point) => trackPointXML(point)).join('')}    </trkseg>
 }
 
 function trackPointXML(point: LatLon): string {
-  const lat = point.lat.toFixed(6);
-  const lon = normalizeLongitude(point.lon).toFixed(6);
+  const lat = point.lat.toFixed(12);
+  const lon = normalizeLongitude(point.lon).toFixed(12);
   return `      <trkpt lat="${lat}" lon="${lon}">
         <ele>0</ele>
       </trkpt>
@@ -145,7 +147,7 @@ export function generateCompleteGPX(
 
   // Add waypoints for all centers
   for (const [centerIndex, center] of centers.entries()) {
-    gpx += `  <wpt lat="${center.lat.toFixed(6)}" lon="${center.lon.toFixed(6)}">
+    gpx += `  <wpt lat="${center.lat.toFixed(12)}" lon="${center.lon.toFixed(12)}">
     <ele>0</ele>
     <name>Center ${centerIndex + 1}</name>
     <desc>Circle center point ${centerIndex + 1}</desc>
@@ -156,7 +158,7 @@ export function generateCompleteGPX(
 
   // Add waypoints for all layer points
   for (const point of layerPoints) {
-    gpx += `  <wpt lat="${point.coordinates.lat.toFixed(6)}" lon="${point.coordinates.lon.toFixed(6)}">
+    gpx += `  <wpt lat="${point.coordinates.lat.toFixed(12)}" lon="${point.coordinates.lon.toFixed(12)}">
     <ele>0</ele>
     <name>${escapeXML(point.name || '')}</name>
     <desc>User added point</desc>

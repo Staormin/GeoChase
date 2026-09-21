@@ -2,7 +2,8 @@ import type { LatLon } from './geometry';
 import type { LineSegmentElement, ProjectProjection } from '@/types/project';
 import { LineString } from 'ol/geom';
 import { fromLonLat, toLonLat } from 'ol/proj';
-import { getDistance as sphericalDistance } from 'ol/sphere';
+import { offset, getDistance as sphericalDistance } from 'ol/sphere';
+import { cartesGouvBearing, cartesGouvDestination } from './cartesGouvGeometry';
 import {
   densifyGeodesic,
   geodesicDestination,
@@ -22,12 +23,12 @@ export function createProjectGeometry(getProjection: () => ProjectProjection) {
   function destinationPoint(lat: number, lon: number, distanceKm: number, bearing: number): LatLon {
     return isGeodesic()
       ? geodesicDestination({ lat, lon }, bearing, distanceKm * 1000)
-      : legacy.destinationPoint(lat, lon, distanceKm, bearing);
+      : cartesGouvDestination({ lat, lon }, distanceKm, bearing);
   }
   function calculateBearing(lat: number, lon: number, endLat: number, endLon: number): number {
     return isGeodesic()
       ? geodesicInverse({ lat, lon }, { lat: endLat, lon: endLon }).initialBearing
-      : legacy.calculateBearing(lat, lon, endLat, endLon);
+      : cartesGouvBearing({ lat, lon }, { lat: endLat, lon: endLon });
   }
   function endpointFromIntersection(
     lat: number,
@@ -62,6 +63,7 @@ export function createProjectGeometry(getProjection: () => ProjectProjection) {
     );
   }
   function interpolateLine(from: LatLon, to: LatLon, fraction: number): LatLon {
+    if (from.lat === to.lat && from.lon === to.lon) return { ...from };
     if (isGeodesic()) return geodesicIntermediate(from, to, fraction);
     const start = fromLonLat([from.lon, from.lat]);
     const end = fromLonLat([to.lon, to.lat]);
@@ -160,10 +162,16 @@ export function createProjectGeometry(getProjection: () => ProjectProjection) {
     const closest = toLonLat(path.getClosestPoint(projected));
     return getDistance(coordinate, closest) <= toleranceM;
   }
+  // A circle radius is a ground distance, independent of the azimuth convention
+  // used to construct straight Mercator lines.
+  function circlePoint(lat: number, lon: number, radiusKm: number, bearing: number): LatLon {
+    if (isGeodesic()) return geodesicDestination({ lat, lon }, bearing, radiusKm * 1000);
+    const coordinates = offset([lon, lat], radiusKm * 1000, (bearing * Math.PI) / 180);
+    return { lon: coordinates[0]!, lat: coordinates[1]! };
+  }
   function generateCircle(lat: number, lon: number, radiusKm: number, segments = 360): LatLon[] {
-    if (!isGeodesic()) return legacy.generateCircle(lat, lon, radiusKm, segments);
     const points = Array.from({ length: segments }, (_, i) =>
-      destinationPoint(lat, lon, radiusKm, (i * 360) / segments)
+      circlePoint(lat, lon, radiusKm, (i * 360) / segments)
     );
     points.push(points[0]!);
     return points;
@@ -195,6 +203,7 @@ export function createProjectGeometry(getProjection: () => ProjectProjection) {
     isPointOnLine,
     pointAtDistance,
     generateCircle,
+    circlePoint,
     polygonCoordinates,
   };
 }
