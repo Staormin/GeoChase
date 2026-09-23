@@ -38,6 +38,7 @@ export interface ProjectLayerData {
 }
 
 export interface CircleElement {
+  listOrder?: number; // Manual order within the sidebar category
   id: string;
   name: string;
   center: { lat: number; lon: number };
@@ -48,6 +49,7 @@ export interface CircleElement {
 }
 
 export interface LineSegmentElement {
+  listOrder?: number; // Manual order within the sidebar category
   id: string;
   name: string;
   center: { lat: number; lon: number };
@@ -70,6 +72,7 @@ export interface LineSegmentElement {
 }
 
 export interface PointElement {
+  listOrder?: number; // Manual order within the sidebar category
   id: string;
   name: string;
   coordinates: { lat: number; lon: number };
@@ -86,6 +89,7 @@ export interface PointElement {
 }
 
 export interface PolygonElement {
+  listOrder?: number; // Manual order within the sidebar category
   id: string;
   name: string;
   pointIds: string[]; // Array of PointElement IDs (minimum 3) - bidirectional relationship with PointElement.polygonIds
@@ -95,6 +99,7 @@ export interface PolygonElement {
 }
 
 export interface NoteElement {
+  listOrder?: number; // Manual order within the sidebar category
   id: string;
   title: string;
   content: string;

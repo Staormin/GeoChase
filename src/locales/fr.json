@@ -86,6 +86,7 @@
     "rulerHint": "Cliquez pour définir le point de départ, cliquez à nouveau pour mesurer, Échap pour annuler"
   },
   "sidebar": {
+    "resize": "Redimensionner la barre latérale",
     "drawings": "Dessins",
     "search": "Recherche",
     "projects": "Projets",

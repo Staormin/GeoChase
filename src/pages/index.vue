@@ -12,11 +12,32 @@
   <v-navigation-drawer
     v-if="!uiStore.viewCaptureState.isCapturing"
     v-model="sidebarOpen"
+    :class="{ 'sidebar-resizing': sidebarResize !== null }"
     data-testid="layers-sidebar"
     location="left"
     :style="panelStyle"
     :width="sidebarWidth"
   >
+    <div
+      :aria-label="$t('sidebar.resize')"
+      aria-orientation="vertical"
+      :aria-valuemax="Math.round(sidebarMaxWidth)"
+      :aria-valuemin="Math.round(sidebarMinWidth)"
+      :aria-valuenow="Math.round(sidebarWidth)"
+      class="sidebar-resize-handle"
+      data-testid="sidebar-resize-handle"
+      role="separator"
+      tabindex="0"
+      @keydown.end.prevent="setSidebarWidth(sidebarMaxWidth)"
+      @keydown.home.prevent="setSidebarWidth(sidebarMinWidth)"
+      @keydown.left.prevent="setSidebarWidth(sidebarWidth - 20)"
+      @keydown.right.prevent="setSidebarWidth(sidebarWidth + 20)"
+      @lostpointercapture="endSidebarResize"
+      @pointercancel="endSidebarResize"
+      @pointerdown.stop.prevent="startSidebarResize"
+      @pointermove="moveSidebarResize"
+      @pointerup="endSidebarResize"
+    />
     <!-- Search Along Panel (when active) -->
     <SearchAlongPanelInline v-if="uiStore.searchAlongPanel.isOpen" />
 
@@ -112,7 +133,49 @@ const { width: screenWidth } = useDisplay();
 const topBarHeight = ref(64);
 // Keep room for the panel toggle and its margins on narrow screens.
 const availablePanelWidth = computed(() => Math.max(0, screenWidth.value - 56));
-const sidebarWidth = computed(() => Math.min(640, availablePanelWidth.value));
+const savedSidebarWidth = Number(localStorage.getItem('geochase_sidebarWidth'));
+const preferredSidebarWidth = ref(
+  Number.isFinite(savedSidebarWidth) && savedSidebarWidth >= 280 ? savedSidebarWidth : 640
+);
+const sidebarMaxWidth = computed(() => Math.min(900, availablePanelWidth.value));
+const sidebarMinWidth = computed(() => Math.min(280, sidebarMaxWidth.value));
+const sidebarWidth = computed(() => Math.min(preferredSidebarWidth.value, sidebarMaxWidth.value));
+const sidebarResize = ref<{ pointerId: number; startX: number; startWidth: number } | null>(null);
+
+function setSidebarWidth(width: number) {
+  preferredSidebarWidth.value = Math.max(
+    sidebarMinWidth.value,
+    Math.min(sidebarMaxWidth.value, width)
+  );
+  localStorage.setItem('geochase_sidebarWidth', String(preferredSidebarWidth.value));
+}
+
+function startSidebarResize(event: PointerEvent) {
+  if (event.button !== 0 || sidebarResize.value) return;
+  sidebarResize.value = {
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startWidth: sidebarWidth.value,
+  };
+  (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+}
+
+function moveSidebarResize(event: PointerEvent) {
+  const resize = sidebarResize.value;
+  if (!resize || event.pointerId !== resize.pointerId) return;
+  preferredSidebarWidth.value = Math.max(
+    sidebarMinWidth.value,
+    Math.min(sidebarMaxWidth.value, resize.startWidth + event.clientX - resize.startX)
+  );
+}
+
+function endSidebarResize(event: PointerEvent) {
+  if (sidebarResize.value?.pointerId !== event.pointerId) return;
+  sidebarResize.value = null;
+  localStorage.setItem('geochase_sidebarWidth', String(preferredSidebarWidth.value));
+  const handle = event.currentTarget as HTMLElement;
+  if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+}
 const panelStyle = computed(() => {
   const top =
     uiStore.navigatingElement || uiStore.freeHandDrawing.isDrawing
@@ -345,6 +408,28 @@ body,
 
 #map.freehand-drawing * {
   cursor: crosshair !important;
+}
+
+.sidebar-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  cursor: ew-resize;
+  touch-action: none;
+  z-index: 10;
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle:focus-visible,
+.sidebar-resizing .sidebar-resize-handle {
+  background: rgba(var(--v-theme-primary), 0.3);
+}
+
+.sidebar-resizing {
+  transition: none !important;
+  user-select: none;
 }
 
 /* PDF panel resize handle */

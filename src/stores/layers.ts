@@ -14,6 +14,13 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { normalizeLayers } from '@/domain/layers';
 
+// New elements stay above manually ordered elements; legacy projects retain date sorting.
+function compareListOrder(a: { listOrder?: number }, b: { listOrder?: number }): number {
+  const aOrder = Number.isFinite(a.listOrder) ? a.listOrder! : -1;
+  const bOrder = Number.isFinite(b.listOrder) ? b.listOrder! : -1;
+  return aOrder - bOrder;
+}
+
 export const useLayersStore = defineStore('layers', () => {
   // State
   const circles = ref<CircleElement[]>([]);
@@ -50,7 +57,7 @@ export const useLayersStore = defineStore('layers', () => {
     return circles.value.toSorted((a, b) => {
       const aTime = a.createdAt || 0;
       const bTime = b.createdAt || 0;
-      return bTime - aTime; // Newest first
+      return compareListOrder(a, b) || bTime - aTime; // Newest first
     });
   });
 
@@ -58,7 +65,7 @@ export const useLayersStore = defineStore('layers', () => {
     return lineSegments.value.toSorted((a, b) => {
       const aTime = a.createdAt || 0;
       const bTime = b.createdAt || 0;
-      return bTime - aTime; // Newest first
+      return compareListOrder(a, b) || bTime - aTime; // Newest first
     });
   });
 
@@ -66,7 +73,7 @@ export const useLayersStore = defineStore('layers', () => {
     return points.value.toSorted((a, b) => {
       const aTime = a.createdAt || 0;
       const bTime = b.createdAt || 0;
-      return bTime - aTime; // Newest first
+      return compareListOrder(a, b) || bTime - aTime; // Newest first
     });
   });
 
@@ -74,7 +81,7 @@ export const useLayersStore = defineStore('layers', () => {
     return polygons.value.toSorted((a, b) => {
       const aTime = a.createdAt || 0;
       const bTime = b.createdAt || 0;
-      return bTime - aTime; // Newest first
+      return compareListOrder(a, b) || bTime - aTime; // Newest first
     });
   });
 
@@ -104,9 +111,36 @@ export const useLayersStore = defineStore('layers', () => {
     return notes.value.toSorted((a, b) => {
       const aTime = a.updatedAt || a.createdAt || 0;
       const bTime = b.updatedAt || b.createdAt || 0;
-      return bTime - aTime; // Most recently updated first
+      return compareListOrder(a, b) || bTime - aTime; // Most recently updated first
     });
   });
+
+  function reorderElement(
+    type: 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note',
+    sourceId: string,
+    targetId: string,
+    position: 'before' | 'after'
+  ): void {
+    const items = [
+      ...{
+        circle: sortedCircles.value,
+        lineSegment: sortedLineSegments.value,
+        point: sortedPoints.value,
+        polygon: sortedPolygons.value,
+        note: sortedNotes.value,
+      }[type],
+    ];
+    const sourceIndex = items.findIndex((item) => item.id === sourceId);
+    if (sourceId === targetId || sourceIndex === -1 || !items.some((item) => item.id === targetId))
+      return;
+    const [source] = items.splice(sourceIndex, 1);
+    if (!source) return;
+    const targetIndex = items.findIndex((item) => item.id === targetId);
+    items.splice(targetIndex + (position === 'after' ? 1 : 0), 0, source);
+    for (const [index, item] of items.entries()) {
+      item.listOrder = index;
+    }
+  }
 
   // Actions
   function addCircle(circle: CircleElement): void {
@@ -610,6 +644,7 @@ export const useLayersStore = defineStore('layers', () => {
     sortedNotes,
 
     // Actions
+    reorderElement,
     addCircle,
     updateCircle,
     deleteCircle,

@@ -28,6 +28,7 @@
         filteredCircles.length === 0 &&
         filteredLines.length === 0 &&
         filteredPoints.length === 0 &&
+        filteredPolygons.length === 0 &&
         filteredNotes.length === 0
       "
       class="layers-empty"
@@ -36,7 +37,7 @@
     </div>
 
     <!-- Layers list -->
-    <div v-else ref="layersListRef" class="layers-list">
+    <div v-else class="layers-list">
       <!-- Circles -->
       <div v-if="filteredCircles.length > 0">
         <div class="layers-section-header">
@@ -69,8 +70,17 @@
             :key="circle.id"
             class="layer-item"
             :class="{
+              ...dropClasses('circle', circle.id),
               'layer-item-hidden': circle.id && !uiStore.isElementVisible('circle', circle.id),
             }"
+            :data-layer-id="circle.id"
+            data-layer-type="circle"
+            @dragstart.prevent
+            @lostpointercapture="cancelElementDrag"
+            @pointercancel="cancelElementDrag"
+            @pointerdown="startElementDrag($event, 'circle', circle.id)"
+            @pointermove="moveElementDrag"
+            @pointerup="finishElementDrag"
           >
             <div class="layer-item-info" @click="handleGoTo('circle', circle)">
               <div class="layer-item-name">{{ circle.name }}</div>
@@ -120,8 +130,17 @@
             :key="line.id"
             class="layer-item"
             :class="{
+              ...dropClasses('lineSegment', line.id),
               'layer-item-hidden': line.id && !uiStore.isElementVisible('lineSegment', line.id),
             }"
+            :data-layer-id="line.id"
+            data-layer-type="lineSegment"
+            @dragstart.prevent
+            @lostpointercapture="cancelElementDrag"
+            @pointercancel="cancelElementDrag"
+            @pointerdown="startElementDrag($event, 'lineSegment', line.id)"
+            @pointermove="moveElementDrag"
+            @pointerup="finishElementDrag"
           >
             <div class="layer-item-info" @click="handleGoTo('lineSegment', line)">
               <div class="layer-item-name">{{ line.name }}</div>
@@ -174,17 +193,18 @@
             :key="point.id"
             class="layer-item"
             :class="{
+              ...dropClasses('point', point.id),
               'layer-item-hidden': point.id && !uiStore.isElementVisible('point', point.id),
-              'drag-over': dragOverPointId === point.id,
             }"
-            draggable="true"
+            :data-layer-id="point.id"
+            data-layer-type="point"
             @click="handlePointClick(point)"
-            @dragend="handleDragEnd"
-            @dragenter.prevent
-            @dragleave="handleDragLeave($event, point)"
-            @dragover.prevent="handleDragOver($event, point)"
-            @dragstart="handleDragStart($event, point)"
-            @drop.prevent="handleDrop(point)"
+            @dragstart.prevent
+            @lostpointercapture="cancelElementDrag"
+            @pointercancel="cancelElementDrag"
+            @pointerdown="startElementDrag($event, 'point', point.id)"
+            @pointermove="moveElementDrag"
+            @pointerup="finishElementDrag"
           >
             <div class="layer-item-info">
               <div class="layer-item-name">{{ point.name }}</div>
@@ -234,9 +254,18 @@
             :key="polygon.id"
             class="layer-item"
             :class="{
+              ...dropClasses('polygon', polygon.id),
               'layer-item-hidden': polygon.id && !uiStore.isElementVisible('polygon', polygon.id),
             }"
+            :data-layer-id="polygon.id"
+            data-layer-type="polygon"
             @click="handlePolygonClick(polygon)"
+            @dragstart.prevent
+            @lostpointercapture="cancelElementDrag"
+            @pointercancel="cancelElementDrag"
+            @pointerdown="startElementDrag($event, 'polygon', polygon.id)"
+            @pointermove="moveElementDrag"
+            @pointerup="finishElementDrag"
           >
             <div class="layer-item-info">
               <div class="layer-item-name">{{ polygon.name }}</div>
@@ -276,7 +305,16 @@
             v-for="note in filteredNotes"
             :key="note.id"
             class="layer-item"
+            :class="dropClasses('note', note.id)"
+            :data-layer-id="note.id"
+            data-layer-type="note"
             @click="handleNoteClick(note)"
+            @dragstart.prevent
+            @lostpointercapture="cancelElementDrag"
+            @pointercancel="cancelElementDrag"
+            @pointerdown="startElementDrag($event, 'note', note.id)"
+            @pointermove="moveElementDrag"
+            @pointerup="finishElementDrag"
           >
             <div class="layer-item-info">
               <div class="layer-item-name">{{ note.title }}</div>
@@ -326,6 +364,27 @@
       </div>
     </div>
   </div>
+
+  <Teleport to="body">
+    <div
+      v-if="dragPreview"
+      aria-hidden="true"
+      class="layer-drag-preview"
+      data-testid="layer-drag-preview"
+      :style="{
+        transform: `translate3d(${dragPreview.x}px, ${dragPreview.y}px, 0)`,
+        width: `${dragPreview.width}px`,
+        minHeight: `${dragPreview.height}px`,
+      }"
+    >
+      <div class="layer-item-info">
+        <div class="layer-item-name">{{ dragPreview.name }}</div>
+        <div class="layer-item-type">{{ dragPreview.detail }}</div>
+      </div>
+
+      <v-icon icon="mdi-drag" size="small" />
+    </div>
+  </Teleport>
 </template>
 
 <script lang="ts" setup>
@@ -337,7 +396,7 @@ import type {
   PointElement,
   PolygonElement,
 } from '@/types/project';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, ref } from 'vue';
 import LayerContextMenu from '@/components/layers/LayerContextMenu.vue';
 import { useDrawingContext, useMapContext } from '@/composables/mapContext';
 import { useProjectGeometry } from '@/composables/useProjectGeometry';
@@ -352,12 +411,32 @@ const drawing = useDrawingContext();
 const mapContainer = useMapContext();
 
 const searchQuery = ref('');
-const draggedPoint = ref<PointElement | null>(null);
-const dragOverPointId = ref<string | null>(null);
+type ListElementType = 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note';
+const draggedElement = ref<{ type: ListElementType; id: string } | null>(null);
+const dropTarget = ref<{
+  type: ListElementType;
+  id: string;
+  position: 'before' | 'after' | 'link';
+} | null>(null);
 const isDragging = ref(false);
-const lastDropTarget = ref<PointElement | null>(null);
-const layersListRef = ref<HTMLElement | null>(null);
-let dragLeaveTimeout: ReturnType<typeof setTimeout> | null = null;
+const dragPreview = ref<{
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  name: string;
+  detail: string;
+} | null>(null);
+let pendingDrag: {
+  pointerId: number;
+  x: number;
+  y: number;
+  type: ListElementType;
+  id: string;
+  handle: HTMLElement;
+  bounds: DOMRect;
+} | null = null;
+let suppressClickUntil = 0;
 let autoScrollInterval: ReturnType<typeof setInterval> | null = null;
 
 // Filtered lists based on search query (using sorted arrays)
@@ -555,6 +634,7 @@ function handleGoTo(
   elementType: string,
   element: CircleElement | LineSegmentElement | PointElement | PolygonElement
 ) {
+  if (isDragging.value || Date.now() < suppressClickUntil) return;
   let lat: number;
   let lon: number;
   let zoom: number;
@@ -639,48 +719,179 @@ function handleGoTo(
   mapContainer.setCenter(lat, lon, zoom);
 }
 
-// Drag and drop handlers for creating lines between points
-function handleDragStart(event: DragEvent, point: PointElement) {
-  isDragging.value = true;
-  draggedPoint.value = point;
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'link';
+function startElementDrag(event: PointerEvent, type: ListElementType, id: string) {
+  if (
+    event.button !== 0 ||
+    pendingDrag ||
+    (event.target as HTMLElement).closest('.layer-item-actions')
+  )
+    return;
+  pendingDrag = {
+    pointerId: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+    type,
+    id,
+    handle: event.currentTarget as HTMLElement,
+    bounds: (event.currentTarget as HTMLElement).getBoundingClientRect(),
+  };
+  document.addEventListener('keydown', cancelDragOnEscape);
+  document.addEventListener('pointerup', cancelElementDrag);
+  document.addEventListener('pointercancel', cancelElementDrag);
+}
+
+function moveElementDrag(event: PointerEvent) {
+  if (!pendingDrag || pendingDrag.pointerId !== event.pointerId) return;
+  if (!isDragging.value) {
+    if (Math.hypot(event.clientX - pendingDrag.x, event.clientY - pendingDrag.y) < 5) return;
+    isDragging.value = true;
+    draggedElement.value = { type: pendingDrag.type, id: pendingDrag.id };
+    pendingDrag.handle.setPointerCapture(event.pointerId);
+    const { handle, bounds } = pendingDrag;
+    dragPreview.value = {
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height,
+      name: handle.querySelector('.layer-item-name')?.textContent || '',
+      detail: handle.querySelector('.layer-item-type')?.textContent || '',
+    };
+    document.documentElement.classList.add('dragging-layer');
   }
+  event.preventDefault();
+  if (dragPreview.value) {
+    dragPreview.value.x = pendingDrag.bounds.x + event.clientX - pendingDrag.x;
+    dragPreview.value.y = pendingDrag.bounds.y + event.clientY - pendingDrag.y;
+  }
+  updateDropTarget(event);
+}
+
+function finishElementDrag(event: PointerEvent) {
+  if (!pendingDrag || pendingDrag.pointerId !== event.pointerId) return;
+  if (isDragging.value) {
+    updateDropTarget(event);
+    applyElementDrop();
+  }
+  cancelElementDrag();
+}
+
+function cancelDragOnEscape(event: KeyboardEvent) {
+  if (event.key === 'Escape') cancelElementDrag();
+}
+
+function cancelElementDrag() {
+  stopAutoScroll();
+  if (isDragging.value) suppressClickUntil = Date.now() + 100;
+  const pending = pendingDrag;
+  pendingDrag = null;
+  isDragging.value = false;
+  dragPreview.value = null;
+  document.documentElement.classList.remove('dragging-layer');
+  draggedElement.value = null;
+  dropTarget.value = null;
+  document.removeEventListener('keydown', cancelDragOnEscape);
+  document.removeEventListener('pointerup', cancelElementDrag);
+  document.removeEventListener('pointercancel', cancelElementDrag);
+  if (pending?.handle.hasPointerCapture(pending.pointerId))
+    pending.handle.releasePointerCapture(pending.pointerId);
+}
+
+function dropClasses(type: ListElementType, id: string) {
+  const position =
+    dropTarget.value?.type === type && dropTarget.value.id === id
+      ? dropTarget.value.position
+      : null;
+  return {
+    'layer-item-dragging': draggedElement.value?.type === type && draggedElement.value.id === id,
+    'drag-over': position === 'link',
+    'drop-before': position === 'before',
+    'drop-after': position === 'after',
+  };
 }
 
 function handlePointClick(point: PointElement) {
-  if (!isDragging.value) {
+  if (!isDragging.value && Date.now() >= suppressClickUntil) {
     handleGoTo('point', point);
   }
 }
 
 function handlePolygonClick(polygon: PolygonElement) {
+  if (Date.now() < suppressClickUntil) return;
   handleGoTo('polygon', polygon);
 }
 
-function handleDragOver(event: DragEvent, point: PointElement) {
-  if (dragLeaveTimeout) {
-    clearTimeout(dragLeaveTimeout);
-    dragLeaveTimeout = null;
+function updateDropTarget(event: PointerEvent) {
+  dropTarget.value = null;
+  stopAutoScroll();
+  const source = draggedElement.value;
+  if (!source || !pendingDrag) return;
+  const row = document
+    .elementFromPoint(event.clientX, event.clientY)
+    ?.closest<HTMLElement>('.layer-item');
+  const type = row?.dataset.layerType as ListElementType | undefined;
+  const id = row?.dataset.layerId;
+  if (row && type === source.type && id) {
+    handleAutoScroll(event, row);
+    if (source.id === id) return;
+    const rect = row.getBoundingClientRect();
+    const offset = event.clientY - rect.top;
+    // Keep the label available for linking, even when a long name wraps.
+    const position =
+      type === 'point' && offset > 8 && offset < rect.height - 8
+        ? 'link'
+        : offset < rect.height / 2
+          ? 'before'
+          : 'after';
+    dropTarget.value = { type, id, position };
+    return;
   }
 
-  if (draggedPoint.value && draggedPoint.value.id !== point.id) {
-    lastDropTarget.value = point;
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'link';
-    }
-    if (dragOverPointId.value !== point.id) {
-      dragOverPointId.value = point.id || null;
-    }
-
-    // Auto-scroll when near edges
-    handleAutoScroll(event);
+  // Extend the category's insertion targets into the sidebar's empty space
+  // and headers, while keeping drops on the map cancelled.
+  const panel = pendingDrag.handle.closest('.v-navigation-drawer');
+  const bounds = panel?.getBoundingClientRect();
+  if (
+    !bounds ||
+    event.clientX < bounds.left ||
+    event.clientX > bounds.right ||
+    event.clientY < bounds.top ||
+    event.clientY > bounds.bottom
+  )
+    return;
+  const items = Array.from(
+    pendingDrag.handle.parentElement?.querySelectorAll<HTMLElement>('.layer-item') ?? []
+  );
+  const first = items?.[0];
+  const last = items?.at(-1);
+  if (!first || !last) return;
+  handleAutoScroll(event, pendingDrag.handle);
+  const edge =
+    event.clientY < first.getBoundingClientRect().top
+      ? { row: first, position: 'before' as const }
+      : event.clientY >= last.getBoundingClientRect().bottom
+        ? { row: last, position: 'after' as const }
+        : null;
+  const targetId = edge?.row.dataset.layerId;
+  if (edge && targetId && targetId !== source.id) {
+    dropTarget.value = { type: source.type, id: targetId, position: edge.position };
   }
 }
 
-function handleAutoScroll(event: DragEvent) {
-  // Find the scrollable container (.layers-list)
-  const target = event.target as HTMLElement;
+function applyElementDrop() {
+  const source = draggedElement.value;
+  const target = dropTarget.value;
+  if (source && target) {
+    if (target.position === 'link') {
+      const start = layersStore.points.find((point) => point.id === source.id);
+      const end = layersStore.points.find((point) => point.id === target.id);
+      if (start && end) createLineBetweenPoints(start, end);
+    } else {
+      layersStore.reorderElement(target.type, source.id, target.id, target.position);
+    }
+  }
+}
+
+function handleAutoScroll(event: PointerEvent, target: HTMLElement) {
   const scrollContainer = target.closest('.layers-list') as HTMLElement;
 
   if (!scrollContainer) {
@@ -716,32 +927,7 @@ function handleAutoScroll(event: DragEvent) {
   }
 }
 
-function handleDragLeave(event: DragEvent, point: PointElement) {
-  const currentTarget = event.currentTarget as HTMLElement;
-  const relatedTarget = event.relatedTarget as HTMLElement;
-
-  if (!currentTarget.contains(relatedTarget)) {
-    dragLeaveTimeout = setTimeout(() => {
-      if (dragOverPointId.value === point.id) {
-        dragOverPointId.value = null;
-      }
-    }, 50);
-  }
-}
-
-function handleDrop(targetPoint: PointElement) {
-  if (dragLeaveTimeout) {
-    clearTimeout(dragLeaveTimeout);
-    dragLeaveTimeout = null;
-  }
-
-  dragOverPointId.value = null;
-
-  if (!draggedPoint.value || draggedPoint.value.id === targetPoint.id) {
-    return;
-  }
-
-  const startPoint = draggedPoint.value;
+function createLineBetweenPoints(startPoint: PointElement, targetPoint: PointElement) {
   // getDistance returns meters, convert to km
   const distance =
     getDistance(
@@ -782,26 +968,8 @@ function handleDrop(targetPoint: PointElement) {
   );
 }
 
-function handleDragEnd(event: DragEvent) {
-  const dropWasSuccessful = event.dataTransfer?.dropEffect !== 'none';
-
-  // Clean up auto-scroll interval
-  stopAutoScroll();
-
-  // If drop didn't fire but we have a last drop target, create the line anyway
-  if (!dropWasSuccessful && lastDropTarget.value && draggedPoint.value) {
-    handleDrop(lastDropTarget.value);
-  }
-
-  setTimeout(() => {
-    isDragging.value = false;
-    draggedPoint.value = null;
-    dragOverPointId.value = null;
-    lastDropTarget.value = null;
-  }, 50);
-}
-
 function handleNoteClick(note: NoteElement) {
+  if (Date.now() < suppressClickUntil) return;
   // If note is linked to an element, navigate to it
   if (note.linkedElementType && note.linkedElementId) {
     let element;
@@ -897,33 +1065,7 @@ function stopAutoScroll() {
   }
 }
 
-function handleLayersListDragLeave(event: DragEvent) {
-  const relatedTarget = event.relatedTarget as HTMLElement;
-  const currentTarget = event.currentTarget as HTMLElement;
-
-  // Check if mouse left the layers-list container entirely
-  if (!relatedTarget || !currentTarget.contains(relatedTarget)) {
-    stopAutoScroll();
-  }
-}
-
-// Set up event listener for dragleave on layers-list container
-onMounted(() => {
-  if (layersListRef.value) {
-    layersListRef.value.addEventListener('dragleave', handleLayersListDragLeave as EventListener);
-  }
-});
-
-// Clean up event listener
-onBeforeUnmount(() => {
-  stopAutoScroll();
-  if (layersListRef.value) {
-    layersListRef.value.removeEventListener(
-      'dragleave',
-      handleLayersListDragLeave as EventListener
-    );
-  }
-});
+onBeforeUnmount(cancelElementDrag);
 </script>
 
 <style scoped>
@@ -1018,12 +1160,33 @@ onBeforeUnmount(() => {
 }
 
 .layer-item {
+  position: relative;
+  cursor: grab;
+  user-select: none;
   padding: 12px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: all 0.2s ease;
   border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.drop-before::before,
+.drop-after::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgb(var(--v-theme-primary));
+  pointer-events: none;
+  z-index: 1;
+}
+.drop-before::before {
+  top: -2px;
+}
+.drop-after::after {
+  bottom: -2px;
 }
 
 .layer-item:last-child {
@@ -1100,13 +1263,38 @@ onBeforeUnmount(() => {
 }
 
 /* Drag and drop styles */
-.layer-item[draggable='true'] {
-  cursor: pointer;
+:global(html.dragging-layer),
+:global(html.dragging-layer *) {
+  cursor: grabbing !important;
+}
+
+.layer-item-dragging {
+  opacity: 0.25;
+}
+
+.layer-drag-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 12px 8px;
+  border-radius: 6px;
+  background: rgb(var(--v-theme-surface-bright));
+  box-shadow:
+    0 8px 24px rgb(0 0 0 / 25%),
+    0 0 0 1px rgba(var(--v-theme-primary), 0.5);
+  pointer-events: none;
+  user-select: none;
+  will-change: transform;
 }
 
 .layer-item.drag-over {
   background: rgba(var(--v-theme-primary), 0.15) !important;
-  border: 2px solid rgb(var(--v-theme-primary)) !important;
+  box-shadow: inset 0 0 0 2px rgb(var(--v-theme-primary));
   border-radius: 4px;
   padding-left: 4px;
   padding-right: 4px;

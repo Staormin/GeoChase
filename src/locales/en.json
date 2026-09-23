@@ -86,6 +86,7 @@
     "rulerHint": "Click to set the start point, click again to measure, Escape to cancel"
   },
   "sidebar": {
+    "resize": "Resize sidebar",
     "drawings": "Drawings",
     "search": "Search",
     "projects": "Projects",
