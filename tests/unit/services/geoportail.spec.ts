@@ -391,7 +391,7 @@ describe('geoportail service', () => {
         </osm>`;
 
       const mockElevationResponse = {
-        results: [{ latitude: 48.857, longitude: 2.352, elevation: 100 }],
+        elevations: [{ lat: 48.857, lon: 2.352, z: 100 }],
       };
 
       vi.mocked(fetch)
@@ -688,9 +688,9 @@ describe('geoportail service', () => {
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
-            results: [
-              { latitude: 48.8566, longitude: 2.3522, elevation: 50 },
-              { latitude: 48.8567, longitude: 2.3523, elevation: 60 },
+            elevations: [
+              { lat: 48.8566, lon: 2.3522, z: 50 },
+              { lat: 48.8567, lon: 2.3523, z: 60 },
             ],
           }),
         } as Response)
@@ -698,9 +698,9 @@ describe('geoportail service', () => {
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
-            results: [
-              { latitude: 48.8568, longitude: 2.3524, elevation: 70 },
-              { latitude: 48.8569, longitude: 2.3525, elevation: 80 },
+            elevations: [
+              { lat: 48.8568, lon: 2.3524, z: 70 },
+              { lat: 48.8569, lon: 2.3525, z: 80 },
             ],
           }),
         } as Response);
@@ -963,6 +963,89 @@ describe('geoportail service', () => {
       expect(results).toHaveLength(0);
     });
 
+    it.each([0, -12.4, 33.79])('preserves valid IGN elevation %s', async (z) => {
+      vi.mocked(fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          text: async () =>
+            '<osm><node lat="48.8566" lon="2.3522"><tag k="name" v="Paris"/></node></osm>',
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ elevations: [{ lat: 48.8566, lon: 2.3522, z }] }),
+        } as Response);
+      const results = await searchLocationsNearPath([{ lat: 48.8566, lon: 2.3522 }], 1);
+      expect(results).toHaveLength(1);
+      expect(results[0]?.elevation).toBe(Math.round(z));
+      expect(fetch).toHaveBeenLastCalledWith(
+        'https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            lat: '48.8566',
+            lon: '2.3522',
+            resource: 'ign_rge_alti_wld',
+            delimiter: '|',
+            zonly: 'false',
+          }),
+        })
+      );
+    });
+
+    it.each([-99_999, null, undefined, Number.NaN])(
+      'falls back for missing IGN elevation %s',
+      async (z) => {
+        vi.mocked(fetch)
+          .mockResolvedValueOnce({
+            ok: true,
+            text: async () =>
+              '<osm><node lat="51.5074" lon="-0.1278"><tag k="name" v="London"/></node></osm>',
+          } as Response)
+          .mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({ elevations: [{ lat: 51.5074, lon: -0.1278, z }] }),
+          } as Response)
+          .mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({ elevation: [11.7] }),
+          } as Response);
+        const results = await searchLocationsNearPath([{ lat: 51.5074, lon: -0.1278 }], 1);
+        expect(results).toHaveLength(1);
+        expect(results[0]?.elevation).toBe(12);
+        expect(fetch).toHaveBeenLastCalledWith(
+          'https://api.open-meteo.com/v1/elevation?latitude=51.5074&longitude=-0.1278',
+          expect.anything()
+        );
+      }
+    );
+
+    it('falls back after a network failure and retains zero metres', async () => {
+      vi.mocked(fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          text: async () =>
+            '<osm><node lat="48.8566" lon="2.3522"><tag k="name" v="Paris"/></node></osm>',
+        } as Response)
+        .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ elevation: [0] }) } as Response);
+      const results = await searchLocationsNearPath([{ lat: 48.8566, lon: 2.3522 }], 1);
+      expect(results[0]?.elevation).toBe(0);
+    });
+
+    it('keeps locations without inventing elevation when both services fail', async () => {
+      vi.mocked(fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          text: async () =>
+            '<osm><node lat="48.8566" lon="2.3522"><tag k="name" v="Paris"/></node></osm>',
+        } as Response)
+        .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+        .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+      const results = await searchLocationsNearPath([{ lat: 48.8566, lon: 2.3522 }], 1);
+      expect(results).toHaveLength(1);
+      expect(results[0]?.elevation).toBeUndefined();
+    });
+
     it('should handle elevation API returning null elevation', async () => {
       const mockOverpassResponse = `<?xml version="1.0"?>
         <osm>
@@ -980,7 +1063,7 @@ describe('geoportail service', () => {
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
-            results: [{ latitude: 48.8566, longitude: 2.3522, elevation: null }],
+            elevations: [{ lat: 48.8566, lon: 2.3522, z: null }],
           }),
         } as Response);
 
@@ -1033,7 +1116,7 @@ describe('geoportail service', () => {
           ok: true,
           json: async () => ({
             // Return elevation for completely different coordinates (won't match)
-            results: [{ latitude: 99, longitude: 99, elevation: 100 }],
+            elevations: [{ lat: 99, lon: 99, z: 100 }],
           }),
         } as Response);
 

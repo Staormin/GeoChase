@@ -71,11 +71,11 @@ test('reorders points at edges, persists order, and creates a line only at the c
     .locator('.layer-items')
     .filter({ has: row('Alpha') })
     .locator('.layer-item-name');
-  await row('Charlie').dragTo(row('Bravo'), { targetPosition: { x: 30, y: 3 } });
+  await row('Charlie').dragTo(row('Bravo'), { targetPosition: { x: 30, y: 16 } });
   await expect(names).toHaveText(['Alpha', 'Charlie', 'Bravo']);
   await expect(page.locator('.layer-item-name').filter({ hasText: '→' })).toHaveCount(0);
   const bravoHeight = (await row('Bravo').boundingBox())!.height;
-  await row('Alpha').dragTo(row('Bravo'), { targetPosition: { x: 30, y: bravoHeight - 3 } });
+  await row('Alpha').dragTo(row('Bravo'), { targetPosition: { x: 30, y: bravoHeight - 16 } });
   await expect(names).toHaveText(['Charlie', 'Bravo', 'Alpha']);
   await expect
     .poll(() =>
@@ -234,3 +234,25 @@ test('drops in empty space below or above the category move to its ends', async 
   await expect(names).toHaveText(['Alpha', 'Bravo', 'Charlie']);
   await expect(page.locator('[data-layer-type="lineSegment"]')).toHaveCount(0);
 });
+
+for (const side of ['left', 'right']) {
+  test(`reorders points from the ${side} sidebar margin`, async ({ page }) => {
+    const source = page.locator('[data-layer-id="Charlie"]');
+    const target = page.locator('[data-layer-id="Bravo"]');
+    await source.scrollIntoViewIfNeeded();
+    const sourceBox = (await source.boundingBox())!;
+    const targetBox = (await target.boundingBox())!;
+    await page.mouse.move(sourceBox.x + 40, sourceBox.y + sourceBox.height / 2);
+    await page.mouse.down();
+    const x = side === 'left' ? targetBox.x - 8 : targetBox.x + targetBox.width + 8;
+    await page.mouse.move(x, targetBox.y + 16, { steps: 8 });
+    await expect(target).toHaveClass(/drop-before/);
+    await page.mouse.up();
+    await expect(page.locator('[data-layer-type="point"] .layer-item-name')).toHaveText([
+      'Alpha',
+      'Charlie',
+      'Bravo',
+    ]);
+    await expect(page.locator('.layer-item-name').filter({ hasText: '→' })).toHaveCount(0);
+  });
+}

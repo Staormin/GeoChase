@@ -152,7 +152,7 @@
             >
               <div class="text-sm font-medium">
                 {{
-                  result.elevation
+                  result.elevation != null
                     ? `${result.elevation}${$t('common.mUnit')}`
                     : $t('common.notAvailable')
                 }}
@@ -162,6 +162,20 @@
         </tbody>
       </table>
     </div>
+    <!-- Provider names are attribution, not translatable UI text. -->
+    <!-- eslint-disable @intlify/vue-i18n/no-raw-text -->
+    <div class="text-caption text-disabled">
+      {{ $t('search.elevation') }}:
+      <a href="https://geoservices.ign.fr/rgealti" rel="noopener noreferrer" target="_blank">IGN</a>
+      ·
+      <a
+        href="https://open-meteo.com/en/docs/elevation-api"
+        rel="noopener noreferrer"
+        target="_blank"
+        >Open-Meteo / Copernicus</a
+      >
+    </div>
+    <!-- eslint-enable @intlify/vue-i18n/no-raw-text -->
   </div>
 
   <div v-else class="text-caption text-disabled text-center py-8 px-4">

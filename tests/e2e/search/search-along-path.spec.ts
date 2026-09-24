@@ -15,9 +15,9 @@ const mockOverpassResponse = `<?xml version="1.0" encoding="UTF-8"?>
 
 // Mock elevation API response
 const mockElevationResponse = {
-  results: [
-    { latitude: 48.8584, longitude: 2.2945, elevation: 33 },
-    { latitude: 48.8606, longitude: 2.3376, elevation: 35 },
+  elevations: [
+    { lat: 48.8584, lon: 2.2945, z: 33 },
+    { lat: 48.8606, lon: 2.3376, z: 35 },
   ],
 };
 
@@ -31,13 +31,16 @@ async function setupApiMocks(page: any) {
     });
   });
 
-  await page.route('**/api.open-elevation.com/api/v1/lookup', (route: any) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(mockElevationResponse),
-    });
-  });
+  await page.route(
+    '**/data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json',
+    (route: any) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockElevationResponse),
+      });
+    }
+  );
 }
 
 // Helper to open search panel from point

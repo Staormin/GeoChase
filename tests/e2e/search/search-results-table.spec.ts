@@ -27,12 +27,12 @@ const mockOverpassResponse = `<?xml version="1.0" encoding="UTF-8"?>
 
 // Mock elevation API response
 const mockElevationResponse = {
-  results: [
-    { latitude: 48.8584, longitude: 2.2945, elevation: 33 },
-    { latitude: 48.8606, longitude: 2.3376, elevation: 35 },
-    { latitude: 48.853, longitude: 2.3499, elevation: 42 },
-    { latitude: 48.8738, longitude: 2.295, elevation: 55 },
-    { latitude: 48.8867, longitude: 2.3431, elevation: 130 },
+  elevations: [
+    { lat: 48.8584, lon: 2.2945, z: 33 },
+    { lat: 48.8606, lon: 2.3376, z: 35 },
+    { lat: 48.853, lon: 2.3499, z: 42 },
+    { lat: 48.8738, lon: 2.295, z: 55 },
+    { lat: 48.8867, lon: 2.3431, z: 130 },
   ],
 };
 
@@ -48,13 +48,16 @@ async function setupApiMocks(page: any) {
   });
 
   // Mock Elevation API
-  await page.route('**/api.open-elevation.com/api/v1/lookup', (route: any) => {
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(mockElevationResponse),
-    });
-  });
+  await page.route(
+    '**/data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json',
+    (route: any) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockElevationResponse),
+      });
+    }
+  );
 }
 
 // Helper to open search panel from a point
@@ -143,6 +146,34 @@ test.describe('Search Results Table', () => {
 
       // Elevation column should contain "m" (meters)
       await expect(rows.first().locator('td').nth(2)).toContainText(/m/i);
+    });
+
+    test('should display zero elevation', async ({ page, blankProject }) => {
+      await page.route('**/data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json', (route) =>
+        route.fulfill({
+          json: {
+            elevations: mockElevationResponse.elevations.map((point) => ({ ...point, z: 0 })),
+          },
+        })
+      );
+      await openSearchPanel(page);
+      await expect(page.locator('tbody tr').first().locator('td').nth(2)).toHaveText('0 m');
+    });
+
+    test('should display fallback elevation when IGN is unavailable', async ({
+      page,
+      blankProject,
+    }) => {
+      await page.route('**/data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json', (route) =>
+        route.abort()
+      );
+      await page.route('**/api.open-meteo.com/v1/elevation?**', (route) => {
+        const latitude = new URL(route.request().url()).searchParams.get('latitude')!;
+        const count = latitude.split(',').length;
+        return route.fulfill({ json: { elevation: Array.from({ length: count }, () => 12) } });
+      });
+      await openSearchPanel(page);
+      await expect(page.locator('tbody tr').first().locator('td').nth(2)).toHaveText('12 m');
     });
 
     test('should have hover effect on rows', async ({ page, blankProject }) => {

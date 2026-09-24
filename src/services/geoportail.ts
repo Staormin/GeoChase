@@ -31,10 +31,10 @@ export interface AddressSearchResult {
 
 const COMPLETION_API = 'https://data.geopf.fr/geocodage/completion';
 const OVERPASS_API = 'https://overpass-api.de/api/interpreter';
-const ELEVATION_API = 'https://api.open-elevation.com/api/v1/lookup';
+const ELEVATION_API = 'https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json';
 
 /**
- * Fetch elevation data for coordinates using Open-Elevation API
+ * Fetch elevation data for coordinates using IGN Géoplateforme
  * Handles "entity too large" errors by splitting the payload
  * @param coordinates Array of {lat, lon} coordinate pairs
  * @returns Map of coordinate strings to elevation values
@@ -61,11 +61,17 @@ async function fetchElevations(
     }
 
     try {
-      const locations = coords.map((coord) => ({ latitude: coord.lat, longitude: coord.lon }));
       const response = await fetch(ELEVATION_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ locations }),
+        body: JSON.stringify({
+          lat: coords.map((coord) => coord.lat).join('|'),
+          lon: coords.map((coord) => coord.lon).join('|'),
+          resource: 'ign_rge_alti_wld',
+          delimiter: '|',
+          zonly: 'false',
+        }),
+        signal: AbortSignal.timeout(15_000),
       });
 
       if (!response.ok) {
@@ -87,17 +93,17 @@ async function fetchElevations(
       }
 
       const data = (await response.json()) as {
-        results: Array<{ latitude: number; longitude: number; elevation: number | null }>;
+        elevations: Array<{ lat: number; lon: number; z: number | null }>;
       };
 
-      if (data.results) {
-        for (const result of data.results) {
-          if (result.elevation !== null) {
+      if (Array.isArray(data.elevations)) {
+        for (const result of data.elevations) {
+          if (typeof result.z === 'number' && Number.isFinite(result.z) && result.z !== -99_999) {
             // Try multiple key formats to match with the input coordinates
             const keys = [
-              `${result.latitude.toFixed(6)}_${result.longitude.toFixed(6)}`,
-              `${result.latitude.toFixed(5)}_${result.longitude.toFixed(5)}`,
-              `${Math.round(result.latitude * 1_000_000) / 1_000_000}_${Math.round(result.longitude * 1_000_000) / 1_000_000}`,
+              `${result.lat.toFixed(6)}_${result.lon.toFixed(6)}`,
+              `${result.lat.toFixed(5)}_${result.lon.toFixed(5)}`,
+              `${Math.round(result.lat * 1_000_000) / 1_000_000}_${Math.round(result.lon * 1_000_000) / 1_000_000}`,
             ];
 
             let foundKey: string | null = null;
@@ -109,7 +115,7 @@ async function fetchElevations(
             }
 
             if (foundKey) {
-              elevationMap.set(foundKey, Math.round(result.elevation));
+              elevationMap.set(foundKey, Math.round(result.z));
             }
           }
         }
@@ -119,7 +125,41 @@ async function fetchElevations(
     }
   }
 
-  await fetchWithRetry(coordinates);
+  // IGN accepts at most 5,000 coordinates per request.
+  for (let start = 0; start < coordinates.length; start += 5000) {
+    await fetchWithRetry(coordinates.slice(start, start + 5000));
+  }
+
+  // Fill gaps outside IGN coverage (or during an outage) with worldwide Copernicus data.
+  const missing = coordinates.filter(
+    (coord) => !elevationMap.has(`${coord.lat.toFixed(6)}_${coord.lon.toFixed(6)}`)
+  );
+  for (let start = 0; start < missing.length; start += 100) {
+    const batch = missing.slice(start, start + 100);
+    const params = new URLSearchParams({
+      latitude: batch.map((coord) => coord.lat).join(','),
+      longitude: batch.map((coord) => coord.lon).join(','),
+    });
+    try {
+      const response = await fetch(`https://api.open-meteo.com/v1/elevation?${params}`, {
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (!response.ok) continue;
+      const data = (await response.json()) as { elevation?: Array<number | null> };
+      if (!Array.isArray(data.elevation) || data.elevation.length !== batch.length) continue;
+      for (const [index, coord] of batch.entries()) {
+        const elevation = data.elevation[index];
+        if (typeof elevation === 'number' && Number.isFinite(elevation) && elevation !== -99_999) {
+          elevationMap.set(
+            `${coord.lat.toFixed(6)}_${coord.lon.toFixed(6)}`,
+            Math.round(elevation)
+          );
+        }
+      }
+    } catch {
+      // Keep locations searchable even when both elevation services are unavailable.
+    }
+  }
   return elevationMap;
 }
 

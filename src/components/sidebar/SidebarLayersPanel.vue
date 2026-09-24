@@ -825,29 +825,6 @@ function updateDropTarget(event: PointerEvent) {
   stopAutoScroll();
   const source = draggedElement.value;
   if (!source || !pendingDrag) return;
-  const row = document
-    .elementFromPoint(event.clientX, event.clientY)
-    ?.closest<HTMLElement>('.layer-item');
-  const type = row?.dataset.layerType as ListElementType | undefined;
-  const id = row?.dataset.layerId;
-  if (row && type === source.type && id) {
-    handleAutoScroll(event, row);
-    if (source.id === id) return;
-    const rect = row.getBoundingClientRect();
-    const offset = event.clientY - rect.top;
-    // Keep the label available for linking, even when a long name wraps.
-    const position =
-      type === 'point' && offset > 8 && offset < rect.height - 8
-        ? 'link'
-        : offset < rect.height / 2
-          ? 'before'
-          : 'after';
-    dropTarget.value = { type, id, position };
-    return;
-  }
-
-  // Extend the category's insertion targets into the sidebar's empty space
-  // and headers, while keeping drops on the map cancelled.
   const panel = pendingDrag.handle.closest('.v-navigation-drawer');
   const bounds = panel?.getBoundingClientRect();
   if (
@@ -861,6 +838,38 @@ function updateDropTarget(event: PointerEvent) {
   const items = Array.from(
     pendingDrag.handle.parentElement?.querySelectorAll<HTMLElement>('.layer-item') ?? []
   );
+  const hitRow = document
+    .elementFromPoint(event.clientX, event.clientY)
+    ?.closest<HTMLElement>('.layer-item');
+  // Include the sidebar padding so users need not aim inside the row's border.
+  const row =
+    hitRow ??
+    items.find((item) => {
+      const rect = item.getBoundingClientRect();
+      return event.clientY >= rect.top && event.clientY < rect.bottom;
+    });
+  const type = row?.dataset.layerType as ListElementType | undefined;
+  const id = row?.dataset.layerId;
+  if (row && type === source.type && id) {
+    handleAutoScroll(event, row);
+    if (source.id === id) return;
+    const rect = row.getBoundingClientRect();
+    const offset = event.clientY - rect.top;
+    // Give reordering broad edges while retaining a central point-link target.
+    // Cap the edges so wrapped point names remain available for linking.
+    const edgeSize = Math.min(20, rect.height / 3);
+    const position =
+      type === 'point' && hitRow && offset >= edgeSize && offset <= rect.height - edgeSize
+        ? 'link'
+        : offset < rect.height / 2
+          ? 'before'
+          : 'after';
+    dropTarget.value = { type, id, position };
+    return;
+  }
+
+  // Extend the category's insertion targets into the sidebar's empty space
+  // and headers, while keeping drops on the map cancelled.
   const first = items?.[0];
   const last = items?.at(-1);
   if (!first || !last) return;
@@ -1177,8 +1186,9 @@ onBeforeUnmount(cancelElementDrag);
   position: absolute;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 4px;
   background: rgb(var(--v-theme-primary));
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.16);
   pointer-events: none;
   z-index: 1;
 }

@@ -27,7 +27,7 @@ A web-based mapping application for solving geoportail treasure hunts through ge
   - Distance filter: 0.5 - 25 km radius
   - Altitude filter: Filter by elevation range
   - Name filter: Search by location name
-- **Elevation Data**: Automatic altitude lookup via Open-Elevation API
+- **Elevation Data**: Automatic altitude lookup via IGN Géoplateforme, with Open-Meteo / Copernicus worldwide fallback
 
 ### Analysis Tools
 
