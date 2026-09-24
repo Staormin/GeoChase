@@ -9,6 +9,7 @@ import type {
   NoteElement,
   PointElement,
   PolygonElement,
+  RouteElement,
 } from '@/types/project';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
@@ -23,6 +24,7 @@ function compareListOrder(a: { listOrder?: number }, b: { listOrder?: number }):
 
 export const useLayersStore = defineStore('layers', () => {
   // State
+  const routes = ref<RouteElement[]>([]);
   const circles = ref<CircleElement[]>([]);
   const lineSegments = ref<LineSegmentElement[]>([]);
   const points = ref<PointElement[]>([]);
@@ -32,6 +34,7 @@ export const useLayersStore = defineStore('layers', () => {
   // Computed
   const isEmpty = computed(
     () =>
+      routes.value.length === 0 &&
       circles.value.length === 0 &&
       lineSegments.value.length === 0 &&
       points.value.length === 0 &&
@@ -41,8 +44,29 @@ export const useLayersStore = defineStore('layers', () => {
 
   const totalCount = computed(
     () =>
-      circles.value.length + lineSegments.value.length + points.value.length + polygons.value.length
+      routes.value.length +
+      circles.value.length +
+      lineSegments.value.length +
+      points.value.length +
+      polygons.value.length
   );
+
+  const routeCount = computed(() => routes.value.length);
+  const sortedRoutes = computed(() =>
+    routes.value.toSorted(
+      (a, b) => compareListOrder(a, b) || (b.createdAt || 0) - (a.createdAt || 0)
+    )
+  );
+  function addRoute(route: RouteElement) {
+    routes.value.push({ ...route, createdAt: route.createdAt ?? Date.now() });
+  }
+  function updateRoute(id: string, updates: Partial<RouteElement>) {
+    const route = routes.value.find((route) => route.id === id);
+    if (route) Object.assign(route, updates);
+  }
+  function deleteRoute(id: string) {
+    routes.value = routes.value.filter((route) => route.id !== id);
+  }
 
   const circleCount = computed(() => circles.value.length);
 
@@ -116,13 +140,14 @@ export const useLayersStore = defineStore('layers', () => {
   });
 
   function reorderElement(
-    type: 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note',
+    type: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note',
     sourceId: string,
     targetId: string,
     position: 'before' | 'after'
   ): void {
     const items = [
       ...{
+        route: sortedRoutes.value,
         circle: sortedCircles.value,
         lineSegment: sortedLineSegments.value,
         point: sortedPoints.value,
@@ -317,10 +342,13 @@ export const useLayersStore = defineStore('layers', () => {
    * Helper function to get element by type and id
    */
   function getElement(
-    elementType: 'circle' | 'lineSegment' | 'point' | 'polygon',
+    elementType: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon',
     elementId: string
-  ): CircleElement | LineSegmentElement | PointElement | PolygonElement | undefined {
+  ): RouteElement | CircleElement | LineSegmentElement | PointElement | PolygonElement | undefined {
     switch (elementType) {
+      case 'route': {
+        return routes.value.find((route) => route.id === elementId);
+      }
       case 'circle': {
         return circles.value.find((c) => c.id === elementId);
       }
@@ -422,6 +450,7 @@ export const useLayersStore = defineStore('layers', () => {
   }
 
   function clearLayers(): void {
+    routes.value = [];
     circles.value = [];
     lineSegments.value = [];
     points.value = [];
@@ -431,6 +460,7 @@ export const useLayersStore = defineStore('layers', () => {
 
   function loadLayers(data: LayerImportData): void {
     const normalized = normalizeLayers(data);
+    routes.value = normalized.routes ?? [];
     circles.value = normalized.circles;
     lineSegments.value = normalized.lineSegments;
     points.value = normalized.points;
@@ -458,6 +488,7 @@ export const useLayersStore = defineStore('layers', () => {
 
   function exportLayers() {
     return {
+      routes: routes.value,
       circles: circles.value,
       lineSegments: lineSegments.value,
       points: points.value,
@@ -623,6 +654,12 @@ export const useLayersStore = defineStore('layers', () => {
 
   return {
     // State
+    routes,
+    routeCount,
+    sortedRoutes,
+    addRoute,
+    updateRoute,
+    deleteRoute,
     circles,
     lineSegments,
     points,

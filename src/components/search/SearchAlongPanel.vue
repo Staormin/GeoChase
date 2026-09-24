@@ -179,6 +179,10 @@ const pathPoints = computed(() => {
     return [];
   }
 
+  if (elementType === 'route') {
+    const route = layersStore.routes.find((route) => route.id === elementId);
+    return route?.coordinates.map(([lon, lat]) => ({ lat, lon })) ?? [];
+  }
   if (elementType === 'point') {
     const point = layersStore.points.find((p) => p.id === elementId);
     if (!point) {

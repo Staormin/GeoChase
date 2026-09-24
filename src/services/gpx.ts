@@ -4,7 +4,7 @@
  */
 
 import type { LatLon } from './geometry';
-import type { ProjectProjection } from '@/types/project';
+import type { ProjectProjection, RouteElement } from '@/types/project';
 import { downloadFile } from '@/utils/download';
 import { createProjectGeometry } from './projectGeometry';
 
@@ -113,7 +113,8 @@ export function generateCompleteGPX(
   numPoints: number,
   segments: LineSegmentData[],
   layerPoints: PointData[] = [],
-  projection: ProjectProjection = 'mercator'
+  projection: ProjectProjection = 'mercator',
+  routes: RouteElement[] = []
 ): string {
   const { generateCircle } = createProjectGeometry(() => projection);
   const timestamp = new Date().toISOString();
@@ -193,6 +194,9 @@ export function generateCompleteGPX(
     gpx += generateLineSegmentTracks(segments, projection);
   }
 
+  for (const route of routes) {
+    gpx += `<trk><name>${escapeXML(route.name)}</name><type>Route</type><trkseg>${route.coordinates.map(([lon, lat]) => trackPointXML({ lat, lon })).join('')}</trkseg></trk>`;
+  }
   gpx += `</gpx>`;
 
   return gpx;

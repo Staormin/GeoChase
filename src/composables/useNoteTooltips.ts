@@ -51,6 +51,10 @@ export function useNoteTooltips(mapRef: MapContainer) {
         source = mapRef.circlesSource?.value;
         break;
       }
+      case 'route': {
+        source = mapRef.routesSource?.value;
+        break;
+      }
       case 'lineSegment': {
         source = mapRef.linesSource?.value;
         break;

@@ -63,6 +63,18 @@
           </v-btn>
 
           <v-btn
+            :aria-label="$t('route.title')"
+            color="surface-bright"
+            data-testid="draw-route-btn"
+            icon="mdi-routes"
+            variant="flat"
+            @click="uiStore.openModal('routeModal')"
+          >
+            <v-icon>mdi-routes</v-icon>
+            <v-tooltip activator="parent" location="bottom">{{ $t('route.title') }}</v-tooltip>
+          </v-btn>
+
+          <v-btn
             :aria-label="$t('drawing.azimuth')"
             color="surface-bright"
             icon="mdi-compass-outline"

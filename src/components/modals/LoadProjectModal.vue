@@ -29,6 +29,7 @@
                 <div class="text-caption text-medium-emphasis">
                   {{ $t('layers.circles') }}: {{ project.data.circles?.length || 0 }} |
                   {{ $t('layers.lines') }}: {{ project.data.lineSegments?.length || 0 }} |
+                  {{ $t('route.plural') }}: {{ project.data.routes?.length || 0 }} |
                   {{ $t('layers.points') }}:
                   {{ project.data.points?.length || 0 }}
                   <span v-if="project.data.polygons && project.data.polygons.length > 0">

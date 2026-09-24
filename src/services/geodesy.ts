@@ -35,3 +35,10 @@ export function densifyGeodesic(from: LatLon, to: LatLon, minVertices = 2): LatL
     return { lat: result.lat2!, lon: result.lon2! };
   });
 }
+
+/** Unsigned area of the smaller WGS84 region, in square meters. */
+export function geodesicPolygonArea(points: LatLon[]): number {
+  const polygon = geod.Polygon(false);
+  for (const point of points) polygon.AddPoint(point.lat, point.lon);
+  return Math.abs(polygon.Compute(false, true).area ?? 0);
+}

@@ -256,7 +256,7 @@ describe('storage service', () => {
 
       expect(imported).not.toBeNull();
       expect(imported?.name).toBe('Imported Project');
-      expect(imported?.data).toEqual({ ...mockLayerData, savedCoordinates: undefined });
+      expect(imported?.data).toEqual({ ...mockLayerData, routes: [], savedCoordinates: undefined });
       expect(imported?.projection).toBe('mercator');
     });
 

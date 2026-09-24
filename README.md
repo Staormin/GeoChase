@@ -155,3 +155,22 @@ npm run test:pages
 ## License
 
 [MIT](http://opensource.org/licenses/MIT)
+
+### Route calculation
+
+The Routes button in the drawing toolbar calculates an itinerary between two saved
+points, with walking/driving and shortest/fastest options. Intermediate stops can be
+added, removed and reordered before calculation, and are saved with the route. GeoChase calls the free
+[IGN Géoplateforme routing service](https://cartes.gouv.fr/aide/fr/guides-utilisateur/utiliser-les-services-de-la-geoplateforme/calcul-itineraire/)
+directly from the browser, without an API key or application backend. Coverage is
+France; calculating requires an internet connection and sends departure, stop and arrival coordinates
+to IGN. Distance and estimated duration come from IGN.
+
+Routes are a separate element type, with their own sidebar category, visibility,
+color, notes, editing and deletion. Arrow-key navigation follows the road geometry;
+nearby search explores a buffer around the complete route. Routes are saved with the project and retain their full geometry when reloaded,
+when switching projection, and in JSON/GPX exports. Service failures leave the form available for retry; closing it cancels the request.
+
+Routing browser tests use a deterministic service response by default. Set
+`GEOCHASE_LIVE_ROUTING=1` to exercise the real IGN service:
+`GEOCHASE_LIVE_ROUTING=1 npm run test:e2e -- tests/e2e/drawing/routing.spec.ts --workers=1`.

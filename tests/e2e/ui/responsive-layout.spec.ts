@@ -4,7 +4,8 @@ import { expect, test } from '../fixtures';
 async function expectAccessibleToolbar(page: Page, minimumButtonSize = 32) {
   const toolbar = page.getByTestId('topbar');
   await expect(toolbar).toBeVisible();
-  await expect(toolbar.locator('.v-btn')).toHaveCount(17);
+  await expect(toolbar.locator('.v-btn')).toHaveCount(18);
+  await expect(page.getByTestId('draw-route-btn')).toBeVisible();
 
   await expect
     .poll(() =>
@@ -103,6 +104,9 @@ for (const viewport of [
         .toBe(true);
 
       await page.getByTestId('draw-circle-btn').click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+      await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+      await page.getByTestId('draw-route-btn').click();
       await expect(page.getByRole('dialog')).toBeVisible();
       await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
       await page.getByTestId('save-menu-btn').click();

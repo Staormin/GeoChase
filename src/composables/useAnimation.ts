@@ -22,6 +22,7 @@ export function useAnimation(
   function getAllElementsSorted() {
     return [
       ...layersStore.circles.map((c) => ({ ...c, type: 'circle' as const })),
+      ...layersStore.routes.map((route) => ({ ...route, type: 'route' as const })),
       ...layersStore.lineSegments.map((l) => ({ ...l, type: 'lineSegment' as const })),
       ...layersStore.points.map((p) => ({ ...p, type: 'point' as const })),
       ...layersStore.polygons.map((p) => ({ ...p, type: 'polygon' as const })),
@@ -61,6 +62,13 @@ export function useAnimation(
         const radiusInDegrees = element.radius / 111; // Rough conversion
         zoom = Math.max(6, Math.min(18, 13 - Math.log2(radiusInDegrees)));
 
+        break;
+      }
+      case 'route': {
+        const first = element.coordinates[0]!;
+        lat = first[1];
+        lon = first[0];
+        zoom = Math.max(6, Math.min(18, 15 - Math.log2(Math.max(element.distance, 1) / 1500)));
         break;
       }
       case 'lineSegment': {
@@ -235,6 +243,15 @@ export function useAnimation(
             minLon = Math.min(minLon, element.center.lon);
             maxLon = Math.max(maxLon, element.center.lon);
 
+            break;
+          }
+          case 'route': {
+            for (const [lon, lat] of element.coordinates) {
+              minLat = Math.min(minLat, lat);
+              maxLat = Math.max(maxLat, lat);
+              minLon = Math.min(minLon, lon);
+              maxLon = Math.max(maxLon, lon);
+            }
             break;
           }
           case 'lineSegment': {

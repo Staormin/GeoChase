@@ -80,6 +80,7 @@ function submitForm() {
           projectsStore.projects.indexOf(currentProject),
           currentProject.name,
           {
+            routes: layerData.routes,
             circles: layerData.circles,
             lineSegments: layerData.lineSegments,
             points: layerData.points,

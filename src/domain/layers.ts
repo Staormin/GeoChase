@@ -9,8 +9,10 @@ import type {
   PolygonElement,
   ProjectLayerData,
   ProjectProjection,
+  RouteElement,
 } from '@/types/project';
 import { v4 as uuidv4 } from 'uuid';
+import { isRouteData } from '@/services/routing';
 import { isRecord } from '@/utils/guards';
 
 function isOptionalIdList(value: unknown): value is string[] | undefined {
@@ -36,6 +38,27 @@ function validateCircle(circle: unknown): circle is CircleElement {
     Number.isFinite(circle.center.lon) &&
     Number.isFinite(circle.radius) &&
     circle.radius > 0
+  );
+}
+
+function validateRoute(value: unknown): value is RouteElement {
+  if (
+    !isRecord(value) ||
+    !isRouteData(value) ||
+    typeof value.id !== 'string' ||
+    typeof value.name !== 'string'
+  )
+    return false;
+  if (value.intermediates !== undefined && !Array.isArray(value.intermediates)) return false;
+  return [value.start, ...(value.intermediates ?? []), value.end].every(
+    (point) =>
+      isRecord(point) &&
+      typeof point.lat === 'number' &&
+      Number.isFinite(point.lat) &&
+      Math.abs(point.lat) <= 90 &&
+      typeof point.lon === 'number' &&
+      Number.isFinite(point.lon) &&
+      Math.abs(point.lon) <= 180
   );
 }
 
@@ -174,6 +197,7 @@ function migrateSavedCoordinatesToPoints(
 
 export function normalizeLayers(data: LayerImportData): ProjectLayerData {
   // Validate and filter data before loading
+  const validRoutes = (data.routes || []).filter(validateRoute);
   const validCircles = (data.circles || []).filter((circle) => {
     return validateCircle(circle);
   });
@@ -257,6 +281,7 @@ export function normalizeLayers(data: LayerImportData): ProjectLayerData {
       1000;
 
   for (const element of [
+    ...validRoutes,
     ...validCircles,
     ...validLineSegments,
     ...validPoints,
@@ -270,6 +295,7 @@ export function normalizeLayers(data: LayerImportData): ProjectLayerData {
   }
 
   return {
+    routes: validRoutes,
     circles: validCircles,
     lineSegments: validLineSegments,
     points: validPoints,
@@ -284,6 +310,7 @@ export function parseLayersJSON(json: string): ProjectLayerData {
   if (!isRecord(value)) throw new Error('Invalid project format');
   const data = isRecord(value.data) ? value.data : value;
   const keys = [
+    'routes',
     'circles',
     'lineSegments',
     'points',
@@ -305,6 +332,7 @@ export function parseLayersJSON(json: string): ProjectLayerData {
   const coordinates = array('coordinates', isLegacyCoordinate);
   const savedCoordinates = array('savedCoordinates', isLegacyCoordinate);
   return normalizeLayers({
+    routes: array('routes', validateRoute),
     circles: array('circles', validateCircle),
     lineSegments: array('lineSegments', validateLineSegment),
     points: array('points', validatePoint),

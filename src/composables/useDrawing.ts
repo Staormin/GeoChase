@@ -3,9 +3,12 @@
  */
 
 import type { MapContainer } from '@/composables/useMap';
-import type { LineSegmentElement } from '@/types/project';
+import type { LineSegmentElement, RouteElement } from '@/types/project';
 import type VectorSource from 'ol/source/Vector';
-import { Style } from 'ol/style';
+import { Feature } from 'ol';
+import { LineString } from 'ol/geom';
+import { fromLonLat } from 'ol/proj';
+import { Stroke, Style } from 'ol/style';
 import { useLayersStore } from '@/stores/layers';
 import { useCircleDrawing } from './useCircleDrawing';
 import { useLineDrawing } from './useLineDrawing';
@@ -23,9 +26,28 @@ export function useDrawing(mapRef: MapContainer) {
   const pointDrawing = usePointDrawing(mapRef);
   const polygonDrawing = usePolygonDrawing(mapRef);
 
+  function redrawRoute(route: RouteElement) {
+    const source = mapRef.routesSource?.value;
+    if (!source) return;
+    const old = source.getFeatureById(route.id);
+    if (old) source.removeFeature(old);
+    const feature = new Feature(
+      new LineString(route.coordinates.map((point) => fromLonLat(point)))
+    );
+    feature.setId(route.id);
+    feature.set('type', 'route');
+    feature.setStyle(
+      new Style({ stroke: new Stroke({ color: route.color || '#1976D2', width: 4 }) })
+    );
+    source.addFeature(feature);
+  }
+
   // Helper to get source for element type
   const getSourceForElementType = (elementType: string) => {
     switch (elementType) {
+      case 'route': {
+        return mapRef.routesSource?.value;
+      }
       case 'circle': {
         return mapRef.circlesSource?.value;
       }
@@ -76,6 +98,11 @@ export function useDrawing(mapRef: MapContainer) {
     animate: boolean
   ): Promise<void> => {
     switch (elementType) {
+      case 'route': {
+        const route = layersStore.routes.find((route) => route.id === elementId);
+        if (route) redrawRoute(route);
+        break;
+      }
       case 'circle': {
         const circle = layersStore.circles.find((c) => c.id === elementId);
         if (circle && circle.id) {
@@ -220,6 +247,8 @@ export function useDrawing(mapRef: MapContainer) {
     // Track polygons that need to be redrawn after point deletion
     const polygonsToRedraw: string[] = [];
 
+    if (elementType === 'route') removeFeatureById(mapRef.routesSource?.value, elementId);
+
     // Remove from map using OpenLayers feature management
     switch (elementType) {
       case 'circle': {
@@ -289,6 +318,8 @@ export function useDrawing(mapRef: MapContainer) {
       }
     }
 
+    if (elementType === 'route') layersStore.deleteRoute(elementId);
+
     // Remove from store
     switch (elementType) {
       case 'circle': {
@@ -320,6 +351,7 @@ export function useDrawing(mapRef: MapContainer) {
   const clearAllElements = () => {
     layersStore.clearLayers();
     // Clear all VectorSources
+    mapRef.routesSource?.value?.clear();
     mapRef.circlesSource?.value?.clear();
     mapRef.linesSource?.value?.clear();
     mapRef.pointsSource?.value?.clear();
@@ -338,6 +370,7 @@ export function useDrawing(mapRef: MapContainer) {
   // eslint-disable-next-line complexity
   const redrawAllElements = ({ fitBounds = true }: { fitBounds?: boolean } = {}) => {
     // Clear only map layers using VectorSources, not the store (store is already populated)
+    mapRef.routesSource?.value?.clear();
     mapRef.circlesSource?.value?.clear();
     mapRef.linesSource?.value?.clear();
     mapRef.pointsSource?.value?.clear();
@@ -351,6 +384,8 @@ export function useDrawing(mapRef: MapContainer) {
       }
     }
 
+    const routes = layersStore.routes;
+    for (const route of routes) redrawRoute(route);
     const circles = layersStore.circles;
     const lineSegments = layersStore.lineSegments;
     const points = layersStore.points;
@@ -409,7 +444,11 @@ export function useDrawing(mapRef: MapContainer) {
     // Fly to all elements if any exist with animation
     // Skip if skipAutoFly flag is set (when restoring saved view data)
     if (
-      (circles.length > 0 || lineSegments.length > 0 || points.length > 0 || polygons.length > 0) &&
+      (routes.length > 0 ||
+        circles.length > 0 ||
+        lineSegments.length > 0 ||
+        points.length > 0 ||
+        polygons.length > 0) &&
       mapRef.flyToBoundsWithPanels &&
       fitBounds
     ) {
@@ -419,6 +458,14 @@ export function useDrawing(mapRef: MapContainer) {
         minLon = 180,
         maxLon = -180;
 
+      for (const route of routes) {
+        for (const [lon, lat] of route.coordinates) {
+          minLat = Math.min(minLat, lat);
+          maxLat = Math.max(maxLat, lat);
+          minLon = Math.min(minLon, lon);
+          maxLon = Math.max(maxLon, lon);
+        }
+      }
       for (const circle of circles) {
         const lat = circle.center.lat;
         const lon = circle.center.lon;
@@ -478,7 +525,11 @@ export function useDrawing(mapRef: MapContainer) {
 
   function updateElementColor(elementType: string, elementId: string, color: string) {
     if (!/^#[\da-f]{6}$/i.test(color)) return;
+    if (elementType === 'route') layersStore.updateRoute(elementId, { color });
     switch (elementType) {
+      case 'route': {
+        break;
+      }
       case 'circle': {
         layersStore.updateCircle(elementId, { color });
         break;
@@ -507,6 +558,7 @@ export function useDrawing(mapRef: MapContainer) {
   }
 
   return {
+    redrawRoute,
     updateElementColor,
     // Circle methods
     drawCircle: circleDrawing.drawCircle,

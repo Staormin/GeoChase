@@ -37,7 +37,8 @@ export function useProjectFiles() {
         360,
         layers.lineSegments,
         layers.points,
-        projects.activeProjection
+        projects.activeProjection,
+        layers.routes
       ),
       filename('gpx')
     );

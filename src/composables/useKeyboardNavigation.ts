@@ -1,9 +1,12 @@
+import type { useMap } from '@/composables/useMap';
 /**
  * Composable for keyboard navigation shortcuts (arrow keys, escape)
  */
-
-import type { useMap } from '@/composables/useMap';
+import type View from 'ol/View';
+import { getPointResolution } from 'ol/proj';
+import { watch } from 'vue';
 import { useNavigation } from '@/composables/useNavigation';
+import { createRouteTraversal } from '@/services/routeGeometry';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -15,6 +18,43 @@ export function useKeyboardNavigation(
   const uiStore = useUIStore();
   const layersStore = useLayersStore();
   const navigation = useNavigation();
+  let routeDistance = 0;
+  let traversal: ReturnType<typeof createRouteTraversal> | undefined;
+  const stopRouteWatch = watch(
+    () => uiStore.navigatingElement,
+    (element) => {
+      routeDistance = 0;
+      traversal = undefined;
+      if (element?.type !== 'route') return;
+      const route = layersStore.routes.find((route) => route.id === element.id);
+      if (!route) return;
+      traversal = createRouteTraversal(route.coordinates);
+      const point = traversal.at(0);
+      mapContainer.flyTo(point.lat, point.lon, Math.max(16, mapContainer.getZoom() ?? 16), {
+        duration: 500,
+      });
+    }
+  );
+
+  function navigateRoute(event: KeyboardEvent, view: View, zoomLevel: number): boolean {
+    if (!traversal || !['ArrowRight', 'ArrowLeft'].includes(event.key)) return false;
+    event.preventDefault();
+    const metersPerPixel = getPointResolution(
+      view.getProjection(),
+      view.getResolution() ?? 1,
+      view.getCenter() ?? [0, 0],
+      'm'
+    );
+    const step = Math.max(5, metersPerPixel * 120);
+    routeDistance = Math.max(
+      0,
+      Math.min(traversal.length, routeDistance + (event.key === 'ArrowRight' ? step : -step))
+    );
+    const point = traversal.at(routeDistance);
+    view.cancelAnimations();
+    mapContainer.flyTo(point.lat, point.lon, zoomLevel, { duration: 250 });
+    return true;
+  }
 
   const handleKeydown = (event: KeyboardEvent) => {
     // View capture escape handling
@@ -54,6 +94,8 @@ export function useKeyboardNavigation(
     const elementId = navigatingElement.id;
     const view = map.getView();
     const zoomLevel = view.getZoom() || 10;
+
+    if (elementType === 'route' && navigateRoute(event, view, zoomLevel)) return;
 
     switch (event.key) {
       case 'ArrowRight': {
@@ -121,6 +163,7 @@ export function useKeyboardNavigation(
   };
 
   const cleanup = () => {
+    stopRouteWatch();
     document.removeEventListener('keydown', handleKeydown);
   };
 

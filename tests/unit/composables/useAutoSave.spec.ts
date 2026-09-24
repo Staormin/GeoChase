@@ -83,6 +83,7 @@ describe('useAutoSave', () => {
 
     expect(autoSaveSpy).toHaveBeenCalledTimes(1);
     expect(autoSaveSpy).toHaveBeenCalledWith({
+      routes: [],
       circles: layersStore.circles,
       lineSegments: layersStore.lineSegments,
       points: layersStore.points,

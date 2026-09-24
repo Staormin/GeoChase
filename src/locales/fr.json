@@ -1004,5 +1004,33 @@
     "recent": "Dernières couleurs",
     "custom": "Couleur personnalisée",
     "invalid": "Utilisez un code hexadécimal à 6 caractères, par exemple #6366F1."
+  },
+  "route": {
+    "title": "Itinéraire",
+    "name": "Nom de l’itinéraire",
+    "start": "Départ",
+    "end": "Arrivée",
+    "profile": "Déplacement",
+    "pedestrian": "À pied",
+    "car": "En voiture",
+    "optimization": "Parcours",
+    "shortest": "Le plus court",
+    "fastest": "Le plus rapide",
+    "calculate": "Calculer et enregistrer",
+    "calculating": "Calcul en cours…",
+    "info": "Service gratuit IGN • France • Connexion requise. Les coordonnées du départ, des étapes et de l’arrivée sont envoyées à l’IGN.",
+    "needPoints": "Ajoutez au moins deux points sur la carte pour calculer un itinéraire.",
+    "invalid": "Choisissez tous les points et évitez deux points consécutifs identiques.",
+    "failed": "Impossible de calculer cet itinéraire. Vérifiez votre connexion et la couverture en France, puis réessayez.",
+    "rateLimit": "Service IGN très sollicité. Réessayez dans quelques secondes.",
+    "created": "Itinéraire enregistré.",
+    "plural": "Itinéraires",
+    "hideAll": "Masquer tous les itinéraires",
+    "showAll": "Afficher tous les itinéraires",
+    "step": "Étape {number}",
+    "addStep": "Ajouter une étape",
+    "removeStep": "Supprimer l’étape {number}",
+    "moveUp": "Monter l’étape {number}",
+    "moveDown": "Descendre l’étape {number}"
   }
 }

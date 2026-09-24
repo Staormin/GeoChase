@@ -93,7 +93,8 @@ const noteTooltipsRef = useNoteTooltipsContext();
 const form = ref({
   title: '',
   content: '',
-  linkedElementType: undefined as 'circle' | 'lineSegment' | 'point' | 'polygon' | undefined,
+  linkedElementType: undefined as
+    'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | undefined,
   linkedElementId: undefined as string | undefined,
 });
 
@@ -112,6 +113,7 @@ const isEditing = computed(() => {
 
 const linkOptions = computed(() => [
   { label: t('common.circle'), value: 'circle' },
+  { label: t('route.title'), value: 'route' },
   { label: t('common.line'), value: 'lineSegment' },
   { label: t('common.point'), value: 'point' },
 ]);
@@ -124,6 +126,9 @@ const availableElements = computed(() => {
   switch (form.value.linkedElementType) {
     case 'circle': {
       return layersStore.circles.map((c) => ({ id: c.id, name: c.name }));
+    }
+    case 'route': {
+      return layersStore.routes.map((route) => ({ id: route.id, name: route.name }));
     }
     case 'lineSegment': {
       return layersStore.lineSegments.map((l) => ({ id: l.id, name: l.name }));

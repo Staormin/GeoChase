@@ -35,12 +35,14 @@ export function useMap(
   // Vector layers for organized layer management
   const circlesLayer = shallowRef<VectorLayer<VectorSource> | null>(null);
   const linesLayer = shallowRef<VectorLayer<VectorSource> | null>(null);
+  const routesLayer = shallowRef<VectorLayer<VectorSource> | null>(null);
   const pointsLayer = shallowRef<VectorLayer<VectorSource> | null>(null);
   const polygonsLayer = shallowRef<VectorLayer<VectorSource> | null>(null);
 
   // Vector sources for adding/removing features
   const circlesSource = shallowRef<VectorSource | null>(null);
   const linesSource = shallowRef<VectorSource | null>(null);
+  const routesSource = shallowRef<VectorSource | null>(null);
   const pointsSource = shallowRef<VectorSource | null>(null);
   const polygonsSource = shallowRef<VectorSource | null>(null);
 
@@ -65,6 +67,7 @@ export function useMap(
       // Create vector sources
       circlesSource.value = new VectorSource();
       linesSource.value = new VectorSource();
+      routesSource.value = new VectorSource();
       pointsSource.value = new VectorSource();
       polygonsSource.value = new VectorSource();
 
@@ -81,6 +84,14 @@ export function useMap(
       linesLayer.value = new VectorLayer({
         source: linesSource.value,
         className: 'lines-layer',
+        renderBuffer: 200,
+        updateWhileAnimating: true,
+        updateWhileInteracting: true,
+      });
+
+      routesLayer.value = new VectorLayer({
+        source: routesSource.value,
+        className: 'routes-layer',
         renderBuffer: 200,
         updateWhileAnimating: true,
         updateWhileInteracting: true,
@@ -129,6 +140,7 @@ export function useMap(
           }),
           circlesLayer.value,
           linesLayer.value,
+          routesLayer.value,
           pointsLayer.value,
           polygonsLayer.value,
         ],
@@ -198,16 +210,19 @@ export function useMap(
       // Clear vector sources
       circlesSource.value?.clear();
       linesSource.value?.clear();
+      routesSource.value?.clear();
       pointsSource.value?.clear();
       polygonsSource.value?.clear();
 
       circlesSource.value = null;
       linesSource.value = null;
+      routesSource.value = null;
       pointsSource.value = null;
       polygonsSource.value = null;
 
       circlesLayer.value = null;
       linesLayer.value = null;
+      routesLayer.value = null;
       pointsLayer.value = null;
       polygonsLayer.value = null;
 
@@ -237,6 +252,7 @@ export function useMap(
     // Clear all vector sources
     circlesSource.value?.clear();
     linesSource.value?.clear();
+    routesSource.value?.clear();
     pointsSource.value?.clear();
     polygonsSource.value?.clear();
 
@@ -654,10 +670,12 @@ export function useMap(
     mapLayers,
     circlesLayer,
     linesLayer,
+    routesLayer,
     pointsLayer,
     polygonsLayer,
     circlesSource,
     linesSource,
+    routesSource,
     pointsSource,
     polygonsSource,
     initMap,

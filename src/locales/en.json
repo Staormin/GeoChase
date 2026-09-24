@@ -1004,5 +1004,33 @@
     "recent": "Recent colors",
     "custom": "Custom color",
     "invalid": "Use a 6-digit hex color, for example #6366F1."
+  },
+  "route": {
+    "title": "Route",
+    "name": "Route name",
+    "start": "Departure",
+    "end": "Arrival",
+    "profile": "Travel mode",
+    "pedestrian": "Walking",
+    "car": "Driving",
+    "optimization": "Route preference",
+    "shortest": "Shortest",
+    "fastest": "Fastest",
+    "calculate": "Calculate and save",
+    "calculating": "Calculating…",
+    "info": "Free IGN service • France • Internet required. Departure, stop and arrival coordinates are sent to IGN.",
+    "needPoints": "Add at least two points to the map to calculate a route.",
+    "invalid": "Select every point and avoid identical consecutive points.",
+    "failed": "Could not calculate this route. Check your connection and coverage in France, then try again.",
+    "rateLimit": "IGN service is busy. Please try again in a few seconds.",
+    "created": "Route saved.",
+    "plural": "Routes",
+    "hideAll": "Hide all routes",
+    "showAll": "Show all routes",
+    "step": "Stop {number}",
+    "addStep": "Add stop",
+    "removeStep": "Remove stop {number}",
+    "moveUp": "Move stop {number} up",
+    "moveDown": "Move stop {number} down"
   }
 }

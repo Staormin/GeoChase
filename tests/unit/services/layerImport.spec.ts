@@ -53,7 +53,10 @@ describe('project layer import', () => {
         },
       ],
     };
-    expect(parseLayersJSON(exportProjectAsJSON({ name: 'Hunt', data }))).toEqual(data);
+    expect(parseLayersJSON(exportProjectAsJSON({ name: 'Hunt', data }))).toEqual({
+      ...data,
+      routes: [],
+    });
   });
 
   it('accepts old layer-only exports and preserves legacy coordinate IDs', () => {
@@ -108,7 +111,7 @@ describe('project layer import', () => {
   it('accepts an explicitly empty project', () => {
     expect(
       parseLayersJSON('{"circles":[],"lineSegments":[],"points":[],"polygons":[],"notes":[]}')
-    ).toEqual({ circles: [], lineSegments: [], points: [], polygons: [], notes: [] });
+    ).toEqual({ routes: [], circles: [], lineSegments: [], points: [], polygons: [], notes: [] });
   });
 
   it.each([42, 'point', null, {}, ['point', 42]].map((value) => [value]))(

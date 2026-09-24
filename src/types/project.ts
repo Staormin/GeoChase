@@ -29,6 +29,7 @@ export interface ProjectData {
 }
 
 export interface ProjectLayerData {
+  routes?: RouteElement[];
   circles: CircleElement[];
   lineSegments: LineSegmentElement[];
   points: PointElement[];
@@ -109,8 +110,9 @@ export interface NoteElement {
   updatedAt?: number;
 }
 
-export type ElementType = 'circle' | 'lineSegment' | 'point' | 'polygon';
-export type DrawingElement = CircleElement | LineSegmentElement | PointElement | PolygonElement;
+export type ElementType = 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
+export type DrawingElement =
+  RouteElement | CircleElement | LineSegmentElement | PointElement | PolygonElement;
 
 export interface LegacyCoordinate {
   id: string;
@@ -129,4 +131,25 @@ export type LayerImportData = Omit<ProjectLayerData, 'polygons' | 'notes'> & {
 export interface LegacyPolygon extends Omit<PolygonElement, 'pointIds'> {
   points: Array<{ lat: number; lon: number }>;
   pointIds?: undefined;
+}
+
+/** IGN geometry is WGS84 [longitude, latitude], distance in meters, duration in seconds. */
+export interface RouteData {
+  coordinates: [number, number][];
+  distance: number;
+  duration: number;
+  profile: 'pedestrian' | 'car';
+  optimization: 'shortest' | 'fastest';
+}
+
+export interface RouteElement extends RouteData {
+  id: string;
+  name: string;
+  start: { lat: number; lon: number };
+  end: { lat: number; lon: number };
+  intermediates?: Array<{ lat: number; lon: number }>;
+  color?: string;
+  noteId?: string;
+  createdAt?: number;
+  listOrder?: number;
 }

@@ -26,6 +26,7 @@
     <div
       v-else-if="
         filteredCircles.length === 0 &&
+        filteredRoutes.length === 0 &&
         filteredLines.length === 0 &&
         filteredPoints.length === 0 &&
         filteredPolygons.length === 0 &&
@@ -163,6 +164,66 @@
         </div>
       </div>
 
+      <div v-if="filteredRoutes.length > 0">
+        <div class="layers-section-header">
+          <span class="layers-section-title" @click="routesExpanded = !routesExpanded"
+            >{{ $t('route.plural') }} ({{ filteredRoutes.length
+            }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.routeCount}` : '' }})</span
+          >
+
+          <div class="layers-section-actions">
+            <v-btn
+              color="primary"
+              :icon="allRoutesVisible ? 'mdi-eye-off' : 'mdi-eye'"
+              size="x-small"
+              :title="allRoutesVisible ? $t('route.hideAll') : $t('route.showAll')"
+              variant="text"
+              @click.stop="toggleAllElementsOfType('route')"
+            />
+
+            <span class="collapse-icon" @click="routesExpanded = !routesExpanded">{{
+              routesExpanded ? '▼' : '▶'
+            }}</span>
+          </div>
+        </div>
+
+        <div v-show="routesExpanded" class="layer-items">
+          <div
+            v-for="route in filteredRoutes"
+            :key="route.id"
+            class="layer-item"
+            :class="{
+              ...dropClasses('route', route.id),
+              'layer-item-hidden': route.id && !uiStore.isElementVisible('route', route.id),
+            }"
+            :data-layer-id="route.id"
+            data-layer-type="route"
+            @dragstart.prevent
+            @lostpointercapture="cancelElementDrag"
+            @pointercancel="cancelElementDrag"
+            @pointerdown="startElementDrag($event, 'route', route.id)"
+            @pointermove="moveElementDrag"
+            @pointerup="finishElementDrag"
+          >
+            <div class="layer-item-info" @click="handleGoTo('route', route)">
+              <div class="layer-item-name">{{ route.name }}</div>
+
+              <div class="layer-item-type">{{ $t('route.title') }} • {{ getRouteInfo(route) }}</div>
+            </div>
+
+            <div class="layer-item-actions">
+              <LayerContextMenu
+                v-if="route.id"
+                :element-id="route.id"
+                element-type="route"
+                @delete="handleDeleteElement"
+                @edit="handleEditRoute(route)"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Points -->
       <div v-if="filteredPoints.length > 0">
         <div class="layers-section-header">
@@ -273,7 +334,8 @@
               <div class="layer-item-type">
                 {{ $t('layers.polygonType') }} ({{ polygon.pointIds.length }}
                 {{ $t('common.points') }}) •
-                {{ formatDistance(calculatePolygonPerimeter(polygon)) }}
+                {{ formatDistance(calculatePolygonPerimeter(polygon)) }} •
+                {{ formatPolygonArea(polygon) }}
               </div>
             </div>
 
@@ -395,15 +457,19 @@ import type {
   NoteElement,
   PointElement,
   PolygonElement,
+  RouteElement,
 } from '@/types/project';
 import { computed, onBeforeUnmount, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import LayerContextMenu from '@/components/layers/LayerContextMenu.vue';
 import { useDrawingContext, useMapContext } from '@/composables/mapContext';
 import { useProjectGeometry } from '@/composables/useProjectGeometry';
+import { routeBounds } from '@/services/routing';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
-const { getDistance, calculateBearing } = useProjectGeometry();
+const { t } = useI18n();
+const { getDistance, calculateBearing, polygonArea } = useProjectGeometry();
 
 const layersStore = useLayersStore();
 const uiStore = useUIStore();
@@ -411,7 +477,7 @@ const drawing = useDrawingContext();
 const mapContainer = useMapContext();
 
 const searchQuery = ref('');
-type ListElementType = 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note';
+type ListElementType = 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note';
 const draggedElement = ref<{ type: ListElementType; id: string } | null>(null);
 const dropTarget = ref<{
   type: ListElementType;
@@ -447,6 +513,23 @@ const filteredCircles = computed(() => {
   const query = searchQuery.value.toLowerCase();
   return layersStore.sortedCircles.filter((c) => c.name.toLowerCase().includes(query));
 });
+
+const filteredRoutes = computed(() =>
+  layersStore.sortedRoutes.filter((route) =>
+    route.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+);
+const routesExpanded = ref(true);
+const allRoutesVisible = computed(() =>
+  layersStore.routes.every((route) => uiStore.isElementVisible('route', route.id))
+);
+function getRouteInfo(route: RouteElement) {
+  return `${t(route.profile === 'car' ? 'route.car' : 'route.pedestrian')} • ${(route.distance / 1000).toFixed(2)} km • ${Math.ceil(route.duration / 60)} min • IGN`;
+}
+function handleEditRoute(route: RouteElement) {
+  uiStore.startEditing('route', route.id);
+  uiStore.openModal('routeModal');
+}
 
 const filteredLines = computed(() => {
   if (!searchQuery.value) {
@@ -513,6 +596,15 @@ function calculatePolygonPerimeter(polygon: PolygonElement): number {
   }
 
   return perimeter;
+}
+
+function formatPolygonArea(polygon: PolygonElement): string {
+  const points = polygon.pointIds.flatMap((id) => {
+    const point = layersStore.points.find((point) => point.id === id);
+    return point ? [point.coordinates] : [];
+  });
+  const area = polygonArea(points);
+  return area >= 1_000_000 ? `${(area / 1_000_000).toFixed(2)} km²` : `${Math.round(area)} m²`;
 }
 
 // Format distance for display
@@ -630,10 +722,7 @@ function handleDeleteElement(elementType: string, elementId: string) {
   drawing.deleteElement(elementType, elementId);
 }
 
-function handleGoTo(
-  elementType: string,
-  element: CircleElement | LineSegmentElement | PointElement | PolygonElement
-) {
+function handleGoTo(elementType: string, element: DrawingElement) {
   if (isDragging.value || Date.now() < suppressClickUntil) return;
   let lat: number;
   let lon: number;
@@ -648,6 +737,10 @@ function handleGoTo(
       zoom = Math.max(6, Math.min(18, 15 - Math.log2(circle.radius / 1.5)));
 
       break;
+    }
+    case 'route': {
+      mapContainer.flyToBoundsWithPanels(routeBounds(element as RouteElement));
+      return;
     }
     case 'lineSegment': {
       const segment = element as LineSegmentElement;
@@ -989,6 +1082,10 @@ function handleNoteClick(note: NoteElement) {
         element = layersStore.circles.find((c) => c.id === note.linkedElementId);
         break;
       }
+      case 'route': {
+        element = layersStore.routes.find((route) => route.id === note.linkedElementId);
+        break;
+      }
       case 'lineSegment': {
         element = layersStore.lineSegments.find((l) => l.id === note.linkedElementId);
         break;
@@ -1019,7 +1116,9 @@ function handleDeleteNote(note: NoteElement) {
   }
 }
 
-function toggleAllElementsOfType(elementType: 'circle' | 'lineSegment' | 'point' | 'polygon') {
+function toggleAllElementsOfType(
+  elementType: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon'
+) {
   let elements: DrawingElement[];
   let typeName: string;
   let allVisible: boolean;
@@ -1029,6 +1128,12 @@ function toggleAllElementsOfType(elementType: 'circle' | 'lineSegment' | 'point'
       elements = layersStore.circles;
       typeName = 'circles';
       allVisible = allCirclesVisible.value;
+      break;
+    }
+    case 'route': {
+      elements = layersStore.routes;
+      typeName = 'routes';
+      allVisible = allRoutesVisible.value;
       break;
     }
     case 'lineSegment': {

@@ -205,6 +205,11 @@ const allElements = computed(() => {
       type: 'circle' as const,
       displayType: 'Circle',
     })),
+    ...layersStore.routes.map((route) => ({
+      ...route,
+      type: 'route' as const,
+      displayType: 'Route',
+    })),
     ...layersStore.lineSegments.map((l) => ({
       ...l,
       type: 'lineSegment' as const,

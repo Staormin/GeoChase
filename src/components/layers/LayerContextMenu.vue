@@ -23,7 +23,10 @@
       </v-list-item>
 
       <!-- Navigate (only for circles and line segments) -->
-      <v-list-item v-if="['circle', 'lineSegment'].includes(elementType)" @click="handleNavigate">
+      <v-list-item
+        v-if="['route', 'circle', 'lineSegment'].includes(elementType)"
+        @click="handleNavigate"
+      >
         <template #prepend>
           <v-icon icon="mdi-navigation" size="small" />
         </template>
@@ -42,7 +45,7 @@
 
       <!-- Location near (only for line segments and points) -->
       <v-list-item
-        v-if="['lineSegment', 'point'].includes(elementType)"
+        v-if="['route', 'lineSegment', 'point'].includes(elementType)"
         @click="handleLocationNear"
       >
         <template #prepend>
@@ -119,6 +122,7 @@ import type {
   LineSegmentElement,
   PointElement,
   PolygonElement,
+  RouteElement,
 } from '@/types/project';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -128,13 +132,15 @@ import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 interface Props {
-  elementType: 'circle' | 'lineSegment' | 'point' | 'polygon';
+  elementType: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
   elementId: string;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<{
-  edit: [element: CircleElement | LineSegmentElement | PointElement | PolygonElement];
+  edit: [
+    element: RouteElement | CircleElement | LineSegmentElement | PointElement | PolygonElement,
+  ];
   delete: [elementType: string, elementId: string];
 }>();
 
@@ -163,6 +169,9 @@ const hasNote = computed(() => {
 
 function getElement() {
   switch (props.elementType) {
+    case 'route': {
+      return layersStore.routes.find((route) => route.id === props.elementId);
+    }
     case 'circle': {
       return layersStore.circles.find((c) => c.id === props.elementId);
     }
@@ -199,8 +208,8 @@ function handleNavigate() {
     return;
   }
 
-  const elementType = props.elementType as 'circle' | 'lineSegment' | 'point';
-  if (elementType === 'circle' || elementType === 'lineSegment') {
+  const elementType = props.elementType as 'route' | 'circle' | 'lineSegment' | 'point';
+  if (elementType !== 'point') {
     uiStore.startNavigating(elementType, props.elementId);
   }
   isOpen.value = false;
@@ -280,8 +289,8 @@ function handleDelete() {
 }
 
 function handleLocationNear() {
-  const elementType = props.elementType as 'lineSegment' | 'point';
-  if (!['lineSegment', 'point'].includes(elementType)) {
+  const elementType = props.elementType as 'route' | 'lineSegment' | 'point';
+  if (!['route', 'lineSegment', 'point'].includes(elementType)) {
     return;
   }
 

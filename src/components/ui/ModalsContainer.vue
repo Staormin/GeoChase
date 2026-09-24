@@ -1,5 +1,6 @@
 <template>
   <!-- Modals -->
+  <RouteModal v-if="uiStore.isModalOpen('routeModal')" />
   <CircleModal v-if="uiStore.isModalOpen('circleModal')" />
   <TwoPointsLineModal v-if="uiStore.isModalOpen('twoPointsLineModal')" />
   <AzimuthLineModal v-if="uiStore.isModalOpen('azimuthLineModal')" />
@@ -37,6 +38,7 @@ import ParallelLineModal from '@/components/modals/ParallelLineModal.vue';
 import PointModal from '@/components/modals/PointModal.vue';
 import PolygonModal from '@/components/modals/PolygonModal.vue';
 import ProjectSettingsModal from '@/components/modals/ProjectSettingsModal.vue';
+import RouteModal from '@/components/modals/RouteModal.vue';
 import TutorialModal from '@/components/modals/TutorialModal.vue';
 import TwoPointsLineModal from '@/components/modals/TwoPointsLineModal.vue';
 import { useUIStore } from '@/stores/ui';

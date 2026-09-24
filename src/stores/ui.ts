@@ -16,17 +16,17 @@ export interface Toast {
 }
 
 export interface EditingElement {
-  type: 'circle' | 'lineSegment' | 'point' | 'note';
+  type: 'route' | 'circle' | 'lineSegment' | 'point' | 'note';
   id: string;
 }
 
 export interface CreatingElement {
-  type: 'circle' | 'lineSegment' | 'point';
+  type: 'route' | 'circle' | 'lineSegment' | 'point';
   prefill?: { lat: number; lon: number; name?: string };
 }
 
 export interface NavigatingElement {
-  type: 'circle' | 'lineSegment';
+  type: 'route' | 'circle' | 'lineSegment';
   id: string;
 }
 
@@ -39,7 +39,7 @@ export interface IntersectionLineEdit {
 
 export interface SearchAlongPanel {
   isOpen: boolean;
-  elementType: 'lineSegment' | 'point' | null;
+  elementType: 'route' | 'lineSegment' | 'point' | null;
   elementId: string | null;
 }
 
@@ -56,7 +56,7 @@ export interface BearingsPanel {
 }
 
 export interface NotePreFillElement {
-  type: 'circle' | 'lineSegment' | 'point' | 'polygon';
+  type: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
   id: string;
 }
 
@@ -278,7 +278,10 @@ export const useUIStore = defineStore('ui', () => {
     elementVisibility.value[key] = visible;
   }
 
-  function startEditing(type: 'circle' | 'lineSegment' | 'point' | 'note', id: string): void {
+  function startEditing(
+    type: 'route' | 'circle' | 'lineSegment' | 'point' | 'note',
+    id: string
+  ): void {
     editingElement.value = { type, id };
   }
 
@@ -286,7 +289,10 @@ export const useUIStore = defineStore('ui', () => {
     editingElement.value = null;
   }
 
-  function isEditing(type: 'circle' | 'lineSegment' | 'point' | 'note', id: string): boolean {
+  function isEditing(
+    type: 'route' | 'circle' | 'lineSegment' | 'point' | 'note',
+    id: string
+  ): boolean {
     return editingElement.value?.type === type && editingElement.value?.id === id;
   }
 
@@ -295,7 +301,7 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function startCreating(
-    type: 'circle' | 'lineSegment' | 'point',
+    type: 'route' | 'circle' | 'lineSegment' | 'point',
     prefill?: CreatingElement['prefill']
   ): void {
     creatingElement.value = { type, prefill };
@@ -310,7 +316,7 @@ export const useUIStore = defineStore('ui', () => {
     circleCenterPreFill.value = { lat, lon };
   }
 
-  function startNavigating(type: 'circle' | 'lineSegment', id: string): void {
+  function startNavigating(type: 'route' | 'circle' | 'lineSegment', id: string): void {
     navigatingElement.value = { type, id };
     sidebarOpen.value = false;
   }
@@ -319,7 +325,7 @@ export const useUIStore = defineStore('ui', () => {
     navigatingElement.value = null;
   }
 
-  function isNavigating(type: 'circle' | 'lineSegment', id: string): boolean {
+  function isNavigating(type: 'route' | 'circle' | 'lineSegment', id: string): boolean {
     return navigatingElement.value?.type === type && navigatingElement.value?.id === id;
   }
 
@@ -327,7 +333,10 @@ export const useUIStore = defineStore('ui', () => {
     showTutorial.value = show;
   }
 
-  function openSearchAlong(elementType: 'lineSegment' | 'point', elementId: string): void {
+  function openSearchAlong(
+    elementType: 'route' | 'lineSegment' | 'point',
+    elementId: string
+  ): void {
     searchAlongPanel.value = {
       isOpen: true,
       elementType,
@@ -401,7 +410,10 @@ export const useUIStore = defineStore('ui', () => {
     };
   }
 
-  function setNotePreFill(type: 'circle' | 'lineSegment' | 'point' | 'polygon', id: string): void {
+  function setNotePreFill(
+    type: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon',
+    id: string
+  ): void {
     notePreFillElement.value = { type, id };
   }
 

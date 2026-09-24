@@ -1,14 +1,15 @@
 import type { LatLon } from './geometry';
 import type { LineSegmentElement, ProjectProjection } from '@/types/project';
-import { LineString } from 'ol/geom';
+import { LineString, Polygon } from 'ol/geom';
 import { fromLonLat, toLonLat } from 'ol/proj';
-import { offset, getDistance as sphericalDistance } from 'ol/sphere';
+import { offset, getArea as sphericalArea, getDistance as sphericalDistance } from 'ol/sphere';
 import { cartesGouvBearing, cartesGouvDestination } from './cartesGouvGeometry';
 import {
   densifyGeodesic,
   geodesicDestination,
   geodesicIntermediate,
   geodesicInverse,
+  geodesicPolygonArea,
 } from './geodesy';
 import * as legacy from './geometry';
 
@@ -176,6 +177,13 @@ export function createProjectGeometry(getProjection: () => ProjectProjection) {
     points.push(points[0]!);
     return points;
   }
+  /** Ground area in square meters, using the project's measurement model. */
+  function polygonArea(points: LatLon[]): number {
+    if (points.length < 3) return 0;
+    if (isGeodesic()) return geodesicPolygonArea(points);
+    const ring = [...points, points[0]!].map((point) => [point.lon, point.lat]);
+    return sphericalArea(new Polygon([ring]), { projection: 'EPSG:4326' });
+  }
   function polygonCoordinates(points: LatLon[]): number[][] {
     if (!isGeodesic()) return [...points, points[0]!].map((p) => fromLonLat([p.lon, p.lat]));
     const ring: LatLon[] = [];
@@ -205,5 +213,6 @@ export function createProjectGeometry(getProjection: () => ProjectProjection) {
     generateCircle,
     circlePoint,
     polygonCoordinates,
+    polygonArea,
   };
 }
