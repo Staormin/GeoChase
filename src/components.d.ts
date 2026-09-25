@@ -28,6 +28,7 @@ declare module 'vue' {
     LanguageModal: typeof import('./components/modals/LanguageModal.vue')['default']
     LayerContextMenu: typeof import('./components/layers/LayerContextMenu.vue')['default']
     LoadProjectModal: typeof import('./components/modals/LoadProjectModal.vue')['default']
+    MapElementContextMenu: typeof import('./components/layers/MapElementContextMenu.vue')['default']
     ModalsContainer: typeof import('./components/ui/ModalsContainer.vue')['default']
     NavigationBar: typeof import('./components/layout/NavigationBar.vue')['default']
     NewProjectModal: typeof import('./components/modals/NewProjectModal.vue')['default']

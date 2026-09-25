@@ -8,6 +8,8 @@
   <!-- Fullscreen map -->
   <div id="map" :class="{ 'freehand-drawing': uiStore.freeHandDrawing.isDrawing }" />
 
+  <MapElementContextMenu v-if="contextMenu" :selection="contextMenu" />
+
   <!-- Sidebar -->
   <v-navigation-drawer
     v-if="!uiStore.viewCaptureState.isCapturing"
@@ -335,7 +337,12 @@ useAutoSave();
 // Animation logic
 useAnimation(mapContainer, drawing, sidebarOpen);
 
-const initializeApp = useAppSetup(mapContainer, drawing, noteTooltipsRef, cursorTooltip);
+const { initialize: initializeApp, contextMenu } = useAppSetup(
+  mapContainer,
+  drawing,
+  noteTooltipsRef,
+  cursorTooltip
+);
 let disposeApp: (() => void) | undefined;
 let disposeViewSync: (() => void) | undefined;
 let unmounted = false;

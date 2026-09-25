@@ -1,6 +1,6 @@
 <template>
-  <v-menu v-model="isOpen" :close-on-content-click="false" location="bottom">
-    <template #activator="{ props: activatorProps }">
+  <v-menu v-model="isOpen" :close-on-content-click="false" location="bottom" :target="position">
+    <template v-if="!position" #activator="{ props: activatorProps }">
       <v-btn
         v-bind="activatorProps"
         class="ml-2"
@@ -134,6 +134,7 @@ import { useUIStore } from '@/stores/ui';
 interface Props {
   elementType: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
   elementId: string;
+  position?: [number, number];
 }
 
 const props = defineProps<Props>();
@@ -144,7 +145,7 @@ const emit = defineEmits<{
   delete: [elementType: string, elementId: string];
 }>();
 
-const isOpen = ref(false);
+const isOpen = defineModel<boolean>({ default: false });
 const colorPickerOpen = ref(false);
 
 function openColorPicker() {

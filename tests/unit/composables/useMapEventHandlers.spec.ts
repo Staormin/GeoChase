@@ -20,7 +20,18 @@ describe('useMapEventHandlers', () => {
     mockUnsubscribe = vi.fn();
 
     // Create mock map container
+    const viewport = document.createElement('div');
     mockMapContainer = {
+      map: {
+        value: {
+          addInteraction: vi.fn(),
+          removeInteraction: vi.fn(),
+          getViewport: () => viewport,
+          getTargetElement: () => viewport,
+          on: vi.fn(),
+          un: vi.fn(),
+        },
+      },
       onMapRightClick: vi.fn((handler) => {
         mockRightClickHandler = handler;
         return mockUnsubscribe;
@@ -42,7 +53,9 @@ describe('useMapEventHandlers', () => {
     it('should return unsubscribe function', () => {
       const unsubscribe = mapEventHandlers.setup();
 
-      expect(unsubscribe).toBe(mockUnsubscribe);
+      expect(unsubscribe).toEqual(expect.any(Function));
+      unsubscribe();
+      expect(mockUnsubscribe).toHaveBeenCalledOnce();
     });
   });
 

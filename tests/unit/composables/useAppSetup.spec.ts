@@ -114,7 +114,7 @@ describe('useAppSetup', () => {
 
   describe('Setup Function', () => {
     it('should return an async function', () => {
-      expect(appSetup).toBeInstanceOf(Function);
+      expect(appSetup.initialize).toBeInstanceOf(Function);
     });
 
     it('should initialize map and setup all handlers', async () => {
@@ -157,7 +157,7 @@ describe('useAppSetup', () => {
         mockNoteTooltipsRef,
         mockCursorTooltip
       );
-      const cleanupFn = await setup();
+      const cleanupFn = await setup.initialize();
 
       // Should call map initialization
       expect(useMapInitialization).toHaveBeenCalledWith(
@@ -223,7 +223,7 @@ describe('useAppSetup', () => {
         mockNoteTooltipsRef,
         mockCursorTooltip
       );
-      await setup();
+      await setup.initialize();
 
       // Event handlers should be setup after map initialization
       expect(setupOrder).toEqual(['mapEvents', 'viewCapture', 'freeHand', 'ruler', 'keyboard']);
@@ -272,7 +272,7 @@ describe('useAppSetup', () => {
         mockNoteTooltipsRef,
         mockCursorTooltip
       );
-      const cleanup = await setup();
+      const cleanup = await setup.initialize();
 
       // Call cleanup
       cleanup();
@@ -327,7 +327,7 @@ describe('useAppSetup', () => {
         mockNoteTooltipsRef,
         mockCursorTooltip
       );
-      const cleanup = await setup();
+      const cleanup = await setup.initialize();
 
       cleanup();
 
@@ -356,7 +356,7 @@ describe('useAppSetup', () => {
       );
 
       // Should propagate the error
-      await expect(setup()).rejects.toThrow('Map initialization failed');
+      await expect(setup.initialize()).rejects.toThrow('Map initialization failed');
     });
 
     it('should still return cleanup function even if some setups fail', async () => {
@@ -381,7 +381,7 @@ describe('useAppSetup', () => {
       );
 
       // Setup should throw but still be able to attempt cleanup
-      await expect(setup()).rejects.toThrow('FreeHand setup failed');
+      await expect(setup.initialize()).rejects.toThrow('FreeHand setup failed');
     });
   });
 });

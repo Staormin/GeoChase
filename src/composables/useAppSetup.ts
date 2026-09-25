@@ -34,7 +34,7 @@ export function useAppSetup(
   const mapEventHandlers = useMapEventHandlers(mapContainer);
   const viewCapture = useViewCapture(mapContainer);
 
-  return async () => {
+  const initialize = async () => {
     // Initialize map and load project
     await useMapInitialization(mapContainer, drawing, noteTooltipsRef);
 
@@ -60,4 +60,6 @@ export function useAppSetup(
       mapContainer.destroyMap();
     };
   };
+
+  return { initialize, contextMenu: mapEventHandlers.contextMenu };
 }
