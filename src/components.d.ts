@@ -22,6 +22,7 @@ declare module 'vue' {
     CoordinateSelector: typeof import('./components/shared/CoordinateSelector.vue')['default']
     CursorTooltip: typeof import('./components/ui/CursorTooltip.vue')['default']
     DrawingColorDialog: typeof import('./components/layers/DrawingColorDialog.vue')['default']
+    FloatingDialog: typeof import('./components/shared/FloatingDialog.vue')['default']
     FreeHandLineModal: typeof import('./components/modals/FreeHandLineModal.vue')['default']
     IntersectionLineEditStatus: typeof import('./components/ui/IntersectionLineEditStatus.vue')['default']
     IntersectionLineModal: typeof import('./components/modals/IntersectionLineModal.vue')['default']

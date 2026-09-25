@@ -1,8 +1,7 @@
 <template>
-  <v-dialog
+  <FloatingDialog
     v-model="isOpen"
     max-width="500px"
-    @click:outside="closeModal"
     @keydown.enter="submitForm"
     @keydown.esc="closeModal"
   >
@@ -58,12 +57,13 @@
         }}</v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
+  </FloatingDialog>
 </template>
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import FloatingDialog from '@/components/shared/FloatingDialog.vue';
 import { useDrawingContext } from '@/composables/mapContext';
 import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useLayersStore } from '@/stores/layers';

@@ -1,10 +1,10 @@
 <template>
-  <v-dialog
+  <FloatingDialog
     :max-width="maxWidth"
     :model-value="isOpen"
-    @click:outside="$emit('close')"
     @keydown.enter="handleEnter"
     @keydown.esc="$emit('close')"
+    @update:model-value="!$event && $emit('close')"
   >
     <v-card>
       <v-card-title>{{ title }}</v-card-title>
@@ -22,10 +22,11 @@
         }}</v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
+  </FloatingDialog>
 </template>
 
 <script lang="ts" setup>
+import FloatingDialog from '@/components/shared/FloatingDialog.vue';
 const props = withDefaults(
   defineProps<{
     isOpen: boolean;

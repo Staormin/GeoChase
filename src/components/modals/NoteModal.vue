@@ -1,10 +1,5 @@
 <template>
-  <v-dialog
-    v-model="isOpen"
-    max-width="600px"
-    @click:outside="closeModal"
-    @keydown.esc="closeModal"
-  >
+  <FloatingDialog v-model="isOpen" max-width="600px" @keydown.esc="closeModal">
     <v-card>
       <v-card-title>{{ isEditing ? $t('note.editTitle') : $t('note.title') }}</v-card-title>
 
@@ -72,7 +67,7 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
+  </FloatingDialog>
 </template>
 
 <script lang="ts" setup>
@@ -80,6 +75,7 @@ import type { NoteElement } from '@/types/project';
 import { v4 as uuidv4 } from 'uuid';
 import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import FloatingDialog from '@/components/shared/FloatingDialog.vue';
 import { useNoteTooltipsContext } from '@/composables/mapContext';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';

@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="isOpen" max-width="480px" @keydown.esc="closeModal">
+  <FloatingDialog v-model="isOpen" max-width="480px" @keydown.esc="closeModal">
     <v-card>
       <v-card-title>{{ $t('project.settings') }}</v-card-title>
 
@@ -17,12 +17,13 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
+  </FloatingDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import FloatingDialog from '@/components/shared/FloatingDialog.vue';
 import ProjectionSelect from '@/components/shared/ProjectionSelect.vue';
 import { useDrawingContext, useNoteTooltipsContext } from '@/composables/mapContext';
 import { changeProjectProjection } from '@/services/projectProjection';

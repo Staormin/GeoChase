@@ -143,7 +143,7 @@
     <v-divider />
 
     <!-- Password dialog -->
-    <v-dialog v-model="showPasswordDialog" max-width="400" persistent>
+    <FloatingDialog v-model="showPasswordDialog" max-width="400" persistent>
       <v-card>
         <v-card-title>{{ $t('pdf.passwordRequired') }}</v-card-title>
 
@@ -168,7 +168,7 @@
           }}</v-btn>
         </v-card-actions>
       </v-card>
-    </v-dialog>
+    </FloatingDialog>
 
     <!-- Loading state -->
     <div v-if="loading" class="flex-grow-1 d-flex align-center justify-center">
@@ -233,6 +233,7 @@ import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import * as pdfjsLib from 'pdfjs-dist';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import FloatingDialog from '@/components/shared/FloatingDialog.vue';
 import { useUIStore } from '@/stores/ui';
 
 // Set up the worker

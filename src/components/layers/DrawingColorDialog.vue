@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="isOpen" max-width="360">
+  <FloatingDialog v-model="isOpen" max-width="360">
     <v-card :title="$t('drawingColor.title')">
       <v-card-text>
         <div class="text-caption mb-2">{{ $t('drawingColor.palette') }}</div>
@@ -53,11 +53,12 @@
         <v-btn color="primary" :disabled="!valid" @click="save">{{ $t('common.save') }}</v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
+  </FloatingDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import FloatingDialog from '@/components/shared/FloatingDialog.vue';
 import {
   DRAWING_PALETTE,
   getRecentDrawingColors,

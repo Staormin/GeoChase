@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="isOpen" max-width="900px">
+  <FloatingDialog v-model="isOpen" max-width="900px">
     <v-card class="tutorial-card">
       <v-card-title class="tutorial-title d-flex align-center gap-2">
         <v-icon icon="mdi-book-open-variant" />
@@ -710,11 +710,12 @@
         <v-btn color="primary" @click="isOpen = false">{{ $t('common.close') }}</v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
+  </FloatingDialog>
 </template>
 
 <script lang="ts" setup>
 import { ref, watch } from 'vue';
+import FloatingDialog from '@/components/shared/FloatingDialog.vue';
 import { useUIStore } from '@/stores/ui';
 
 const uiStore = useUIStore();

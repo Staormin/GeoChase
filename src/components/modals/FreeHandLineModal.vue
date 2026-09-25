@@ -1,10 +1,5 @@
 <template>
-  <v-dialog
-    v-model="isOpen"
-    max-width="600px"
-    @click:outside="closeModal"
-    @keydown.esc="closeModal"
-  >
+  <FloatingDialog v-model="isOpen" max-width="600px" @keydown.esc="closeModal">
     <v-card>
       <v-card-title>{{ $t('line.freeHandTitle') }}</v-card-title>
 
@@ -57,12 +52,13 @@
         <v-btn color="primary" @click="submitForm">{{ $t('line.startDrawing') }}</v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
+  </FloatingDialog>
 </template>
 
 <script lang="ts" setup>
 import { computed, reactive, watch } from 'vue';
 import CoordinateSelector from '@/components/shared/CoordinateSelector.vue';
+import FloatingDialog from '@/components/shared/FloatingDialog.vue';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 

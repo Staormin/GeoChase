@@ -1,10 +1,5 @@
 <template>
-  <v-dialog
-    v-model="isOpen"
-    max-width="700px"
-    @click:outside="closeModal"
-    @keydown.esc="closeModal"
-  >
+  <FloatingDialog v-model="isOpen" max-width="700px" @keydown.esc="closeModal">
     <v-card>
       <v-card-title class="flex items-center justify-between">
         <span>{{ $t('modals.bearings.title', { name: sourcePoint?.name }) }}</span>
@@ -97,12 +92,13 @@
         <v-btn @click="closeModal">{{ $t('common.close') }}</v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
+  </FloatingDialog>
 </template>
 
 <script lang="ts" setup>
 import type { PointElement } from '@/types/project';
 import { computed, ref } from 'vue';
+import FloatingDialog from '@/components/shared/FloatingDialog.vue';
 import { useMapContext } from '@/composables/mapContext';
 import { useProjectGeometry } from '@/composables/useProjectGeometry';
 import { useLayersStore } from '@/stores/layers';

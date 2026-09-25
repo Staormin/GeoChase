@@ -1,9 +1,8 @@
 <template>
-  <v-dialog
+  <FloatingDialog
     v-model="isOpen"
     max-width="500px"
     :persistent="!isLanguageSet"
-    @click:outside="isLanguageSet ? closeModal() : undefined"
     @keydown.esc="isLanguageSet ? closeModal() : undefined"
   >
     <v-card>
@@ -80,12 +79,13 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-  </v-dialog>
+  </FloatingDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import FloatingDialog from '@/components/shared/FloatingDialog.vue';
 import { isLanguageSet as checkLanguageSet, setLanguage } from '@/plugins/i18n';
 import { useUIStore } from '@/stores/ui';
 
