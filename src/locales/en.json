@@ -1240,7 +1240,10 @@
       "plum": "Plum",
       "classicDark": "Dark",
       "goldVelvet": "Gold & Velvet",
-      "clockworkOrange": "A Clockwork Orange"
+      "clockworkOrange": "A Clockwork Orange",
+      "cyberpunk": "Cyberpunk",
+      "vaporwaveNeon": "Vaporwave Neon",
+      "christmasTree": "Magic Christmas Tree"
     },
     "regularizeProjectTitle": "Save your work",
     "regularizeProjectDescription": "Your elements do not belong to a project. Name your project to keep them and continue.",

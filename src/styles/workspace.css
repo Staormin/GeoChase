@@ -255,3 +255,46 @@ button.layers-section-title {
 .topbar .v-navigation-drawer__content {
   overflow: hidden;
 }
+@keyframes multiColorGarland {
+  0% {
+    box-shadow:
+      0 0 12px #ffd700,
+      0 0 24px #ff3366;
+    border-color: #ffd700;
+  }
+  25% {
+    box-shadow:
+      0 0 12px #ff3366,
+      0 0 24px #33ccff;
+    border-color: #ff3366;
+  }
+  50% {
+    box-shadow:
+      0 0 12px #33ccff,
+      0 0 24px #33ff66;
+    border-color: #33ccff;
+  }
+  75% {
+    box-shadow:
+      0 0 12px #33ff66,
+      0 0 24px #ffd700;
+    border-color: #33ff66;
+  }
+  100% {
+    box-shadow:
+      0 0 12px #ffd700,
+      0 0 24px #ff3366;
+    border-color: #ffd700;
+  }
+}
+
+/* Fait clignoter les boutons du thème Sapin de Noël comme une guirlande électrique */
+[data-palette='christmasTree'] .v-btn,
+[data-palette='christmasTree'] button,
+[data-palette='christmasTree'] .ol-control button {
+  animation: multiColorGarland 1.2s infinite linear !important;
+}
+
+[data-palette='christmasTree'] {
+  --accent: #ffd700;
+}

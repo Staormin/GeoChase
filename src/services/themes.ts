@@ -191,7 +191,47 @@ const definitions = [
     '#c0b6a7',
     '#5a4634',
   ],
+  [
+    'cyberpunk',
+    'cyberpunk',
+    true,
+    '#05050a',
+    '#0c0c14',
+    '#141421',
+    '#00ffcc',
+    '#ff007f',
+    '#ffffff',
+    '#a0a0c0',
+    '#2a2a40',
+  ],
+  [
+    'vaporwaveNeon',
+    'vaporwaveNeon',
+    true,
+    '#06050b',
+    '#10101a',
+    '#1a1a29',
+    '#ff007f',
+    '#39ff14',
+    '#ffffff',
+    '#bfbfbf',
+    '#3d3d5c',
+  ],
+  [
+    'christmasTree',
+    'christmasTree',
+    true,
+    '#07110d',
+    '#0e2219',
+    '#173627',
+    '#ffd700',
+    '#ff3366',
+    '#f4f9f6',
+    '#9fbdb0',
+    '#2d5a43',
+  ],
 ] as const;
+
 export const palettes: Palette[] = definitions.map(([id, theme]) => ({ id, theme }));
 export const themes: Record<string, ThemeDefinition> = Object.fromEntries(
   definitions.map(
@@ -224,6 +264,7 @@ export const themes: Record<string, ThemeDefinition> = Object.fromEntries(
     ]
   )
 );
+
 export function readTheme(): string {
   try {
     const saved = localStorage.getItem('geochase_theme');
@@ -237,6 +278,7 @@ export function readTheme(): string {
   }
   return 'cartography';
 }
+
 export function applyWorkspaceTheme(name: string, persist = true): void {
   const definition = themes[name] ?? themes.cartography!;
   const c = definition.colors;

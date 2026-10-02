@@ -242,6 +242,53 @@
       </div>
     </v-navigation-drawer>
 
+    <v-menu
+      data-testid="quick-tools-context-menu"
+      location="bottom"
+      :model-value="Boolean(uiStore.quickToolsMenuPosition)"
+      :target="quickToolsMenuTarget"
+      @update:model-value="setQuickToolsMenuVisibility"
+    >
+      <v-list density="compact" min-width="220">
+        <v-list-item
+          v-for="tool in primaryTools"
+          :key="tool.modal"
+          :data-testid="`quick-${tool.testId}`"
+          :prepend-icon="tool.icon"
+          :title="$t(tool.label)"
+          @click="uiStore.openModal(tool.modal)"
+        />
+
+        <v-divider class="my-1" />
+        <v-list-subheader>{{ $t('workspace.construct') }}</v-list-subheader>
+
+        <v-list-item
+          v-for="tool in advancedTools"
+          :key="tool.modal"
+          :data-testid="`quick-${tool.modal}-btn`"
+          :prepend-icon="tool.icon"
+          :title="$t(tool.title)"
+          @click="uiStore.openModal(tool.modal)"
+        />
+
+        <v-divider class="my-1" />
+
+        <v-list-item
+          data-testid="quick-create-note-btn"
+          prepend-icon="mdi-note-text-outline"
+          :title="$t('common.note')"
+          @click="handleCreateNote"
+        />
+
+        <v-list-item
+          data-testid="quick-pdf-btn"
+          prepend-icon="mdi-file-document-outline"
+          :title="$t('workspace.pdf')"
+          @click="handlePdfClick"
+        />
+      </v-list>
+    </v-menu>
+
     <div
       v-if="!uiStore.toolInstructionsVisible"
       class="topbar-toggle-wrap"
@@ -310,6 +357,14 @@ watch(toolbarContent, (element, _, onCleanup) => {
 const { t } = useI18n();
 const uiStore = useUIStore();
 const projectsStore = useProjectsStore();
+const quickToolsMenuTarget = computed<[number, number] | undefined>(() => {
+  const position = uiStore.quickToolsMenuPosition;
+  return position ? [position.x, position.y] : undefined;
+});
+
+function setQuickToolsMenuVisibility(open: boolean) {
+  if (!open) uiStore.quickToolsMenuPosition = null;
+}
 
 const primaryTools = [
   {

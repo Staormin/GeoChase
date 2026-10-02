@@ -85,6 +85,7 @@ export const useUIStore = defineStore('ui', () => {
   const isLoading = ref(false);
   const selectedProjectIndex = ref<number | null>(null);
   const topBarOpen = ref(true);
+  const quickToolsMenuPosition = ref<{ x: number; y: number } | null>(null);
   const sidebarOpen = ref(true);
   const sidebarElementRequest = ref<MapElementRequest | null>(null);
   const mapElementHighlightRequest = ref<MapElementRequest | null>(null);
@@ -436,6 +437,7 @@ export const useUIStore = defineStore('ui', () => {
     isLoading,
     selectedProjectIndex,
     topBarOpen,
+    quickToolsMenuPosition,
     sidebarOpen,
     sidebarElementRequest,
     mapElementHighlightRequest,

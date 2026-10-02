@@ -135,6 +135,13 @@ export function useMapEventHandlers(mapContainer: ReturnType<typeof useMap>) {
         if (highlight) hoverSource.addFeature(highlight);
       }
     };
+    const handleAltRightContextMenu = (event: MouseEvent) => {
+      if (event.button !== 2 || !event.altKey || !available()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      uiStore.quickToolsMenuPosition = { x: event.clientX, y: event.clientY };
+    };
     const stopSidebarHover = watch(
       [() => uiStore.sidebarHoverRequest, () => uiStore.elementVisibility, available],
       () => {
@@ -196,8 +203,10 @@ export function useMapEventHandlers(mapContainer: ReturnType<typeof useMap>) {
       },
     });
     map.addInteraction(interaction);
-    map.getViewport().addEventListener('pointermove', handlePointerMove);
-    map.getViewport().addEventListener('pointerleave', clearHover);
+    const viewport = map.getViewport();
+    viewport.addEventListener('pointermove', handlePointerMove);
+    viewport.addEventListener('pointerleave', clearHover);
+    viewport.addEventListener('contextmenu', handleAltRightContextMenu, true);
     map.on('movestart', clearHover);
     const stopWatch = watch(
       () => [available(), uiStore.elementVisibility],
@@ -228,8 +237,9 @@ export function useMapEventHandlers(mapContainer: ReturnType<typeof useMap>) {
         map.removeLayer(clickedLayer);
         map.removeLayer(sidebarHoverLayer);
       }
-      map.getViewport().removeEventListener('pointermove', handlePointerMove);
-      map.getViewport().removeEventListener('pointerleave', clearHover);
+      viewport.removeEventListener('pointermove', handlePointerMove);
+      viewport.removeEventListener('pointerleave', clearHover);
+      viewport.removeEventListener('contextmenu', handleAltRightContextMenu, true);
       map.un('movestart', clearHover);
     };
   };

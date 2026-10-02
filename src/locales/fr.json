@@ -1240,7 +1240,10 @@
       "plum": "Prune",
       "classicDark": "Sombre",
       "goldVelvet": "Or & Velours",
-      "clockworkOrange": "Orange mécanique"
+      "clockworkOrange": "Orange mécanique",
+      "cyberpunk": "Cyberpunk",
+      "vaporwaveNeon": "Vaporwave Neon",
+      "christmasTree": "Magic Christmas Tree"
     },
     "regularizeProjectTitle": "Enregistrer votre travail",
     "regularizeProjectDescription": "Vos éléments ne sont associés à aucun projet. Donnez un nom à votre projet pour les conserver et continuer.",
