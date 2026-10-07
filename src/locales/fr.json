@@ -86,7 +86,8 @@
     "subtitle": "Résolveur de chasse au trésor géographique",
     "collapseTopBar": "Réduire la barre supérieure",
     "expandTopBar": "Développer la barre supérieure",
-    "github": "GitHub"
+    "github": "GitHub",
+    "releaseNotes": "Nouveautés"
   },
   "tools": {
     "toggle": "Outils",
@@ -1320,5 +1321,12 @@
     "paperScaleValue": "1 cm sur la carte = {value} km",
     "ratioPreview": "Molette pour zoomer · Cliquer-glisser pour se déplacer",
     "recalibrate": "Recalibrer"
+  },
+  "releaseNotes": {
+    "title": "🚀 Nouveautés de GeoChase",
+    "version": "Version {version}",
+    "autoDisplay": "Ne plus afficher automatiquement les nouveautés",
+    "close": "Fermer",
+    "empty": "Aucune note de version disponible."
   }
 }

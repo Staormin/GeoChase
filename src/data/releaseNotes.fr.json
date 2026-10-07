@@ -1,0 +1,62 @@
+[
+  {
+    "version": "1.1.0",
+    "date": "2026-10-06",
+    "title": "Mise à jour majeure : Cartographie, Outils et Confort",
+    "sections": [
+      {
+        "category": "1. Gestion des Projets et des Espaces de Travail",
+        "items": [
+          "Création de projet double (Cartographique ou Image) : Projet Géographique (fonds en ligne, recherche d'adresses, GPS) et Projet Image (import de scans/plans PNG, JPEG, WebP, GIF, BMP jusqu'à 25 Mo).",
+          "Calibrage d'image sur mesure : Par deux points (distance réelle en km et optionnellement en cm sur papier) ou par ratio connu (mètres par pixel), avec outil de précision au pixel près (flèches + Maj).",
+          "Choix de la Projection cartographique : Mercator (lignes droites et azimuts conformes aux portails en ligne) ou Géodésique WGS84 (plus courts chemins sur la Terre courbe).",
+          "Sauvegarde, Import/Export : Stockage local automatique, format JSON, et export des tracés au format GPX.",
+          "Historique des actions (Annuler / Rétablir) : Gestion jusqu'à 1 000 étapes (tracés, notes, groupes, visibilité, projections) avec les raccourcis Ctrl/Cmd+Z et Ctrl/Cmd+Maj+Z / Ctrl+Y."
+        ]
+      },
+      {
+        "category": "2. Fonds de Carte et Navigation Visuelle",
+        "items": [
+          "Sélecteur de fonds de carte multiples (projets géographiques) : Géoportail (IGN), OpenStreetMap, Google Plan, Google Satellite et Google Relief.",
+          "Gestion globale de la visibilité : Masquer/afficher le fond de carte (fond blanc épuré) ou filtrer par catégorie.",
+          "Mode Précision (Loupe) : Activation via la touche Z pour afficher une loupe circulaire grossissante (2,5x) avec réticule central.",
+          "Mode Navigation le long des formes : Parcours pas à pas d'un cercle ou d'une ligne avec les touches fléchées (← →) et vitesse dynamique."
+        ]
+      },
+      {
+        "category": "3. Outils de Dessin et Constructions Géométriques",
+        "items": [
+          "Points : Création par clic direct, clic droit ou coordonnées, avec géocodage inversé automatique.",
+          "Cercles : Définis par un centre et un rayon (en km ou cm selon l'équivalence papier).",
+          "Lignes et Itinéraires : Ligne à deux points (avec glisser-déposer dans le panneau), Ligne Azimut, Ligne avec Angle par rapport à une référence, Ligne d'Intersection dynamique, Ligne Parallèle, et Mode Main Levée (verrouillage Alt/Ctrl). Itinéraires routiers/piétons (IGN) avec étapes.",
+          "Polygones : Création à partir de 3 points minimum, affichage du périmètre et extraction du centre."
+        ]
+      },
+      {
+        "category": "4. Recherche, Exploration et Analyse Topographique",
+        "items": [
+          "Recherche d'adresses et de lieux : Barre générale intégrée pour centrer la carte.",
+          "Recherche le long d'un parcours (« Rechercher à proximité ») : Bande de distance (0,5 à 25 km) avec filtres avancés par nom, catégorie et altitude, incluant les données d'élévation.",
+          "Outil Règle (instantané) : Mesure rapide de distances et azimuts sans encombrer les calques.",
+          "Analyse des Relèvements : Matrice complète des distances et azimuts entre points avec tri et navigation directe."
+        ]
+      },
+      {
+        "category": "5. Organisation, Notes et Documents Annexes",
+        "items": [
+          "Panneau Calques : Classement par catégories, filtres textuels et Groupes personnalisés (dossiers par glisser-déposer).",
+          "Notes contextuelles et autonomes : Associées à un élément géométrique (infobulles au survol) ou libres.",
+          "Lecteur de documents PDF intégré : Jusqu'à 50 Mo, avec zoom, rotation, vignettes, ajustement à la page et gestion sécurisée des mots de passe en local."
+        ]
+      },
+      {
+        "category": "6. Interface, Thèmes et Accessibilité",
+        "items": [
+          "Personnalisation visuelle : Choix parmi 14 palettes de thèmes graphiques (Cyberpunk, Or & Velours, etc.).",
+          "Multilingue : Interface entièrement disponible en français et en anglais.",
+          "Raccourcis clavier complets pour la navigation, l'annulation, le mode précision et les contraintes géométriques."
+        ]
+      }
+    ]
+  }
+]

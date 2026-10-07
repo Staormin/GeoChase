@@ -12,7 +12,7 @@
       <div ref="toolbarContent" class="topbar-content">
         <Transition name="tool-instructions">
           <div v-if="uiStore.toolInstructionsVisible" class="tool-instructions-layer">
-            <NavigationBar :style="{ minHeight: `${normalToolbarHeight / 2}px` }" />
+            <NavigationBar :style="{ minHeight: `${normalToolbarHeight / 2}px` }"></NavigationBar>
           </div>
         </Transition>
 
@@ -28,14 +28,18 @@
             :class="{ 'workspace-header-without-search': !imageMaps.canSearch }"
           >
             <div aria-label="GeoChase" class="brand">
-              <span class="brand-symbol"><v-icon icon="mdi-compass-outline" size="27" /></span>
+              <span class="brand-symbol">
+                <v-icon icon="mdi-compass-outline" size="27"></v-icon>
+              </span>
 
               <div>
                 <strong>{{ $t('topbar.title') }}</strong>
               </div>
             </div>
 
-            <div v-if="imageMaps.canSearch" class="topbar-address"><SidebarAddressSearch /></div>
+            <div v-if="imageMaps.canSearch" class="topbar-address">
+              <SidebarAddressSearch></SidebarAddressSearch>
+            </div>
 
             <div class="header-actions">
               <v-menu location="bottom end">
@@ -49,8 +53,9 @@
                     data-testid="save-menu-btn"
                     prepend-icon="mdi-folder-outline"
                     variant="tonal"
-                    >{{ $t('project.title') }}</v-btn
                   >
+                    {{ $t('project.title') }}
+                  </v-btn>
                 </template>
 
                 <v-list data-testid="save-menu-dropdown" density="compact">
@@ -76,18 +81,21 @@
                     :disabled="!projectsStore.activeProject"
                     @click="uiStore.openModal('projectSettingsModal')"
                   >
-                    <template #prepend><v-icon size="small">mdi-cog</v-icon></template>
+                    <template #prepend>
+                      <v-icon size="small">mdi-cog</v-icon>
+                    </template>
+
                     <v-list-item-title>{{ $t('project.settings') }}</v-list-item-title>
                   </v-list-item>
 
-                  <v-divider />
+                  <v-divider></v-divider>
 
                   <v-list-item
                     data-testid="export-gpx-btn"
                     prepend-icon="mdi-download"
                     :title="`${$t('project.exportProject')} GPX`"
                     @click="handleExportGPX"
-                  />
+                  ></v-list-item>
 
                   <v-list-item data-testid="export-json-btn" @click="handleExportJSON">
                     <template #prepend>
@@ -113,16 +121,17 @@
                 icon="mdi-help-circle-outline"
                 variant="text"
                 @click="uiStore.setShowTutorial(true)"
-              />
+              ></v-btn>
 
               <v-menu location="bottom end">
-                <template #activator="{ props }"
-                  ><v-btn
+                <template #activator="{ props }">
+                  <v-btn
                     v-bind="props"
                     :aria-label="$t('common.more')"
                     icon="mdi-dots-horizontal"
                     variant="text"
-                /></template>
+                  ></v-btn>
+                </template>
 
                 <v-list>
                   <v-list-item
@@ -130,15 +139,22 @@
                     prepend-icon="mdi-palette-outline"
                     :title="$t('workspace.themes')"
                     @click="themePickerOpen = true"
-                  />
+                  ></v-list-item>
 
-                  <v-divider class="my-1" />
+                  <v-divider class="my-1"></v-divider>
 
                   <v-list-item
                     prepend-icon="mdi-translate"
                     :title="$t('common.language')"
                     @click="uiStore.openModal('languageModal')"
-                  />
+                  ></v-list-item>
+
+                  <v-list-item
+                    data-testid="release-notes-btn"
+                    prepend-icon="mdi-information-outline"
+                    :title="$t('topbar.releaseNotes')"
+                    @click="uiStore.openModal('releaseNotesModal')"
+                  ></v-list-item>
 
                   <v-list-item
                     href="https://github.com/Staormin/GeoChase"
@@ -146,7 +162,7 @@
                     rel="noopener noreferrer"
                     target="_blank"
                     :title="$t('topbar.github')"
-                  />
+                  ></v-list-item>
                 </v-list>
               </v-menu>
             </div>
@@ -154,8 +170,8 @@
 
           <div class="workspace-toolbar">
             <div :aria-label="$t('sidebar.drawings')" class="drawing-tools" role="group">
-              <HistoryControls />
-              <span aria-hidden="true" class="tool-divider" />
+              <HistoryControls></HistoryControls>
+              <span aria-hidden="true" class="tool-divider"></span>
 
               <v-btn
                 v-for="tool in primaryTools"
@@ -165,20 +181,22 @@
                 :prepend-icon="tool.icon"
                 variant="text"
                 @click="uiStore.openModal(tool.modal)"
-                >{{ $t(tool.label) }}</v-btn
               >
+                {{ $t(tool.label) }}
+              </v-btn>
 
               <v-menu location="bottom start">
-                <template #activator="{ props }"
-                  ><v-btn
+                <template #activator="{ props }">
+                  <v-btn
                     v-bind="props"
                     append-icon="mdi-chevron-down"
                     data-testid="advanced-tools-btn"
                     prepend-icon="mdi-vector-combine"
                     variant="text"
-                    >{{ $t('workspace.construct') }}</v-btn
-                  ></template
-                >
+                  >
+                    {{ $t('workspace.construct') }}
+                  </v-btn>
+                </template>
 
                 <v-list class="construction-menu">
                   <v-list-subheader>{{ $t('workspace.advancedTools') }}</v-list-subheader>
@@ -189,11 +207,11 @@
                     :prepend-icon="tool.icon"
                     :title="$t(tool.title)"
                     @click="uiStore.openModal(tool.modal)"
-                  />
+                  ></v-list-item>
                 </v-list>
               </v-menu>
 
-              <span aria-hidden="true" class="tool-divider" />
+              <span aria-hidden="true" class="tool-divider"></span>
 
               <v-btn
                 :aria-label="$t('note.title')"
@@ -201,8 +219,9 @@
                 prepend-icon="mdi-note-text-outline"
                 variant="text"
                 @click="handleCreateNote"
-                >{{ $t('common.note') }}</v-btn
               >
+                {{ $t('common.note') }}
+              </v-btn>
 
               <v-btn
                 :aria-label="$t('pdf.title')"
@@ -210,8 +229,9 @@
                 prepend-icon="mdi-file-document-outline"
                 variant="text"
                 @click="handlePdfClick"
-                >{{ $t('workspace.pdf') }}</v-btn
               >
+                {{ $t('workspace.pdf') }}
+              </v-btn>
             </div>
 
             <div
@@ -228,7 +248,7 @@
                 prepend-inner-icon="mdi-map-outline"
                 variant="outlined"
                 @update:model-value="selectMapProvider"
-              />
+              ></v-select>
 
               <v-btn
                 v-else
@@ -261,9 +281,9 @@
           :prepend-icon="tool.icon"
           :title="$t(tool.label)"
           @click="uiStore.openModal(tool.modal)"
-        />
+        ></v-list-item>
 
-        <v-divider class="my-1" />
+        <v-divider class="my-1"></v-divider>
         <v-list-subheader>{{ $t('workspace.construct') }}</v-list-subheader>
 
         <v-list-item
@@ -273,34 +293,33 @@
           :prepend-icon="tool.icon"
           :title="$t(tool.title)"
           @click="uiStore.openModal(tool.modal)"
-        />
+        ></v-list-item>
 
-        <v-divider class="my-1" />
+        <v-divider class="my-1"></v-divider>
 
         <v-list-item
           data-testid="quick-create-note-btn"
           prepend-icon="mdi-note-text-outline"
           :title="$t('common.note')"
           @click="handleCreateNote"
-        />
+        ></v-list-item>
 
         <v-list-item
           data-testid="quick-pdf-btn"
           prepend-icon="mdi-file-document-outline"
           :title="$t('workspace.pdf')"
           @click="handlePdfClick"
-        />
+        ></v-list-item>
 
-        <!-- The IGN legend only applies to the Geoportail basemap. -->
         <template v-if="uiStore.mapProvider === 'geoportail'">
-          <v-divider class="my-1" />
+          <v-divider class="my-1"></v-divider>
 
           <v-list-item
             data-testid="quick-ign-legend-btn"
             prepend-icon="mdi-book-open-variant"
             :title="$t('ignLegend.title')"
             @click="handleOpenMapLegend"
-          />
+          ></v-list-item>
         </template>
       </v-list>
     </v-menu>
@@ -318,14 +337,13 @@
         size="small"
         variant="flat"
         @click="uiStore.toggleTopBar()"
-      />
+      ></v-btn>
     </div>
   </div>
 
-  <ThemePicker v-model="themePickerOpen" />
-  <ImageMapModal v-if="imageMapOpen" @close="closeImageMap" />
-
-  <MapLegendModal v-if="uiStore.mapProvider === 'geoportail'" ref="mapLegendRef" />
+  <ThemePicker v-model="themePickerOpen"></ThemePicker>
+  <ImageMapModal v-if="imageMapOpen" @close="closeImageMap"></ImageMapModal>
+  <MapLegendModal v-if="uiStore.mapProvider === 'geoportail'" ref="mapLegendRef"></MapLegendModal>
 </template>
 
 <script lang="ts" setup>
@@ -350,7 +368,6 @@ const toolbarHeight = ref(64);
 const normalToolbarContent = ref<HTMLElement | null>(null);
 const normalToolbarHeight = ref(134);
 
-// Référence et fonction pour la légende IGN
 const mapLegendRef = ref<InstanceType<typeof MapLegendModal> | null>(null);
 
 function handleOpenMapLegend() {
@@ -430,6 +447,7 @@ const primaryTools = [
     testId: 'draw-polygon-btn',
   },
 ] as const;
+
 const advancedTools = [
   { title: 'drawing.azimuth', icon: 'mdi-compass-outline', modal: 'azimuthLineModal' },
   {
@@ -441,20 +459,25 @@ const advancedTools = [
   { title: 'drawing.freehand', icon: 'mdi-gesture', modal: 'freeHandLineModal' },
   { title: 'drawing.angleFromLine', icon: 'mdi-angle-acute', modal: 'angleLineModal' },
 ] as const;
+
 const imageMaps = useImageMapStore();
 const imageMapOpen = ref(false);
+
 function closeImageMap() {
   imageMapOpen.value = false;
   uiStore.closeModal('imageMapModal');
 }
+
 function openRecalibration() {
   imageMapOpen.value = true;
   uiStore.openModal('imageMapModal');
 }
+
 function selectMapProvider(provider: typeof uiStore.mapProvider) {
   if (imageMaps.isImageProject || provider === 'image') return;
   uiStore.mapProvider = provider;
 }
+
 const mapProviders = computed(() => [
   { title: 'Geoportail (IGN)', value: 'geoportail' },
   { title: 'OpenStreetMap', value: 'osm' },
@@ -498,9 +521,7 @@ function handlePdfClick() {
   input.accept = 'application/pdf';
   input.addEventListener('change', async (e: Event) => {
     const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     const MAX_SIZE = 50 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
