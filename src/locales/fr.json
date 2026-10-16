@@ -86,7 +86,8 @@
     "subtitle": "Résolveur de chasse au trésor géographique",
     "collapseTopBar": "Réduire la barre supérieure",
     "expandTopBar": "Développer la barre supérieure",
-    "github": "GitHub"
+    "github": "GitHub",
+    "releaseNotes": "Nouveautés"
   },
   "tools": {
     "toggle": "Outils",
@@ -1182,7 +1183,7 @@
     "error": "Impossible de modifier cette ligne d’intersection. Vérifiez ses constructions liées."
   },
   "drawingColor": {
-    "title": "Couleur du tracé",
+    "title": "Apparence",
     "palette": "Palette",
     "recent": "Dernières couleurs",
     "custom": "Couleur personnalisée",
@@ -1214,7 +1215,8 @@
     "addStep": "Ajouter une étape",
     "removeStep": "Supprimer l’étape {number}",
     "moveUp": "Monter l’étape {number}",
-    "moveDown": "Descendre l’étape {number}"
+    "moveDown": "Descendre l’étape {number}",
+    "weight": "Épaisseur du trait (px)"
   },
   "game": {
     "tank": "Char",
@@ -1320,5 +1322,12 @@
     "paperScaleValue": "1 cm sur la carte = {value} km",
     "ratioPreview": "Molette pour zoomer · Cliquer-glisser pour se déplacer",
     "recalibrate": "Recalibrer"
+  },
+  "releaseNotes": {
+    "title": "🚀 Nouveautés de GeoChase",
+    "version": "Version {version}",
+    "autoDisplay": "Ne plus afficher automatiquement les nouveautés",
+    "close": "Fermer",
+    "empty": "Aucune note de version disponible."
   }
 }

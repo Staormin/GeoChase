@@ -1,12 +1,16 @@
 <template>
   <v-app>
     <router-view />
+
+    <!-- Modale des notes de version -->
+    <ReleaseNotesModal />
   </v-app>
 </template>
 
 <script lang="ts" setup>
 import { onMounted, watch } from 'vue';
 import { useTheme } from 'vuetify';
+import ReleaseNotesModal from '@/components/modals/ReleaseNotesModal.vue';
 import { isLanguageSet } from '@/plugins/i18n';
 import { applyWorkspaceTheme } from '@/services/themes';
 import { useProjectsStore } from '@/stores/projects';

@@ -41,7 +41,9 @@ export function useDrawing(mapRef: MapContainer) {
     feature.setId(route.id);
     feature.set('type', 'route');
     feature.setStyle(
-      new Style({ stroke: new Stroke({ color: route.color || '#1976D2', width: 4 }) })
+      new Style({
+        stroke: new Stroke({ color: route.color || '#1976D2', width: route.weight ?? 4 }),
+      })
     );
     source.addFeature(feature);
   }

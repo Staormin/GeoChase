@@ -45,6 +45,7 @@ declare module 'vue' {
     PrecisionModeIndicator: typeof import('./components/ui/PrecisionModeIndicator.vue')['default']
     ProjectionSelect: typeof import('./components/shared/ProjectionSelect.vue')['default']
     ProjectSettingsModal: typeof import('./components/modals/ProjectSettingsModal.vue')['default']
+    ReleaseNotesModal: typeof import('./components/modals/ReleaseNotesModal.vue')['default']
     RouteModal: typeof import('./components/modals/RouteModal.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
