@@ -30,6 +30,7 @@ export function useAutoSave() {
   // Auto-save on layers change
   watch(
     [
+      () => layersStore.images,
       () => layersStore.routes,
       () => layersStore.circles,
       () => layersStore.lineSegments,

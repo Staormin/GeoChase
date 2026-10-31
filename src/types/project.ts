@@ -32,6 +32,7 @@ export interface ProjectData {
 export interface ProjectLayerData {
   elementGroups?: ElementGroup[];
   routes?: RouteElement[];
+  images?: ImageElement[];
   circles: CircleElement[];
   lineSegments: LineSegmentElement[];
   points: PointElement[];
@@ -124,9 +125,9 @@ export interface NoteElement {
   updatedAt?: number;
 }
 
-export type ElementType = 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
+export type ElementType = 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
 export type DrawingElement =
-  RouteElement | CircleElement | LineSegmentElement | PointElement | PolygonElement;
+  ImageElement | RouteElement | CircleElement | LineSegmentElement | PointElement | PolygonElement;
 
 export interface LegacyCoordinate {
   id: string;
@@ -167,4 +168,22 @@ export interface RouteElement extends RouteData {
   noteId?: string;
   createdAt?: number;
   listOrder?: number;
+}
+
+/** Image placement in the map plane; dimensions are EPSG:3857 map units. */
+export interface ImageElement {
+  id: string;
+  name: string;
+  assetId: string;
+  center: { lat: number; lon: number };
+  width: number;
+  height: number;
+  rotation: number;
+  opacity: number;
+  keepAspectRatio: boolean;
+  groupId?: string;
+  listOrder?: number;
+  noteId?: string;
+  color?: string;
+  createdAt?: number;
 }

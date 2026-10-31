@@ -5,6 +5,7 @@
 import type {
   CircleElement,
   ElementGroup,
+  ImageElement,
   LayerImportData,
   LineSegmentElement,
   NoteElement,
@@ -26,6 +27,7 @@ function compareListOrder(a: { listOrder?: number }, b: { listOrder?: number }):
 
 export const useLayersStore = defineStore('layers', () => {
   // State
+  const images = ref<ImageElement[]>([]);
   const routes = ref<RouteElement[]>([]);
   const circles = ref<CircleElement[]>([]);
   const lineSegments = ref<LineSegmentElement[]>([]);
@@ -37,6 +39,7 @@ export const useLayersStore = defineStore('layers', () => {
   // Computed
   const isEmpty = computed(
     () =>
+      images.value.length === 0 &&
       routes.value.length === 0 &&
       circles.value.length === 0 &&
       lineSegments.value.length === 0 &&
@@ -47,12 +50,30 @@ export const useLayersStore = defineStore('layers', () => {
 
   const totalCount = computed(
     () =>
+      images.value.length +
       routes.value.length +
       circles.value.length +
       lineSegments.value.length +
       points.value.length +
       polygons.value.length
   );
+
+  const imageCount = computed(() => images.value.length);
+  const sortedImages = computed(() =>
+    images.value.toSorted(
+      (a, b) => compareListOrder(a, b) || (b.createdAt || 0) - (a.createdAt || 0)
+    )
+  );
+  function addImage(image: ImageElement) {
+    images.value.push({ ...image, createdAt: image.createdAt ?? Date.now() });
+  }
+  function updateImage(id: string, updates: Partial<ImageElement>) {
+    const image = images.value.find((image) => image.id === id);
+    if (image) Object.assign(image, updates);
+  }
+  function deleteImage(id: string) {
+    images.value = images.value.filter((image) => image.id !== id);
+  }
 
   const routeCount = computed(() => routes.value.length);
   const sortedRoutes = computed(() =>
@@ -143,13 +164,14 @@ export const useLayersStore = defineStore('layers', () => {
   });
 
   function reorderElement(
-    type: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note',
+    type: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note',
     sourceId: string,
     targetId: string,
     position: 'before' | 'after'
   ): void {
     const items = [
       ...{
+        image: sortedImages.value,
         route: sortedRoutes.value,
         circle: sortedCircles.value,
         lineSegment: sortedLineSegments.value,
@@ -345,10 +367,20 @@ export const useLayersStore = defineStore('layers', () => {
    * Helper function to get element by type and id
    */
   function getElement(
-    elementType: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon',
+    elementType: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon',
     elementId: string
-  ): RouteElement | CircleElement | LineSegmentElement | PointElement | PolygonElement | undefined {
+  ):
+    | ImageElement
+    | RouteElement
+    | CircleElement
+    | LineSegmentElement
+    | PointElement
+    | PolygonElement
+    | undefined {
     switch (elementType) {
+      case 'image': {
+        return images.value.find((image) => image.id === elementId);
+      }
       case 'route': {
         return routes.value.find((route) => route.id === elementId);
       }
@@ -453,6 +485,7 @@ export const useLayersStore = defineStore('layers', () => {
   }
 
   function clearLayers(): void {
+    images.value = [];
     routes.value = [];
     circles.value = [];
     lineSegments.value = [];
@@ -476,6 +509,7 @@ export const useLayersStore = defineStore('layers', () => {
   function deleteElementGroup(id: string): void {
     elementGroups.value = elementGroups.value.filter((group) => group.id !== id);
     for (const element of [
+      ...images.value,
       ...routes.value,
       ...circles.value,
       ...lineSegments.value,
@@ -488,12 +522,13 @@ export const useLayersStore = defineStore('layers', () => {
   }
 
   function setElementGroup(
-    type: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note',
+    type: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note',
     id: string,
     groupId?: string
   ): void {
     if (groupId && !elementGroups.value.some((group) => group.id === groupId)) return;
     const items = {
+      image: images.value,
       route: routes.value,
       circle: circles.value,
       lineSegment: lineSegments.value,
@@ -517,6 +552,9 @@ export const useLayersStore = defineStore('layers', () => {
       const group = elementGroups.value.find((item) => item.id === groupId);
       if (group) {
         const currentMembers = [
+          ...images.value
+            .filter((item) => item.groupId === groupId)
+            .map((item) => `image:${item.id}`),
           ...routes.value
             .filter((item) => item.groupId === groupId)
             .map((item) => `route:${item.id}`),
@@ -544,9 +582,9 @@ export const useLayersStore = defineStore('layers', () => {
 
   function reorderElementGroupMember(
     groupId: string,
-    sourceType: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note',
+    sourceType: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note',
     sourceId: string,
-    targetType: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note',
+    targetType: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note',
     targetId: string,
     position: 'before' | 'after'
   ): void {
@@ -554,6 +592,7 @@ export const useLayersStore = defineStore('layers', () => {
     const group = elementGroups.value.find((item) => item.id === groupId);
     if (!group) return;
     const members = [
+      ...images.value.filter((item) => item.groupId === groupId).map((item) => `image:${item.id}`),
       ...routes.value.filter((item) => item.groupId === groupId).map((item) => `route:${item.id}`),
       ...circles.value
         .filter((item) => item.groupId === groupId)
@@ -583,6 +622,7 @@ export const useLayersStore = defineStore('layers', () => {
 
   function loadLayers(data: LayerImportData): void {
     const normalized = normalizeLayers(data);
+    images.value = normalized.images ?? [];
     routes.value = normalized.routes ?? [];
     circles.value = normalized.circles;
     lineSegments.value = normalized.lineSegments;
@@ -612,6 +652,7 @@ export const useLayersStore = defineStore('layers', () => {
 
   function exportLayers() {
     return {
+      ...(images.value.length > 0 ? { images: images.value } : {}),
       routes: routes.value,
       circles: circles.value,
       lineSegments: lineSegments.value,
@@ -779,6 +820,12 @@ export const useLayersStore = defineStore('layers', () => {
 
   return {
     // State
+    images,
+    imageCount,
+    sortedImages,
+    addImage,
+    updateImage,
+    deleteImage,
     routes,
     routeCount,
     sortedRoutes,

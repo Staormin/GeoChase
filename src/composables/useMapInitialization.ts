@@ -56,6 +56,7 @@ export async function useMapInitialization(
           layersStore.loadLayers({
             elementGroups: activeProject.data.elementGroups ?? [],
             circles: activeProject.data.circles,
+            images: activeProject.data.images ?? [],
             routes: activeProject.data.routes ?? [],
             lineSegments: activeProject.data.lineSegments,
             points: activeProject.data.points,

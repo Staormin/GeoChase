@@ -93,7 +93,10 @@
         <v-list-item-title>{{ $t('contextMenu.edit') }}</v-list-item-title>
       </v-list-item>
 
-      <v-list-item v-if="elementType !== 'point'" @click="openColorPicker">
+      <v-list-item
+        v-if="elementType !== 'point' && elementType !== 'image'"
+        @click="openColorPicker"
+      >
         <template #prepend><v-icon icon="mdi-palette" size="small" /></template>
         <v-list-item-title>{{ $t('drawingColor.title') }}</v-list-item-title>
       </v-list-item>
@@ -124,6 +127,7 @@
 <script lang="ts" setup>
 import type {
   CircleElement,
+  ImageElement,
   LineSegmentElement,
   PointElement,
   PolygonElement,
@@ -137,7 +141,7 @@ import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 interface Props {
-  elementType: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
+  elementType: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
   elementId: string;
   position?: [number, number];
   inGroup?: boolean;
@@ -146,7 +150,13 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits<{
   edit: [
-    element: RouteElement | CircleElement | LineSegmentElement | PointElement | PolygonElement,
+    element:
+      | ImageElement
+      | RouteElement
+      | CircleElement
+      | LineSegmentElement
+      | PointElement
+      | PolygonElement,
   ];
   delete: [elementType: string, elementId: string];
   'remove-from-group': [elementType: string, elementId: string];
@@ -177,6 +187,9 @@ const hasNote = computed(() => {
 
 function getElement() {
   switch (props.elementType) {
+    case 'image': {
+      return layersStore.images.find((image) => image.id === props.elementId);
+    }
     case 'route': {
       return layersStore.routes.find((route) => route.id === props.elementId);
     }

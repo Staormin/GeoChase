@@ -14,6 +14,7 @@ export const visibilityCategories: { type: ElementType; icon: string; key: strin
   { type: 'circle', icon: 'mdi-circle-outline', key: 'c' },
   { type: 'lineSegment', icon: 'mdi-vector-line', key: 's' },
   { type: 'polygon', icon: 'mdi-vector-polygon', key: 'v' },
+  { type: 'image', icon: 'mdi-image-outline', key: 'i' },
   { type: 'route', icon: 'mdi-routes', key: 'r' },
 ];
 export const mapVisibilityKey = 'x';
@@ -31,6 +32,7 @@ export function useElementVisibility(
       circle: layers.circles,
       lineSegment: layers.lineSegments,
       polygon: layers.polygons,
+      image: layers.images,
       route: layers.routes,
     };
     return categories[type].map((element) => ({ type, id: element.id }));

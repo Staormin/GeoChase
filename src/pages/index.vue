@@ -3,6 +3,7 @@
   <TopBar @resize="topBarHeight = $event" />
 
   <MapEffects />
+  <MapImages />
 
   <!-- Fullscreen map -->
   <div
@@ -104,6 +105,7 @@ import type { useNoteTooltips } from '@/composables/useNoteTooltips';
 import { computed, onBeforeUnmount, onMounted, provide, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDisplay } from 'vuetify';
+import MapImages from '@/components/layers/MapImages.vue';
 import MapControls from '@/components/layout/MapControls.vue';
 import ToolsButton from '@/components/layout/ToolsButton.vue';
 import ToolsToolbar from '@/components/layout/ToolsToolbar.vue';

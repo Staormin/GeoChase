@@ -48,6 +48,7 @@ export const useHistoryStore = defineStore('history', () => {
       ui.showTutorial ||
       ui.freeHandDrawing.isDrawing ||
       !!ui.intersectionLineEdit ||
+      ui.imageTransformActive ||
       !!ui.tools.activeTool
   );
   const undoCount = computed(() => position.value);
@@ -143,6 +144,7 @@ export const useHistoryStore = defineStore('history', () => {
         const restored = captureHistorySnapshot(
           {
             ...persisted.data,
+            images: persisted.data.images ?? [],
             routes: persisted.data.routes ?? [],
             elementGroups: persisted.data.elementGroups ?? [],
           },

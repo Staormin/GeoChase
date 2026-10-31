@@ -1,6 +1,7 @@
 import type {
   CircleElement,
   ElementGroup,
+  ImageElement,
   LayerImportData,
   LegacyCoordinate,
   LegacyPolygon,
@@ -143,6 +144,36 @@ function validatePolygon(polygon: unknown): polygon is PolygonElement {
   );
 }
 
+function validateImage(value: unknown): value is ImageElement {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.name === 'string' &&
+    typeof value.assetId === 'string' &&
+    value.assetId.length > 0 &&
+    (value.groupId === undefined || typeof value.groupId === 'string') &&
+    isRecord(value.center) &&
+    typeof value.center.lat === 'number' &&
+    Number.isFinite(value.center.lat) &&
+    Math.abs(value.center.lat) <= 85.06 &&
+    typeof value.center.lon === 'number' &&
+    Number.isFinite(value.center.lon) &&
+    typeof value.width === 'number' &&
+    Number.isFinite(value.width) &&
+    value.width > 0 &&
+    typeof value.height === 'number' &&
+    Number.isFinite(value.height) &&
+    value.height > 0 &&
+    typeof value.rotation === 'number' &&
+    Number.isFinite(value.rotation) &&
+    typeof value.opacity === 'number' &&
+    Number.isFinite(value.opacity) &&
+    value.opacity >= 0 &&
+    value.opacity <= 1 &&
+    typeof value.keepAspectRatio === 'boolean'
+  );
+}
+
 function validateNote(note: unknown): note is NoteElement {
   return (
     isRecord(note) &&
@@ -217,6 +248,7 @@ function migrateSavedCoordinatesToPoints(
 
 export function normalizeLayers(data: LayerImportData): ProjectLayerData {
   // Validate and filter data before loading
+  const validImages = (data.images || []).filter(validateImage);
   const validRoutes = (data.routes || []).filter(validateRoute);
   const validCircles = (data.circles || []).filter((circle) => {
     return validateCircle(circle);
@@ -299,6 +331,7 @@ export function normalizeLayers(data: LayerImportData): ProjectLayerData {
     .filter((group, index, groups) => groups.findIndex((item) => item.id === group.id) === index);
   const validGroupIds = new Set(validElementGroups.map((group) => group.id));
   const groupableElements = [
+    ...validImages,
     ...validRoutes,
     ...validCircles,
     ...validLineSegments,
@@ -318,6 +351,7 @@ export function normalizeLayers(data: LayerImportData): ProjectLayerData {
       1000;
 
   for (const element of [
+    ...validImages,
     ...validRoutes,
     ...validCircles,
     ...validLineSegments,
@@ -333,6 +367,7 @@ export function normalizeLayers(data: LayerImportData): ProjectLayerData {
 
   return {
     ...(validElementGroups.length > 0 ? { elementGroups: validElementGroups } : {}),
+    ...(validImages.length > 0 ? { images: validImages } : {}),
     routes: validRoutes,
     circles: validCircles,
     lineSegments: validLineSegments,
@@ -348,6 +383,7 @@ export function parseLayersJSON(json: string): ProjectLayerData {
   if (!isRecord(value)) throw new Error('Invalid project format');
   const data = isRecord(value.data) ? value.data : value;
   const keys = [
+    'images',
     'routes',
     'circles',
     'lineSegments',
@@ -371,6 +407,7 @@ export function parseLayersJSON(json: string): ProjectLayerData {
   const coordinates = array('coordinates', isLegacyCoordinate);
   const savedCoordinates = array('savedCoordinates', isLegacyCoordinate);
   return normalizeLayers({
+    images: array('images', validateImage),
     routes: array('routes', validateRoute),
     circles: array('circles', validateCircle),
     lineSegments: array('lineSegments', validateLineSegment),

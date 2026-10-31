@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 export const HISTORY_LIMIT = 1000;
 export const HISTORY_MAX_BYTES = 8 * 1024 * 1024;
 export const historyCollections = [
+  'images',
   'routes',
   'circles',
   'lineSegments',
@@ -55,9 +56,9 @@ export function captureHistorySnapshot(
   const data = {} as HistorySnapshot['data'];
   for (const collection of historyCollections) {
     data[collection] = {
-      order: layers[collection].map((element) => element.id),
+      order: (layers[collection] ?? []).map((element) => element.id),
       items: new Map(
-        layers[collection].map((element) => [
+        (layers[collection] ?? []).map((element) => [
           element.id,
           new Map(
             Object.entries(element)

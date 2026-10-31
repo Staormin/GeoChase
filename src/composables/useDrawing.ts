@@ -7,9 +7,10 @@ import type { LineSegmentElement, RouteElement } from '@/types/project';
 import type VectorSource from 'ol/source/Vector';
 import { Feature } from 'ol';
 import { LineString } from 'ol/geom';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import { Stroke, Style } from 'ol/style';
 import { watch } from 'vue';
+import { imageCorners } from '@/services/imageElements';
 import { useImageMapStore } from '@/stores/imageMap';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -240,6 +241,10 @@ export function useDrawing(mapRef: MapContainer) {
   };
 
   // Delete element from map
+  const directDeletions: Record<string, (id: string) => void> = {
+    image: layersStore.deleteImage,
+    route: layersStore.deleteRoute,
+  };
   const deleteElement = (elementType: string, elementId: string | undefined) => {
     if (!mapRef.map?.value || !elementId) {
       return;
@@ -319,7 +324,7 @@ export function useDrawing(mapRef: MapContainer) {
       }
     }
 
-    if (elementType === 'route') layersStore.deleteRoute(elementId);
+    directDeletions[elementType]?.(elementId);
 
     // Remove from store
     switch (elementType) {
@@ -362,7 +367,7 @@ export function useDrawing(mapRef: MapContainer) {
     if (mapRef.map?.value) {
       const overlays = mapRef.map.value.getOverlays().getArray().slice();
       for (const overlay of overlays) {
-        mapRef.map.value.removeOverlay(overlay);
+        if (overlay.get('imageElement') !== true) mapRef.map.value.removeOverlay(overlay);
       }
     }
   };
@@ -382,7 +387,7 @@ export function useDrawing(mapRef: MapContainer) {
     if (mapRef.map?.value) {
       const overlays = mapRef.map.value.getOverlays().getArray().slice();
       for (const overlay of overlays) {
-        mapRef.map.value.removeOverlay(overlay);
+        if (overlay.get('imageElement') !== true) mapRef.map.value.removeOverlay(overlay);
       }
     }
 
@@ -448,7 +453,8 @@ export function useDrawing(mapRef: MapContainer) {
     // Fly to all elements if any exist with animation
     // Skip if skipAutoFly flag is set (when restoring saved view data)
     if (
-      (routes.length > 0 ||
+      (layersStore.images.length > 0 ||
+        routes.length > 0 ||
         circles.length > 0 ||
         lineSegments.length > 0 ||
         points.length > 0 ||
@@ -462,6 +468,15 @@ export function useDrawing(mapRef: MapContainer) {
         minLon = 180,
         maxLon = -180;
 
+      for (const image of layersStore.images) {
+        for (const corner of imageCorners(image)) {
+          const [lon, lat] = toLonLat(corner);
+          minLat = Math.min(minLat, lat!);
+          maxLat = Math.max(maxLat, lat!);
+          minLon = Math.min(minLon, lon!);
+          maxLon = Math.max(maxLon, lon!);
+        }
+      }
       for (const route of routes) {
         for (const [lon, lat] of route.coordinates) {
           minLat = Math.min(minLat, lat);

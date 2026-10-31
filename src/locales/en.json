@@ -1,4 +1,31 @@
 {
+  "imageElement": {
+    "done": "Done",
+    "edit": "Edit image",
+    "exportError": "Could not export the images. Check that they are still available in this browser.",
+    "fileError": "Choose a readable PNG, JPEG, WebP or GIF below 25 MB and 100 megapixels.",
+    "hideAll": "Hide all images",
+    "importing": "Importing…",
+    "instructions": "Drag the image to move it, its handles to resize it, and the round handle to rotate it. Shift snaps rotation to 15° and toggles proportions while resizing corners.",
+    "keepAspectRatio": "Keep proportions at corners",
+    "label": "Image",
+    "loadError": "Could not load the image “{name}”.",
+    "manipulate": "Move or transform {name}",
+    "name": "Image name (optional)",
+    "opacity": "Opacity",
+    "opacityValue": "Opacity {value}%",
+    "pdfError": "Could not import this PDF. Choose a valid PDF without password protection, below 50 MB.",
+    "pdfPage": "Page to import (of {count})",
+    "pdfPageName": "{name} — page {page}",
+    "pdfScale": "Import scale: 1:{scale}",
+    "plural": "Images",
+    "resize": "Resize image",
+    "rotate": "Rotate image",
+    "rotation": "Rotation",
+    "saveError": "Could not save the image. Check available browser storage and try again.",
+    "showAll": "Show all images",
+    "title": "Import an image or PDF page"
+  },
   "history": {
     "title": "History",
     "undo": "Undo",
@@ -68,6 +95,8 @@
     "languageChanged": "Language changed successfully"
   },
   "map": {
+    "customScale": "Custom scale",
+    "invalidScale": "Enter a positive integer within the map's zoom limits.",
     "provider": "Map Provider",
     "geoportail": "Geoportail (IGN)",
     "openstreetmap": "OpenStreetMap",
@@ -77,6 +106,7 @@
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "resetView": "Reset view",
+    "scale": "Scale",
     "currentLocation": "Current location",
     "pointCreated": "Point created",
     "rightClickToSave": "Right-click on the map to create a point"
@@ -949,6 +979,7 @@
     "hideMapBackground": "Hide map background (white background)",
     "showMapBackground": "Show map background",
     "visibilityCategories": {
+      "image": "images",
       "point": "points",
       "circle": "circles",
       "lineSegment": "lines",

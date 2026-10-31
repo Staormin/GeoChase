@@ -311,7 +311,8 @@ test('undo keeps text editing native and restores group visibility', async ({
   const dialog = page.getByRole('dialog');
   const name = dialog.getByLabel('Point Name', { exact: true });
   await name.click();
-  await name.pressSequentially('Temporary');
+  // One native insertion is one undo transaction; character grouping varies by browser timing.
+  await page.keyboard.insertText('Temporary');
   await name.press('Control+z');
   await expect(name).toHaveValue('');
   await expect.poll(async () => (await mapState(page)).points.length).toBe(4);

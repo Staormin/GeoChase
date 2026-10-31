@@ -134,6 +134,7 @@
     <div
       v-else-if="
         filteredCircles.length === 0 &&
+        filteredImages.length === 0 &&
         filteredRoutes.length === 0 &&
         filteredLines.length === 0 &&
         filteredPoints.length === 0 &&
@@ -422,6 +423,78 @@
                 element-type="lineSegment"
                 @delete="handleDeleteElement"
                 @edit="handleEditLineSegment(line)"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="filteredImages.length > 0">
+        <div class="layers-section-header">
+          <button
+            :aria-expanded="imagesExpanded"
+            class="layers-section-title"
+            type="button"
+            @click="imagesExpanded = !imagesExpanded"
+          >
+            {{ $t('imageElement.plural') }} ({{ filteredImages.length
+            }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.imageCount}` : '' }})
+
+            <span aria-hidden="true" class="collapse-icon">{{ imagesExpanded ? '▼' : '▶' }}</span>
+          </button>
+
+          <div class="layers-section-actions">
+            <v-btn
+              color="primary"
+              :icon="allImagesVisible ? 'mdi-eye-off' : 'mdi-eye'"
+              size="x-small"
+              :title="allImagesVisible ? $t('imageElement.hideAll') : $t('imageElement.showAll')"
+              variant="text"
+              @click.stop="toggleAllElementsOfType('image')"
+            />
+          </div>
+        </div>
+
+        <div v-show="imagesExpanded" class="layer-items">
+          <div
+            v-for="image in filteredImages"
+            :key="image.id"
+            class="layer-item"
+            :class="{
+              ...dropClasses('image', image.id),
+              'layer-item-hidden': image.id && !uiStore.isElementVisible('image', image.id),
+            }"
+            :data-layer-id="image.id"
+            data-layer-type="image"
+            @dragstart.prevent
+            @lostpointercapture="cancelElementDrag"
+            @pointercancel="cancelElementDrag"
+            @pointerdown="startElementDrag($event, 'image', image.id)"
+            @pointerenter="hoverSidebarElement('image', image.id)"
+            @pointerleave="clearSidebarHover"
+            @pointermove="moveElementDrag"
+            @pointerup="finishElementDrag"
+          >
+            <div
+              class="layer-item-info"
+              role="button"
+              tabindex="0"
+              @click="handleGoTo('image', image)"
+              @keydown.enter="handleGoTo('image', image)"
+              @keydown.space.prevent="handleGoTo('image', image)"
+            >
+              <div class="layer-item-name">{{ image.name }}</div>
+
+              <div class="layer-item-type">{{ $t('imageElement.label') }}</div>
+            </div>
+
+            <div class="layer-item-actions">
+              <LayerContextMenu
+                v-if="image.id"
+                :element-id="image.id"
+                element-type="image"
+                @delete="handleDeleteElement"
+                @edit="handleEditImage(image)"
               />
             </div>
           </div>
@@ -825,12 +898,14 @@ import type {
   DrawingElement,
   ElementGroup,
   ElementType,
+  ImageElement,
   LineSegmentElement,
   NoteElement,
   PointElement,
   PolygonElement,
   RouteElement,
 } from '@/types/project';
+import { toLonLat } from 'ol/proj';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import LayerContextMenu from '@/components/layers/LayerContextMenu.vue';
@@ -844,6 +919,7 @@ import {
   type VisibilityTarget,
 } from '@/composables/useElementVisibility';
 import { useProjectGeometry } from '@/composables/useProjectGeometry';
+import { imageCorners } from '@/services/imageElements';
 import { routeBounds } from '@/services/routing';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
@@ -859,6 +935,7 @@ const projectsStore = useProjectsStore();
 const elementCount = computed(
   () =>
     layersStore.circles.length +
+    layersStore.images.length +
     layersStore.routes.length +
     layersStore.lineSegments.length +
     layersStore.points.length +
@@ -871,9 +948,10 @@ const { categoryVisibilityTargets, areAllTargetsVisible, toggleVisibilityTargets
 const mapContainer = useMapContext();
 
 const searchQuery = ref('');
-type ListElementType = 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note';
+type ListElementType = 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon' | 'note';
 type GroupableType = ListElementType;
 type GroupMember =
+  | { type: 'image'; element: ImageElement }
   | { type: 'route'; element: RouteElement }
   | { type: 'circle'; element: CircleElement }
   | { type: 'lineSegment'; element: LineSegmentElement }
@@ -934,6 +1012,17 @@ const filteredCircles = computed(() => {
   );
 });
 
+const filteredImages = computed(() =>
+  layersStore.sortedImages.filter(
+    (image) => !image.groupId && image.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+);
+const imagesExpanded = ref(true);
+const allImagesVisible = computed(() => areAllTargetsVisible(sectionVisibilityTargets('image')));
+function handleEditImage(image: ImageElement) {
+  handleGoTo('image', image);
+}
+
 const filteredRoutes = computed(() =>
   layersStore.sortedRoutes.filter(
     (route) => !route.groupId && route.name.toLowerCase().includes(searchQuery.value.toLowerCase())
@@ -990,6 +1079,13 @@ const filteredNotes = computed(() => {
 });
 
 const groupableItems = computed<GroupableItem[]>(() => [
+  ...layersStore.sortedImages.map((image) => ({
+    key: `image:${image.id}`,
+    type: 'image' as const,
+    id: image.id,
+    name: image.name,
+    detail: t('imageElement.title'),
+  })),
   ...layersStore.sortedRoutes.map((route) => ({
     key: `route:${route.id}`,
     type: 'route' as const,
@@ -1049,6 +1145,9 @@ const filteredElementGroups = computed(() => {
 
 function groupMembers(groupId: string): GroupMember[] {
   const members: GroupMember[] = [
+    ...layersStore.sortedImages
+      .filter((item) => item.groupId === groupId)
+      .map((element) => ({ type: 'image' as const, element })),
     ...layersStore.sortedRoutes
       .filter((item) => item.groupId === groupId)
       .map((element) => ({ type: 'route' as const, element })),
@@ -1106,6 +1205,7 @@ function groupMemberDetail(member: GroupMember): string {
   return t(
     (
       {
+        image: 'imageElement.title',
         route: 'route.title',
         circle: 'layers.circleType',
         lineSegment: 'layers.lineSegmentType',
@@ -1136,6 +1236,7 @@ function groupVisibilityTargets(group: ElementGroup): VisibilityTarget[] {
 
 function sectionVisibilityTargets(type: ElementType): VisibilityTarget[] {
   const sections = {
+    image: filteredImages,
     route: filteredRoutes,
     circle: filteredCircles,
     lineSegment: filteredLines,
@@ -1175,6 +1276,7 @@ function openEditGroupDialog(groupId: string) {
 
 function getGroupableElement(type: GroupableType, id: string) {
   return {
+    image: layersStore.images,
     route: layersStore.routes,
     circle: layersStore.circles,
     lineSegment: layersStore.lineSegments,
@@ -1214,7 +1316,7 @@ function removeElementGroup(groupId: string) {
 }
 
 function ungroupElement(type: string, id: string) {
-  if (['route', 'circle', 'lineSegment', 'point', 'polygon', 'note'].includes(type)) {
+  if (['image', 'route', 'circle', 'lineSegment', 'point', 'polygon', 'note'].includes(type)) {
     layersStore.setElementGroup(type as GroupableType, id);
   }
 }
@@ -1226,6 +1328,10 @@ function handleGroupMemberClick(member: GroupMember) {
 
 function handleGroupMemberEdit(member: GroupMember) {
   switch (member.type) {
+    case 'image': {
+      handleEditImage(member.element);
+      break;
+    }
     case 'route': {
       handleEditRoute(member.element);
       break;
@@ -1314,6 +1420,7 @@ watch(
     const sections = {
       circle: { expanded: circlesExpanded, items: filteredCircles },
       lineSegment: { expanded: linesExpanded, items: filteredLines },
+      image: { expanded: imagesExpanded, items: filteredImages },
       route: { expanded: routesExpanded, items: filteredRoutes },
       point: { expanded: pointsExpanded, items: filteredPoints },
       polygon: { expanded: polygonsExpanded, items: filteredPolygons },
@@ -1448,6 +1555,16 @@ function handleGoTo(elementType: MapElementRequest['elementType'], element: Draw
   let zoom: number;
 
   switch (elementType) {
+    case 'image': {
+      const image = element as ImageElement;
+      const corners = imageCorners(image).map((point) => toLonLat(point));
+      mapContainer.flyToBoundsWithPanels([
+        [Math.min(...corners.map((p) => p[1]!)), Math.min(...corners.map((p) => p[0]!))],
+        [Math.max(...corners.map((p) => p[1]!)), Math.max(...corners.map((p) => p[0]!))],
+      ]);
+      uiStore.selectedImageId = image.id;
+      return;
+    }
     case 'circle': {
       const circle = element as CircleElement;
       lat = circle.center.lat;
@@ -1919,6 +2036,10 @@ function handleNoteClick(note: NoteElement) {
     const elementType = note.linkedElementType;
 
     switch (note.linkedElementType) {
+      case 'image': {
+        element = layersStore.images.find((image) => image.id === note.linkedElementId);
+        break;
+      }
       case 'circle': {
         element = layersStore.circles.find((c) => c.id === note.linkedElementId);
         break;

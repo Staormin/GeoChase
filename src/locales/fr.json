@@ -1,4 +1,31 @@
 {
+  "imageElement": {
+    "done": "Terminer",
+    "edit": "Modifier l’image",
+    "exportError": "Impossible d’exporter les images. Vérifiez qu’elles sont encore disponibles dans ce navigateur.",
+    "fileError": "Choisissez un PNG, JPEG, WebP ou GIF lisible de moins de 25 Mo et 100 mégapixels.",
+    "hideAll": "Masquer toutes les images",
+    "importing": "Import en cours…",
+    "instructions": "Glissez l’image pour la déplacer, ses poignées pour la redimensionner et la poignée ronde pour la tourner. Maj aligne la rotation par pas de 15° et inverse le maintien des proportions aux coins.",
+    "keepAspectRatio": "Conserver les proportions aux coins",
+    "label": "Image",
+    "loadError": "Impossible de charger l’image « {name} ».",
+    "manipulate": "Déplacer ou transformer {name}",
+    "name": "Nom de l’image (facultatif)",
+    "opacity": "Opacité",
+    "opacityValue": "Opacité {value}%",
+    "pdfError": "Impossible d’importer ce PDF. Choisissez un PDF valide, non protégé par mot de passe, de moins de 50 Mo.",
+    "pdfPage": "Page à importer (sur {count})",
+    "pdfPageName": "{name} — page {page}",
+    "pdfScale": "Échelle à l’import : 1:{scale}",
+    "plural": "Images",
+    "resize": "Redimensionner l’image",
+    "rotate": "Tourner l’image",
+    "rotation": "Rotation",
+    "saveError": "Impossible d’enregistrer l’image. Vérifiez l’espace disponible dans le navigateur et réessayez.",
+    "showAll": "Afficher toutes les images",
+    "title": "Importer une image ou une page PDF"
+  },
   "history": {
     "title": "Historique",
     "undo": "Annuler",
@@ -68,6 +95,8 @@
     "languageChanged": "Langue modifiée avec succès"
   },
   "map": {
+    "customScale": "Échelle personnalisée",
+    "invalidScale": "Saisissez un entier positif dans les limites de zoom de la carte.",
     "provider": "Fournisseur de carte",
     "geoportail": "Géoportail (IGN)",
     "openstreetmap": "OpenStreetMap",
@@ -77,6 +106,7 @@
     "zoomIn": "Zoomer",
     "zoomOut": "Dézoomer",
     "resetView": "Réinitialiser la vue",
+    "scale": "Échelle",
     "currentLocation": "Position actuelle",
     "pointCreated": "Point créé",
     "rightClickToSave": "Clic droit sur la carte pour créer un point"
@@ -949,6 +979,7 @@
     "hideMapBackground": "Masquer le fond de carte (fond blanc)",
     "showMapBackground": "Afficher le fond de carte",
     "visibilityCategories": {
+      "image": "images",
       "point": "points",
       "circle": "cercles",
       "lineSegment": "segments",

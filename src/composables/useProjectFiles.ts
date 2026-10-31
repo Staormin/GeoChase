@@ -1,6 +1,7 @@
 import { useI18n } from 'vue-i18n';
 import { parseProjectJSON } from '@/domain/layers';
 import { downloadGPX, generateCompleteGPX, getTimestamp } from '@/services/gpx';
+import { imageAssetDataURL, importImageAsset } from '@/services/imageAssets';
 import { exportProjectAsJSON } from '@/services/storage';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
@@ -45,15 +46,28 @@ export function useProjectFiles() {
     ui.addToast(t('messages.gpxExported'), 'success');
   }
 
-  function exportJSON() {
-    const json = exportProjectAsJSON({
-      ...projects.activeProject,
-      name: projects.activeProject?.name || 'project',
-      data: layers.exportLayers(),
-      projection: projects.activeProjection,
-    });
-    downloadFile(json, filename('json'), 'application/json');
-    ui.addToast(t('messages.jsonExported'), 'success');
+  async function exportJSON() {
+    // Snapshot metadata before reading bytes, so a concurrent project switch cannot mix exports.
+    const project = JSON.parse(
+      exportProjectAsJSON({
+        ...projects.activeProject,
+        name: projects.activeProject?.name || 'project',
+        data: layers.exportLayers(),
+        projection: projects.activeProjection,
+      })
+    );
+    const exportFilename = filename('json');
+    try {
+      const ids = [...new Set(layers.images.map((image) => image.assetId))];
+      if (ids.length > 0)
+        project.imageAssets = Object.fromEntries(
+          await Promise.all(ids.map(async (id) => [id, await imageAssetDataURL(id)]))
+        );
+      downloadFile(JSON.stringify(project, null, 2), exportFilename, 'application/json');
+      ui.addToast(t('messages.jsonExported'), 'success');
+    } catch {
+      ui.addToast(t('imageElement.exportError'), 'error');
+    }
   }
 
   function importJSON() {
@@ -70,6 +84,15 @@ export function useProjectFiles() {
           const json = await file.text();
           const { data, projection } = parseProjectJSON(json);
           const imported = JSON.parse(json);
+          const assetIds = new Map<string, string>();
+          for (const image of data.images ?? []) {
+            let id = assetIds.get(image.assetId);
+            if (!id) {
+              id = await importImageAsset(imported.imageAssets?.[image.assetId]);
+              assetIds.set(image.assetId, id);
+            }
+            image.assetId = id;
+          }
           const name =
             typeof imported.name === 'string' && imported.name.trim()
               ? imported.name.trim()

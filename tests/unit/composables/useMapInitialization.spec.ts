@@ -179,6 +179,7 @@ describe('useMapInitialization', () => {
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
 
       expect(loadLayersSpy).toHaveBeenCalledWith({
+        images: [],
         elementGroups: projectData.elementGroups,
         routes: [],
         circles: projectData.circles,
@@ -241,6 +242,7 @@ describe('useMapInitialization', () => {
       await useMapInitialization(mockMapContainer, mockDrawing, noteTooltipsRef);
 
       expect(loadLayersSpy).toHaveBeenCalledWith({
+        images: [],
         elementGroups: [],
         routes: [],
         circles: [],
@@ -276,6 +278,7 @@ describe('useMapInitialization', () => {
 
       // Should pass savedCoordinates for migration
       expect(loadLayersSpy).toHaveBeenCalledWith({
+        images: [],
         elementGroups: [],
         routes: [],
         circles: [],

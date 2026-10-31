@@ -1,4 +1,58 @@
 <template>
+  <input
+    ref="imageFileInput"
+    accept="image/png,image/jpeg,image/webp,image/gif,application/pdf,.pdf"
+    data-testid="image-element-file"
+    hidden
+    type="file"
+    @change="importImage"
+  />
+
+  <div
+    v-if="importingImage || pendingPdf"
+    aria-live="polite"
+    class="pdf-import-bar"
+    data-testid="pdf-import-bar"
+  >
+    <span v-if="importingImage">{{ $t('imageElement.importing') }}</span>
+
+    <template v-else-if="pendingPdf">
+      <span class="pdf-import-name">{{ pendingPdf.context.name }}</span>
+
+      <label>
+        {{ $t('imageElement.pdfPage', { count: pendingPdf.document.numPages }) }}
+        <input
+          v-model.number="pdfPage"
+          :aria-label="$t('imageElement.pdfPage', { count: pendingPdf.document.numPages })"
+          :max="pendingPdf.document.numPages"
+          min="1"
+          step="1"
+          type="number"
+          @keydown.enter="importPdfPage"
+        />
+      </label>
+
+      <span>{{
+        $t('imageElement.pdfScale', {
+          scale: pendingPdf.context.denominator.toLocaleString(locale, {
+            maximumSignificantDigits: 6,
+          }),
+        })
+      }}</span>
+
+      <v-btn
+        color="primary"
+        data-testid="import-pdf-page"
+        :disabled="!validPdfPage"
+        size="small"
+        @click="importPdfPage"
+        >{{ $t('common.import') }}</v-btn
+      >
+
+      <v-btn size="small" variant="text" @click="cancelPdf">{{ $t('common.cancel') }}</v-btn>
+    </template>
+  </div>
+
   <div>
     <v-navigation-drawer
       class="topbar"
@@ -164,7 +218,7 @@
                 :data-testid="tool.testId"
                 :prepend-icon="tool.icon"
                 variant="text"
-                @click="uiStore.openModal(tool.modal)"
+                @click="activateTool(tool.modal)"
                 >{{ $t(tool.label) }}</v-btn
               >
 
@@ -188,7 +242,7 @@
                     :key="tool.modal"
                     :prepend-icon="tool.icon"
                     :title="$t(tool.title)"
-                    @click="uiStore.openModal(tool.modal)"
+                    @click="activateTool(tool.modal)"
                   />
                 </v-list>
               </v-menu>
@@ -260,7 +314,7 @@
           :data-testid="`quick-${tool.testId}`"
           :prepend-icon="tool.icon"
           :title="$t(tool.label)"
-          @click="uiStore.openModal(tool.modal)"
+          @click="activateTool(tool.modal)"
         />
 
         <v-divider class="my-1" />
@@ -272,7 +326,7 @@
           :data-testid="`quick-${tool.modal}-btn`"
           :prepend-icon="tool.icon"
           :title="$t(tool.title)"
-          @click="uiStore.openModal(tool.modal)"
+          @click="activateTool(tool.modal)"
         />
 
         <v-divider class="my-1" />
@@ -337,6 +391,7 @@ import ThemePicker from '@/components/layout/ThemePicker.vue';
 import ImageMapModal from '@/components/modals/ImageMapModal.vue';
 import MapLegendModal from '@/components/modals/MapLegendModal.vue';
 import SidebarAddressSearch from '@/components/sidebar/SidebarAddressSearch.vue';
+import { useImageImport } from '@/composables/useImageImport';
 import { useProjectFiles } from '@/composables/useProjectFiles';
 import { useImageMapStore } from '@/stores/imageMap';
 import { useProjectsStore } from '@/stores/projects';
@@ -381,7 +436,7 @@ watch(toolbarContent, (element, _, onCleanup) => {
   onCleanup(() => observer.disconnect());
 });
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const uiStore = useUIStore();
 const projectsStore = useProjectsStore();
 const quickToolsMenuTarget = computed<[number, number] | undefined>(() => {
@@ -393,7 +448,31 @@ function setQuickToolsMenuVisibility(open: boolean) {
   if (!open) uiStore.quickToolsMenuPosition = null;
 }
 
+const imageFileInput = ref<HTMLInputElement | null>(null);
+const {
+  chooseImage,
+  importImage,
+  importingImage,
+  pendingPdf,
+  pdfPage,
+  validPdfPage,
+  importPdfPage,
+  cancelPdf,
+} = useImageImport(imageFileInput);
+function activateTool(modal: string) {
+  uiStore.quickToolsMenuPosition = null;
+  if (modal === 'importImage') chooseImage();
+  else uiStore.openModal(modal);
+}
+
 const primaryTools = [
+  {
+    label: 'imageElement.label',
+    title: 'imageElement.title',
+    icon: 'mdi-image-plus-outline',
+    modal: 'importImage',
+    testId: 'import-image-btn',
+  },
   {
     label: 'common.point',
     title: 'drawing.point',
@@ -532,6 +611,39 @@ function handlePdfClick() {
 </script>
 
 <style scoped>
+.pdf-import-bar {
+  position: fixed;
+  z-index: 1100;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: calc(100vw - 100px);
+  padding: 12px;
+  border: 1px solid var(--gc-border);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  box-shadow: 0 4px 20px #2037451a;
+}
+.pdf-import-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pdf-import-bar input {
+  width: 64px;
+  padding: 4px;
+  border: 1px solid var(--gc-border);
+  border-radius: 4px;
+  color: var(--text);
+}
 .topbar {
   border-bottom: 1px solid var(--gc-border);
   box-shadow: 0 2px 12px #173b4510;

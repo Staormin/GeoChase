@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { computed, ref } from 'vue';
 
 export interface MapElementRequest {
-  elementType: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
+  elementType: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
   elementId: string;
 }
 
@@ -21,7 +21,7 @@ export interface Toast {
 }
 
 export interface EditingElement {
-  type: 'route' | 'circle' | 'lineSegment' | 'point' | 'note';
+  type: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'note';
   id: string;
 }
 
@@ -64,7 +64,7 @@ export interface BearingsPanel {
 }
 
 export interface NotePreFillElement {
-  type: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
+  type: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
   id: string;
 }
 
@@ -78,6 +78,8 @@ export interface ToolsState {
 export const useUIStore = defineStore('ui', () => {
   // State
   const openModals = ref<Set<string>>(new Set());
+  const selectedImageId = ref<string | null>(null);
+  const imageTransformActive = ref(false);
   const gameMode = ref(false);
   const mapBackgroundVisible = ref(true);
   const drawingMode = ref<DrawingMode>('none');
@@ -250,7 +252,7 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function startEditing(
-    type: 'route' | 'circle' | 'lineSegment' | 'point' | 'note',
+    type: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'note',
     id: string
   ): void {
     editingElement.value = { type, id };
@@ -261,7 +263,7 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function isEditing(
-    type: 'route' | 'circle' | 'lineSegment' | 'point' | 'note',
+    type: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'note',
     id: string
   ): boolean {
     return editingElement.value?.type === type && editingElement.value?.id === id;
@@ -383,7 +385,7 @@ export const useUIStore = defineStore('ui', () => {
   }
 
   function setNotePreFill(
-    type: 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon',
+    type: 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon',
     id: string
   ): void {
     notePreFillElement.value = { type, id };
@@ -428,6 +430,8 @@ export const useUIStore = defineStore('ui', () => {
   return {
     canInteractWithLines,
     toolInstructionsVisible,
+    selectedImageId,
+    imageTransformActive,
     gameMode,
     mapBackgroundVisible,
     // State

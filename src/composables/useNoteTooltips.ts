@@ -5,10 +5,12 @@
 
 import type { MapContainer } from '@/composables/useMap';
 import type { NoteElement } from '@/types/project';
-import type { Feature } from 'ol';
 import type { Geometry } from 'ol/geom';
+import { Feature } from 'ol';
 import { getCenter } from 'ol/extent';
+import { Point } from 'ol/geom';
 import Overlay from 'ol/Overlay';
+import { fromLonLat } from 'ol/proj';
 import { watch } from 'vue';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
@@ -47,6 +49,12 @@ export function useNoteTooltips(mapRef: MapContainer) {
     // Get the appropriate vector source based on element type
     let source;
     switch (note.linkedElementType) {
+      case 'image': {
+        const image = layersStore.images.find((item) => item.id === note.linkedElementId);
+        return image && uiStore.isElementVisible('image', image.id)
+          ? new Feature(new Point(fromLonLat([image.center.lon, image.center.lat])))
+          : null;
+      }
       case 'circle': {
         source = mapRef.circlesSource?.value;
         break;
@@ -252,7 +260,18 @@ export function useNoteTooltips(mapRef: MapContainer) {
     deep: true,
   });
 
+  const stopImagesWatch = watch(
+    () => [layersStore.images, uiStore.elementVisibility],
+    () => {
+      for (const note of layersStore.notes) {
+        if (note.linkedElementType === 'image') refreshNoteTooltip(note.id);
+      }
+    },
+    { deep: true }
+  );
+
   function dispose() {
+    stopImagesWatch();
     stopNotesWatch();
     debouncedUpdateNoteTooltips.cancel();
     view?.un('change:resolution', debouncedUpdateNoteTooltips);

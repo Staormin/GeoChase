@@ -115,6 +115,7 @@ const { t, locale } = useI18n();
 
 function projectStats(project: ProjectData) {
   return [
+    { label: 'imageElement.plural', count: project.data.images?.length || 0 },
     { label: 'layers.points', count: project.data.points?.length || 0 },
     { label: 'layers.lines', count: project.data.lineSegments?.length || 0 },
     { label: 'layers.circles', count: project.data.circles?.length || 0 },

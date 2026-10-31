@@ -8,7 +8,10 @@ async function prepareImageProject(page: Page) {
     .filter({ has: page.locator('input[value="image"]') })
     .click();
   await page.getByTestId('create-project-btn').click();
-  await page.locator('input[type="file"]').setInputFiles('public/images/legende-ign.png');
+  await page
+    .getByRole('dialog')
+    .locator('input[type="file"]')
+    .setInputFiles('public/images/legende-ign.png');
   await page.getByRole('button', { name: 'Known ratio', exact: true }).click();
   await page.getByRole('spinbutton', { name: 'Metres per pixel', exact: true }).fill('10');
 }
