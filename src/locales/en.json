@@ -122,7 +122,8 @@
     "subtitle": "Geographic Treasure Hunt Solver",
     "collapseTopBar": "Collapse top bar",
     "expandTopBar": "Expand top bar",
-    "github": "GitHub"
+    "github": "GitHub",
+    "releaseNotes": "What's New"
   },
   "tools": {
     "toggle": "Tools",
@@ -1219,7 +1220,7 @@
     "error": "Could not update this intersection line. Check its linked constructions."
   },
   "drawingColor": {
-    "title": "Drawing color",
+    "title": "Appearance",
     "palette": "Palette",
     "recent": "Recent colors",
     "custom": "Custom color",
@@ -1251,7 +1252,8 @@
     "addStep": "Add stop",
     "removeStep": "Remove stop {number}",
     "moveUp": "Move stop {number} up",
-    "moveDown": "Move stop {number} down"
+    "moveDown": "Move stop {number} down",
+    "weight": "Line width (px)"
   },
   "game": {
     "tank": "Tank",
@@ -1357,5 +1359,12 @@
     "paperScaleValue": "1 cm on the map = {value} km",
     "ratioPreview": "Scroll to zoom · Drag to pan",
     "recalibrate": "Recalibrate"
+  },
+  "releaseNotes": {
+    "title": "🚀 What's New in GeoChase",
+    "version": "Version {version}",
+    "autoDisplay": "Don't show updates automatically",
+    "close": "Close",
+    "empty": "No release notes available."
   }
 }

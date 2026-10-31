@@ -165,6 +165,7 @@ export interface RouteElement extends RouteData {
   end: { lat: number; lon: number };
   intermediates?: Array<{ lat: number; lon: number }>;
   color?: string;
+  weight?: number;
   noteId?: string;
   createdAt?: number;
   listOrder?: number;

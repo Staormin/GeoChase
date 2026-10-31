@@ -195,6 +195,13 @@
                   />
 
                   <v-list-item
+                    data-testid="release-notes-btn"
+                    prepend-icon="mdi-information-outline"
+                    :title="$t('topbar.releaseNotes')"
+                    @click="uiStore.openModal('releaseNotesModal')"
+                  ></v-list-item>
+
+                  <v-list-item
                     href="https://github.com/Staormin/GeoChase"
                     prepend-icon="mdi-github"
                     rel="noopener noreferrer"

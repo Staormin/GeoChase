@@ -1,0 +1,62 @@
+[
+  {
+    "version": "1.1.0",
+    "date": "2026-10-06",
+    "title": "Major Update: Mapping, Tools & Usability",
+    "sections": [
+      {
+        "category": "1. Project & Workspace Management",
+        "items": [
+          "Dual project creation (Map or Image): Geographic projects (online basemaps, address search, GPS) and Image projects (import scans/plans PNG, JPEG, WebP, GIF, BMP up to 25 MB).",
+          "Custom image calibration: By two points (real distance in km and optionally paper cm) or known ratio (meters per pixel), with pixel-precision tool (arrows + Shift).",
+          "Map projection choice: Mercator (straight lines and bearings matching online portals) or Geodesic WGS84 (shortest paths on curved Earth).",
+          "Save, Import/Export: Automatic local storage, JSON format, and GPX track export.",
+          "Action history (Undo / Redo): Manage up to 1,000 steps (drawings, notes, groups, visibility, projections) with Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z / Ctrl+Y shortcuts."
+        ]
+      },
+      {
+        "category": "2. Basemaps & Visual Navigation",
+        "items": [
+          "Multiple basemap selector (geographic projects): Geoportail (IGN), OpenStreetMap, Google Plan, Google Satellite, and Google Relief.",
+          "Global visibility management: Hide/show basemap (clean white background) or filter by category.",
+          "Precision Mode (Magnifier): Toggle with Z key to show a circular magnifying lens (2.5x) with center crosshair.",
+          "Navigation Mode along shapes: Step-by-step tour of a circle or line using arrow keys (← →) with dynamic speed."
+        ]
+      },
+      {
+        "category": "3. Drawing Tools & Geometric Constructions",
+        "items": [
+          "Points: Created via direct click, right-click, or coordinates, with automatic reverse geocoding.",
+          "Circles: Defined by center and radius (in km or cm depending on paper equivalence).",
+          "Lines & Routes: Two-points line (with panel drag-and-drop), Azimuth Line, Line at Angle from reference, dynamic Intersection Line, Parallel Line, and Free Hand Mode (Alt/Ctrl locking). IGN road/walking routes with stops.",
+          "Polygons: Created from at least 3 points, perimeter display, and center extraction."
+        ]
+      },
+      {
+        "category": "4. Search, Exploration & Topographic Analysis",
+        "items": [
+          "Address & place search: Integrated general bar to center the map.",
+          "Search along a path (\"Search nearby\"): Distance band (0.5 to 25 km) with advanced filters by name, category, and altitude, including elevation data.",
+          "Ruler tool (instant): Quick measurement of distances and bearings without cluttering layers.",
+          "Bearings Analysis: Complete matrix of distances and angles between points with sorting and direct navigation."
+        ]
+      },
+      {
+        "category": "5. Organization, Notes & Supplementary Documents",
+        "items": [
+          "Layers Panel: Categorized sorting, text filters, and custom groups (drag-and-drop folders).",
+          "Contextual and standalone notes: Attached to geometric elements (hover tooltips) or free.",
+          "Integrated PDF document reader: Up to 50 MB, with zoom, rotation, thumbnails, page fit, and local secure password management."
+        ]
+      },
+      {
+        "category": "6. Interface, Themes & Accessibility",
+        "items": [
+          "Visual customization: Choice of 14 graphic theme palettes (Cyberpunk, Gold & Velvet, etc.).",
+          "Multilingual: Interface fully available in French and English.",
+          "Comprehensive keyboard shortcuts for navigation, undo, precision mode, and geometric constraints."
+        ]
+      }
+    ]
+  }
+]
