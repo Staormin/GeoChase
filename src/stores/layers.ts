@@ -17,6 +17,7 @@ import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
 import { computed, ref } from 'vue';
 import { normalizeLayers } from '@/domain/layers';
+import { imagePivotCoordinate, imagePivotFromMap } from '@/services/imageElements';
 
 // New elements stay above manually ordered elements; legacy projects retain date sorting.
 function compareListOrder(a: { listOrder?: number }, b: { listOrder?: number }): number {
@@ -69,7 +70,11 @@ export const useLayersStore = defineStore('layers', () => {
   }
   function updateImage(id: string, updates: Partial<ImageElement>) {
     const image = images.value.find((image) => image.id === id);
-    if (image) Object.assign(image, updates);
+    if (image) {
+      Object.assign(image, updates);
+      if (image.pivotPointId)
+        image.pivot = imagePivotFromMap(image, imagePivotCoordinate(image, points.value), false);
+    }
   }
   function deleteImage(id: string) {
     images.value = images.value.filter((image) => image.id !== id);
@@ -283,6 +288,13 @@ export const useLayersStore = defineStore('layers', () => {
     const index = points.value.findIndex((p) => p.id === id);
     if (index !== -1 && points.value[index]) {
       const point = points.value[index];
+
+      // Keep the last pivot position when its referenced point is deleted.
+      for (const image of images.value) {
+        if (image.pivotPointId !== id) continue;
+        image.pivot = imagePivotFromMap(image, imagePivotCoordinate(image, points.value), false);
+        image.pivotPointId = undefined;
+      }
 
       // Remove references to this point from all lines
       if (id) {

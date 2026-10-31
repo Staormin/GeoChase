@@ -144,6 +144,17 @@ function validatePolygon(polygon: unknown): polygon is PolygonElement {
   );
 }
 
+function validateImagePivot(value: unknown): boolean {
+  return (
+    value === undefined ||
+    (isRecord(value) &&
+      typeof value.x === 'number' &&
+      Number.isFinite(value.x) &&
+      typeof value.y === 'number' &&
+      Number.isFinite(value.y))
+  );
+}
+
 function validateImage(value: unknown): value is ImageElement {
   return (
     isRecord(value) &&
@@ -170,6 +181,9 @@ function validateImage(value: unknown): value is ImageElement {
     Number.isFinite(value.opacity) &&
     value.opacity >= 0 &&
     value.opacity <= 1 &&
+    validateImagePivot(value.pivot) &&
+    (value.pivotPointId === undefined ||
+      (typeof value.pivotPointId === 'string' && value.pivotPointId.length > 0)) &&
     typeof value.keepAspectRatio === 'boolean'
   );
 }

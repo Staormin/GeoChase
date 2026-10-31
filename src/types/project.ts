@@ -181,6 +181,10 @@ export interface ImageElement {
   rotation: number;
   opacity: number;
   keepAspectRatio: boolean;
+  /** Rotation pivot in image fractions from its top-left corner; can lie outside the image. */
+  pivot?: { x: number; y: number };
+  /** Existing point used as a fixed map pivot; local pivot remains a fallback. */
+  pivotPointId?: string;
   groupId?: string;
   listOrder?: number;
   noteId?: string;

@@ -1,5 +1,6 @@
 {
   "imageElement": {
+    "anchoredPivot": "Pivot anchored to {name}",
     "done": "Done",
     "edit": "Edit image",
     "exportError": "Could not export the images. Check that they are still available in this browser.",
@@ -11,6 +12,7 @@
     "label": "Image",
     "loadError": "Could not load the image “{name}”.",
     "manipulate": "Move or transform {name}",
+    "movePivot": "Move rotation pivot",
     "name": "Image name (optional)",
     "opacity": "Opacity",
     "opacityValue": "Opacity {value}%",
@@ -18,7 +20,11 @@
     "pdfPage": "Page to import (of {count})",
     "pdfPageName": "{name} — page {page}",
     "pdfScale": "Import scale: 1:{scale}",
+    "pivot": "Pivot",
+    "pivotHint": "Drag the marker or click the map. The pivot snaps to nearby existing points.",
+    "placePivot": "Place rotation pivot",
     "plural": "Images",
+    "resetPivot": "Reset pivot to centre",
     "resize": "Resize image",
     "rotate": "Rotate image",
     "rotation": "Rotation",

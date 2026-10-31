@@ -211,6 +211,11 @@ for (const source of ['image', 'pdf']) {
       await expect(page.locator('.map-image')).toBeVisible();
       await expect.poll(() => images(page)).toHaveLength(1);
     }
+    await placePivot(page);
+    if (source === 'image') {
+      await anchorPivotToPoint(page, 'point-1');
+      await expect.poll(async () => (await images(page))[0]?.pivotPointId).toBe('point-1');
+    }
     const original = (await images(page))[0]!;
     await page.getByTestId('save-menu-btn').click();
     const download = page.waitForEvent('download');
@@ -596,3 +601,183 @@ test('zoom during dragging, cancellation and project switching preserve separate
   await expect.poll(async () => (await images(page))[0]).toEqual(secondImage);
   await expect(page.locator('.map-image img')).toBeVisible();
 });
+
+async function placePivot(page: Page) {
+  await page.locator('[data-layer-type="image"] .layer-item-info').first().click();
+  await waitForMapIdle(page);
+  const box = (await page.locator('.map-image-selected').boundingBox())!;
+  await page.getByRole('button', { name: 'Place rotation pivot', exact: true }).click();
+  await page.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.4);
+  await expect(page.locator('[data-image-handle="pivot"]')).toBeVisible();
+  await expect.poll(async () => (await images(page))[0]?.pivot?.x).toBeCloseTo(0.3, 2);
+  await expect.poll(async () => (await images(page))[0]?.pivot?.y).toBeCloseTo(0.4, 2);
+}
+
+async function pivotPixel(page: Page) {
+  const box = (await page.locator('[data-image-handle="pivot"]').boundingBox())!;
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+}
+async function expectPivotAt(page: Page, point: { x: number; y: number }) {
+  await expect
+    .poll(async () => {
+      const actual = await pivotPixel(page);
+      return Math.hypot(actual.x - point.x, actual.y - point.y);
+    })
+    .toBeLessThan(0.5);
+}
+
+test('custom pivot remains fixed during live rotation, survives undo/reload and can be moved or reset', async ({
+  page,
+  blankProject,
+}) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await importImage(page);
+  const original = (await images(page))[0]!;
+  await placePivot(page);
+  const anchored = (await images(page))[0]!;
+  expect(anchored.center).toEqual(original.center);
+  const pivot = await pivotPixel(page);
+  const field = page.getByRole('spinbutton', { name: 'Rotation', exact: true });
+  await field.fill('45');
+  await expect(page.locator('.map-image-selected')).toHaveAttribute('style', /rotate\(45deg\)/);
+  await expectPivotAt(page, pivot);
+  await field.hover();
+  await page.mouse.wheel(0, -120);
+  await expect(field).toHaveValue('46');
+  await expectPivotAt(page, pivot);
+  await field.press('Tab');
+  await expect.poll(async () => (await images(page))[0]!.rotation).toBe(46);
+  const rotated = (await images(page))[0]!;
+  expect(rotated.center).not.toEqual(original.center);
+  expect(rotated.width).toBe(original.width);
+  expect(rotated.height).toBe(original.height);
+  await page.getByTestId('undo-btn').click();
+  await expect.poll(async () => (await images(page))[0]).toEqual(anchored);
+  await expectPivotAt(page, pivot);
+  await page.getByTestId('redo-btn').click();
+  await expect.poll(async () => (await images(page))[0]).toEqual(rotated);
+  await expectPivotAt(page, pivot);
+  await page.reload();
+  await page.locator('[data-layer-type="image"] .layer-item-info').click();
+  await waitForMapIdle(page);
+  expect((await images(page))[0]).toEqual(rotated);
+  await expect(page.locator('[data-image-handle="pivot"]')).toBeVisible();
+  await drag(page, page.locator('[data-image-handle="pivot"]'), 30, -15);
+  await expect.poll(async () => (await images(page))[0]!.pivot).not.toEqual(rotated.pivot);
+  const movedPivot = (await images(page))[0]!;
+  expect(movedPivot.center).toEqual(rotated.center);
+  expect(movedPivot.rotation).toBe(rotated.rotation);
+  const nextPivot = await pivotPixel(page);
+  const handle = (await page.locator('[data-image-handle="rotate"]').boundingBox())!;
+  const vx = handle.x + handle.width / 2 - nextPivot.x;
+  const vy = handle.y + handle.height / 2 - nextPivot.y;
+  const delta = Math.PI / 6;
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    nextPivot.x + vx * Math.cos(delta) - vy * Math.sin(delta),
+    nextPivot.y + vx * Math.sin(delta) + vy * Math.cos(delta),
+    { steps: 12 }
+  );
+  await expectPivotAt(page, nextPivot);
+  await page.mouse.up();
+  await expect.poll(async () => (await images(page))[0]!.rotation).toBeCloseTo(76, 0);
+  await expectPivotAt(page, nextPivot);
+  await page.getByTestId('undo-btn').click();
+  await expect.poll(async () => (await images(page))[0]).toEqual(movedPivot);
+  await page.getByRole('button', { name: 'Reset pivot to centre', exact: true }).click();
+  await expect(page.locator('[data-image-handle="pivot"]')).toHaveCount(0);
+  await expect.poll(async () => (await images(page))[0]!.pivot).toBeUndefined();
+  expect((await images(page))[0]!.center).toEqual(movedPivot.center);
+  await page.getByTestId('undo-btn').click();
+  await expect.poll(async () => (await images(page))[0]).toEqual(movedPivot);
+});
+
+async function pointPixel(page: Page, id: string) {
+  return page.evaluate((id) => {
+    const element = document.querySelector('#map') as HTMLElement & {
+      __vueParentComponent: { provides: Record<symbol, MapContainer> };
+    };
+    const provides = element.__vueParentComponent.provides;
+    const key = Object.getOwnPropertySymbols(provides).find(
+      (symbol) => symbol.description === 'mapContainer'
+    )!;
+    const container = provides[key]!;
+    const geometry = container.pointsSource.value!.getFeatureById(id)!.getGeometry()!;
+    const extent = geometry.getExtent();
+    const pixel = container.map.value!.getPixelFromCoordinate([extent[0]!, extent[1]!]);
+    return { x: pixel[0]!, y: pixel[1]! };
+  }, id);
+}
+
+test('anchors rotation to an existing point, follows its coordinates and restores the link after deletion', async ({
+  page,
+  blankProject,
+}) => {
+  test.setTimeout(60_000);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await importImage(page);
+  const original = (await images(page))[0]!;
+  await expect(page.getByRole('combobox', { name: 'Anchor point', exact: true })).toHaveCount(0);
+  await anchorPivotToPoint(page, 'point-1');
+  await expect.poll(async () => (await images(page))[0]!.pivotPointId).toBe('point-1');
+  expect((await images(page))[0]!.center).toEqual(original.center);
+  await expectPivotAt(page, await pointPixel(page, 'point-1'));
+  const rotation = page.getByRole('spinbutton', { name: 'Rotation', exact: true });
+  await rotation.fill('35');
+  await expectPivotAt(page, await pointPixel(page, 'point-1'));
+  await rotation.press('Tab');
+  await expect.poll(async () => (await images(page))[0]!.rotation).toBe(35);
+  const rotated = (await images(page))[0]!;
+
+  const pointRow = page.locator('[data-layer-id="point-1"]');
+  await pointRow.locator('.layer-item-actions button').click();
+  await page.locator('.v-menu .v-list:visible').getByText('Edit', { exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Coordinates', { exact: true }).fill('49.1, 2.5');
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await waitForMapIdle(page);
+  await expectPivotAt(page, await pointPixel(page, 'point-1'));
+  expect((await images(page))[0]!.center).toEqual(rotated.center);
+  await rotation.fill('70');
+  await expectPivotAt(page, await pointPixel(page, 'point-1'));
+  await rotation.press('Tab');
+  await expect.poll(async () => (await images(page))[0]!.rotation).toBe(70);
+  const linked = (await images(page))[0]!;
+  const fixed = await pointPixel(page, 'point-1');
+  await pointRow.locator('.layer-item-actions button').click();
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.locator('.v-menu .v-list:visible').getByText('Delete', { exact: true }).click();
+  await expect(pointRow).toHaveCount(0);
+  await expect.poll(async () => (await images(page))[0]!.pivotPointId).toBeUndefined();
+  await expectPivotAt(page, fixed);
+  await page.getByTestId('undo-btn').click();
+  await expect(pointRow).toBeVisible();
+  await expect.poll(async () => (await images(page))[0]).toEqual(linked);
+  await expect(page.locator('[data-image-handle="pivot"]')).toHaveClass(/image-pivot-linked/);
+  await expectPivotAt(page, await pointPixel(page, 'point-1'));
+  await page.reload();
+  await page.locator('[data-layer-type="image"] .layer-item-info').click();
+  await waitForMapIdle(page);
+  await expect(page.locator('[data-image-handle="pivot"]')).toHaveClass(/image-pivot-linked/);
+  await expectPivotAt(page, await pointPixel(page, 'point-1'));
+  await drag(page, page.locator('[data-image-handle="pivot"]'), 40, 0);
+  await expect.poll(async () => (await images(page))[0]!.pivotPointId).toBeUndefined();
+  await expect(page.locator('[data-image-handle="pivot"]')).not.toHaveClass(/image-pivot-linked/);
+});
+
+async function anchorPivotToPoint(page: Page, id: string) {
+  await page.getByRole('button', { name: 'Place rotation pivot', exact: true }).click();
+  const origin = await pivotPixel(page);
+  const target = await pointPixel(page, id);
+  await page.mouse.move(origin.x, origin.y);
+  await page.mouse.down();
+  // Land near the point rather than exactly on it to verify magnetic snapping.
+  await page.mouse.move(target.x + 6, target.y + 3, { steps: 12 });
+  await expect(page.locator('[data-image-handle="pivot"]')).toHaveClass(/image-pivot-linked/);
+  await expectPivotAt(page, target);
+  await page.mouse.up();
+  await expect.poll(async () => (await images(page))[0]!.pivotPointId).toBe(id);
+}

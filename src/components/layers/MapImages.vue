@@ -4,7 +4,10 @@
     :key="image.id"
     :image="image"
     :opacity-preview="selected?.id === image.id ? opacity / 100 : undefined"
+    :placing-pivot="selected?.id === image.id && placingPivot"
     :rotation-preview="selected?.id === image.id ? rotationPreview : undefined"
+    @cancel-pivot="placingPivot = false"
+    @pivot-placed="placingPivot = false"
   />
 
   <div
@@ -12,7 +15,7 @@
     :aria-label="$t('imageElement.edit')"
     class="image-edit-bar"
     role="group"
-    @keydown.esc="ui.selectedImageId = null"
+    @keydown.esc="placingPivot ? (placingPivot = false) : (ui.selectedImageId = null)"
     @pointerdown.stop
   >
     <label class="image-name-field">
@@ -58,6 +61,31 @@
     </label>
 
     <v-btn
+      :aria-label="$t('imageElement.placePivot')"
+      :aria-pressed="placingPivot"
+      :color="placingPivot ? 'primary' : undefined"
+      prepend-icon="mdi-crosshairs-gps"
+      size="small"
+      :title="$t('imageElement.placePivot')"
+      variant="text"
+      @click="placingPivot = !placingPivot"
+      >{{ $t('imageElement.pivot') }}</v-btn
+    >
+
+    <v-btn
+      v-if="selected.pivot || selected.pivotPointId"
+      :aria-label="$t('imageElement.resetPivot')"
+      icon="mdi-image-filter-center-focus"
+      size="small"
+      :title="$t('imageElement.resetPivot')"
+      variant="text"
+      @click="
+        layers.updateImage(selected.id, { pivot: undefined, pivotPointId: undefined });
+        placingPivot = false;
+      "
+    />
+
+    <v-btn
       :aria-label="$t('imageElement.keepAspectRatio')"
       :aria-pressed="selected.keepAspectRatio"
       :color="selected.keepAspectRatio ? 'primary' : undefined"
@@ -71,11 +99,16 @@
     <v-btn color="primary" size="small" @click="ui.selectedImageId = null">{{
       $t('imageElement.done')
     }}</v-btn>
+
+    <span v-if="placingPivot" class="image-pivot-hint" role="status">{{
+      $t('imageElement.pivotHint')
+    }}</span>
   </div>
 </template>
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useMapContext } from '@/composables/mapContext';
+import { rotateImage } from '@/services/imageElements';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
@@ -90,6 +123,13 @@ const selected = computed(() =>
   )
 );
 const opacity = ref(100);
+const placingPivot = ref(false);
+watch(
+  () => selected.value?.id,
+  () => {
+    placingPivot.value = false;
+  }
+);
 const rotationPreview = ref<number>();
 const rotationInput = ref('0');
 watch(
@@ -118,6 +158,7 @@ watch(
   (map, _, onCleanup) => {
     if (!map) return;
     const deselect = () => {
+      if (placingPivot.value) return;
       ui.selectedImageId = null;
     };
     map.on('singleclick', deselect);
@@ -136,8 +177,10 @@ function rotate(event: Event) {
   if (!selected.value) return;
   const input = event.target as HTMLInputElement;
   const value = input.valueAsNumber;
-  if (Number.isFinite(value))
-    layers.updateImage(selected.value.id, { rotation: ((value % 360) + 360) % 360 });
+  if (Number.isFinite(value)) {
+    const rotated = rotateImage(selected.value, value, layers.points);
+    if (Math.abs(rotated.center.lat) <= 85.06) layers.updateImage(selected.value.id, rotated);
+  }
   input.value = String(Math.round(selected.value.rotation * 10) / 10);
   rotationInput.value = input.value;
   rotationPreview.value = undefined;
@@ -180,6 +223,11 @@ function wheelRotate(event: WheelEvent) {
   display: grid;
   gap: 2px;
   font-size: 11px;
+  color: var(--muted);
+}
+.image-pivot-hint {
+  flex-basis: 100%;
+  font-size: 12px;
   color: var(--muted);
 }
 .image-edit-bar input {

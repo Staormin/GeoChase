@@ -6,7 +6,11 @@
         v-show="visible"
         :aria-label="selected ? $t('imageElement.manipulate', { name: image.name }) : undefined"
         class="map-image"
-        :class="{ 'map-image-selected': selected, 'map-image-highlighted': highlighted }"
+        :class="{
+          'map-image-selected': selected,
+          'map-image-highlighted': highlighted,
+          'map-image-placing-pivot': selected && placingPivot,
+        }"
         :data-image-id="image.id"
         :role="selected ? 'group' : undefined"
         :style="imageStyle"
@@ -28,6 +32,24 @@
         />
 
         <template v-if="selected && interactive">
+          <button
+            v-if="placement.pivot || placement.pivotPointId || placingPivot"
+            :aria-label="$t('imageElement.movePivot')"
+            class="image-pivot-handle"
+            :class="{ 'image-pivot-linked': pivotPoint }"
+            data-image-handle="pivot"
+            :style="{ left: `${pivotPosition.x * 100}%`, top: `${pivotPosition.y * 100}%` }"
+            :title="
+              pivotPoint
+                ? $t('imageElement.anchoredPivot', { name: pivotPoint.name })
+                : $t('imageElement.movePivot')
+            "
+            type="button"
+            @pointerdown.stop="start($event, 'pivot')"
+          >
+            <v-icon icon="mdi-crosshairs-gps" size="18" />
+          </button>
+
           <button
             v-for="handle in imageHandles"
             :key="handle.join(',')"
@@ -64,7 +86,14 @@ import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useMapContext } from '@/composables/mapContext';
 import { readImageAsset } from '@/services/imageAssets';
-import { imageHandles, resizeImage } from '@/services/imageElements';
+import {
+  imageHandles,
+  imagePivotCoordinate,
+  imagePivotFromMap,
+  resizeImage,
+  rotateImage,
+  snapImagePivot,
+} from '@/services/imageElements';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
@@ -72,7 +101,9 @@ const props = defineProps<{
   image: ImageElement;
   opacityPreview?: number;
   rotationPreview?: number;
+  placingPivot?: boolean;
 }>();
+const emit = defineEmits<{ 'pivot-placed': []; 'cancel-pivot': [] }>();
 const mapContainer = useMapContext();
 const ui = useUIStore();
 const layers = useLayersStore();
@@ -86,7 +117,19 @@ const viewRotation = ref(0);
 // zoom remains available over the image while its editing controls are active.
 const overlay = new Overlay({ positioning: 'center-center', stopEvent: false, insertFirst: false });
 overlay.set('imageElement', true);
-const placement = computed(() => preview.value ?? props.image);
+const placement = computed(
+  () =>
+    preview.value ??
+    (props.rotationPreview === undefined
+      ? props.image
+      : { ...props.image, ...rotateImage(props.image, props.rotationPreview, layers.points) })
+);
+const pivotPosition = computed(() =>
+  imagePivotFromMap(placement.value, imagePivotCoordinate(placement.value, layers.points), false)
+);
+const pivotPoint = computed(() =>
+  layers.points.find((point) => point.id === placement.value.pivotPointId)
+);
 const selected = computed(() => ui.selectedImageId === props.image.id && interactive.value);
 const visible = computed(() => ui.isElementVisible('image', props.image.id));
 const interactive = computed(
@@ -100,13 +143,13 @@ const highlighted = computed(
 const imageStyle = computed(() => ({
   width: `${placement.value.width / resolution.value}px`,
   height: `${placement.value.height / resolution.value}px`,
-  transform: `translate(-50%, -50%) rotate(${(props.rotationPreview ?? placement.value.rotation) + (viewRotation.value * 180) / Math.PI}deg)`,
+  transform: `translate(-50%, -50%) rotate(${placement.value.rotation + (viewRotation.value * 180) / Math.PI}deg)`,
   pointerEvents: selected.value ? ('auto' as const) : ('none' as const),
 }));
 let gesture: {
   pointerId: number;
   target: HTMLElement;
-  mode: 'move' | 'resize' | 'rotate';
+  mode: 'move' | 'resize' | 'rotate' | 'pivot';
   start: ImageElement;
   coordinate: number[];
   angle: number;
@@ -147,9 +190,16 @@ watch(
     };
     update();
     map.on('postrender', update);
+    const placeFromMap = (event: { coordinate: number[] }) => {
+      if (!selected.value || !props.placingPivot) return;
+      layers.updateImage(props.image.id, pivotAt(props.image, event.coordinate));
+      emit('pivot-placed');
+    };
+    map.on('singleclick', placeFromMap);
     onCleanup(() => {
       cancel();
       map.un('postrender', update);
+      map.un('singleclick', placeFromMap);
       map.removeOverlay(overlay);
     });
   },
@@ -178,9 +228,18 @@ function eventCoordinate(event: PointerEvent) {
   const map = mapContainer.map.value;
   return map?.getCoordinateFromPixel(map.getEventPixel(event));
 }
+function pivotAt(image: ImageElement, coordinate: number[]) {
+  const map = mapContainer.map.value!;
+  return snapImagePivot(
+    image,
+    coordinate,
+    layers.points.filter((point) => ui.isElementVisible('point', point.id)),
+    (coordinate) => map.getPixelFromCoordinate(coordinate)
+  );
+}
 function start(
   event: PointerEvent,
-  mode: 'move' | 'resize' | 'rotate',
+  mode: 'move' | 'resize' | 'rotate' | 'pivot',
   handle: ImageHandle = [1, 1]
 ) {
   if (!selected.value || event.button !== 0 || ui.imageTransformActive) return;
@@ -189,9 +248,14 @@ function start(
   event.preventDefault();
   event.stopPropagation();
   ui.sidebarElementRequest = { elementType: 'image', elementId: props.image.id };
-  const center = fromLonLat([props.image.center.lon, props.image.center.lat]);
   const target = event.currentTarget as HTMLElement;
   target.focus({ preventScroll: true });
+  if (props.placingPivot && mode !== 'pivot') {
+    layers.updateImage(props.image.id, pivotAt(props.image, coordinate));
+    emit('pivot-placed');
+    return;
+  }
+  const pivot = imagePivotCoordinate(props.image, layers.points);
   target.setPointerCapture(event.pointerId);
   gesture = {
     pointerId: event.pointerId,
@@ -200,7 +264,7 @@ function start(
     handle,
     start: { ...props.image, center: { ...props.image.center } },
     coordinate,
-    angle: Math.atan2(center[1]! - coordinate[1]!, coordinate[0]! - center[0]!),
+    angle: Math.atan2(pivot[1]! - coordinate[1]!, coordinate[0]! - pivot[0]!),
   };
   ui.imageTransformActive = true;
 }
@@ -211,28 +275,42 @@ function move(event: PointerEvent) {
   const { start: original, mode, handle } = gesture;
   const center = fromLonLat([original.center.lon, original.center.lat]);
   let next: ImageElement;
-  if (mode === 'move') {
-    const [lon, lat] = toLonLat([
-      center[0]! + coordinate[0]! - gesture.coordinate[0]!,
-      center[1]! + coordinate[1]! - gesture.coordinate[1]!,
-    ]);
-    next = { ...original, center: { lon: lon!, lat: lat! } };
-  } else if (mode === 'resize') {
-    next = {
-      ...original,
-      ...resizeImage(
-        original,
-        coordinate,
-        handle,
-        resolution.value * 8,
-        event.shiftKey ? !original.keepAspectRatio : original.keepAspectRatio
-      ),
-    };
-  } else {
-    const angle = Math.atan2(center[1]! - coordinate[1]!, coordinate[0]! - center[0]!);
-    let rotation = original.rotation + ((angle - gesture.angle) * 180) / Math.PI;
-    if (event.shiftKey) rotation = Math.round(rotation / 15) * 15;
-    next = { ...original, rotation: ((rotation % 360) + 360) % 360 };
+  switch (mode) {
+    case 'move': {
+      const [lon, lat] = toLonLat([
+        center[0]! + coordinate[0]! - gesture.coordinate[0]!,
+        center[1]! + coordinate[1]! - gesture.coordinate[1]!,
+      ]);
+      next = { ...original, center: { lon: lon!, lat: lat! } };
+
+      break;
+    }
+    case 'pivot': {
+      next = { ...original, ...pivotAt(original, coordinate) };
+
+      break;
+    }
+    case 'resize': {
+      next = {
+        ...original,
+        ...resizeImage(
+          original,
+          coordinate,
+          handle,
+          resolution.value * 8,
+          event.shiftKey ? !original.keepAspectRatio : original.keepAspectRatio
+        ),
+      };
+
+      break;
+    }
+    default: {
+      const pivot = imagePivotCoordinate(original, layers.points);
+      const angle = Math.atan2(pivot[1]! - coordinate[1]!, coordinate[0]! - pivot[0]!);
+      let rotation = original.rotation + ((angle - gesture.angle) * 180) / Math.PI;
+      if (event.shiftKey) rotation = Math.round(rotation / 15) * 15;
+      next = { ...original, ...rotateImage(original, rotation, layers.points) };
+    }
   }
   if (
     Math.abs(next.center.lat) <= 85.06 &&
@@ -251,7 +329,10 @@ function release() {
 }
 function finish(event: PointerEvent) {
   if (!gesture || event.pointerId !== gesture.pointerId) return;
-  const updated = preview.value;
+  const movedPivot = gesture.mode === 'pivot';
+  const updated =
+    preview.value ??
+    (movedPivot ? { ...gesture.start, ...pivotAt(gesture.start, gesture.coordinate) } : null);
   release();
   // Commit once per gesture so Undo restores the complete previous placement.
   if (updated)
@@ -260,8 +341,11 @@ function finish(event: PointerEvent) {
       width: updated.width,
       height: updated.height,
       rotation: updated.rotation,
+      pivot: updated.pivot,
+      pivotPointId: updated.pivotPointId,
     });
   preview.value = null;
+  if (movedPivot) emit('pivot-placed');
 }
 function cancel() {
   release();
@@ -273,12 +357,31 @@ function handleKey(event: KeyboardEvent) {
     event.preventDefault();
     event.stopPropagation();
     if (gesture) cancel();
+    else if (props.placingPivot) emit('cancel-pivot');
     else ui.selectedImageId = null;
     return;
   }
   if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key) || gesture) return;
   event.preventDefault();
   event.stopPropagation();
+  if ((event.target as HTMLElement).closest('[data-image-handle="pivot"]')) {
+    const pivot = pivotPosition.value;
+    const step = resolution.value * (event.shiftKey ? 10 : 1);
+    layers.updateImage(props.image.id, {
+      pivotPointId: undefined,
+      pivot: {
+        x:
+          pivot.x +
+          (event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0) /
+            props.image.width,
+        y:
+          pivot.y +
+          (event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0) /
+            props.image.height,
+      },
+    });
+    return;
+  }
   const delta = resolution.value * (event.shiftKey ? 10 : 1);
   const center = fromLonLat([props.image.center.lon, props.image.center.lat]);
   const dx = event.key === 'ArrowLeft' ? -delta : event.key === 'ArrowRight' ? delta : 0;
@@ -305,6 +408,27 @@ onBeforeUnmount(cancel);
 .map-image-selected {
   cursor: move;
   touch-action: none;
+}
+.map-image-placing-pivot {
+  cursor: crosshair;
+}
+.image-pivot-handle {
+  position: absolute;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  cursor: grab;
+  touch-action: none;
+}
+.image-pivot-linked {
+  color: var(--text);
 }
 .map-image img {
   display: block;
@@ -339,10 +463,11 @@ onBeforeUnmount(cancel);
   left: 50%;
   width: 28px;
   height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
   border-radius: 50%;
   cursor: grab;
-  font-size: 20px;
-  line-height: 20px;
 }
 .image-rotate-handle::after {
   content: '';
@@ -352,6 +477,7 @@ onBeforeUnmount(cancel);
   background: var(--accent);
   left: 50%;
   top: 100%;
+  transform: translateX(-50%);
   pointer-events: none;
 }
 @media (pointer: coarse) {
