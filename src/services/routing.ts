@@ -38,7 +38,7 @@ export async function calculateRoute(
   intermediates: Array<{ lat: number; lon: number }> = []
 ): Promise<RouteData> {
   const params = new URLSearchParams({
-    resource: 'bdtopo-osrm',
+    resource: 'bdtopo-valhalla',
     start: `${start.lon},${start.lat}`,
     end: `${end.lon},${end.lat}`,
     profile,

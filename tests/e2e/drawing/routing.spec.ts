@@ -104,11 +104,13 @@ test('route calculation, persistence, visibility, editing and GPX export', async
   await page.getByRole('button', { name: 'Calculate and save', exact: true }).click();
   const response = await responsePromise;
   expect(response.ok()).toBeTruthy();
+  expect(new URL(response.url()).searchParams.get('resource')).toBe('bdtopo-valhalla');
   expect(new URL(response.url()).searchParams.get('start')).toBe('2.337306,48.849319');
+  const calculated = await response.json();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   const row = page.locator('[data-layer-type="route"]').filter({ hasText: 'Paris walking route' });
   await expect(row).toBeVisible();
-  await expect(row).toContainText('2.50 km');
+  await expect(row).toContainText(`${(calculated.distance / 1000).toFixed(2)} km`);
   await expect
     .poll(async () =>
       page.evaluate(

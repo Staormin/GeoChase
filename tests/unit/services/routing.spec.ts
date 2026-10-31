@@ -35,6 +35,7 @@ describe('IGN routing', () => {
       )
     ).toEqual(route);
     const url = new URL(fetch.mock.calls[0]![0]);
+    expect(url.searchParams.get('resource')).toBe('bdtopo-valhalla');
     expect(url.searchParams.has('intermediates')).toBe(false);
     expect(url.searchParams.get('start')).toBe('2,48');
     expect(url.searchParams.get('distanceUnit')).toBe('meter');
