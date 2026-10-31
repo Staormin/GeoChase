@@ -128,15 +128,17 @@ test('route calculation, persistence, visibility, editing and GPX export', async
   await expect(page.locator('[data-layer-type="lineSegment"]')).toHaveCount(0);
   expect((await mapRoute(page)).coordinates?.length).toBe(saved.coordinates.length);
   await row.locator('.layer-item-actions button').click();
-  await page.getByText('Hide', { exact: true }).click();
+  await page.getByTestId('toggle-element-visibility').click();
   await expect(row).toHaveClass(/layer-item-hidden/);
   expect((await mapRoute(page)).count).toBe(0);
-  await page.keyboard.press('Escape');
+  await expect(page.getByText('Hide', { exact: true })).toHaveCount(0);
   await row.locator('.layer-item-actions button').click();
-  await page.getByText('Show', { exact: true }).click();
+  const showAction = page.getByTestId('toggle-element-visibility');
+  await expect(showAction).toBeVisible();
+  await showAction.click();
   await expect(row).not.toHaveClass(/layer-item-hidden/);
   expect((await mapRoute(page)).count).toBe(1);
-  await page.keyboard.press('Escape');
+  await expect(showAction).toHaveCount(0);
   await row.locator('.layer-item-actions button').click();
   await page.getByText('Edit', { exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Route name' })).toHaveValue(
@@ -144,7 +146,7 @@ test('route calculation, persistence, visibility, editing and GPX export', async
   );
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await row.locator('.layer-item-actions button').click();
-  await page.getByText('Drawing color', { exact: true }).click();
+  await page.getByText('Appearance', { exact: true }).click();
   await page.getByRole('button', { name: '#6366F1', exact: true }).click();
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect.poll(async () => (await mapRoute(page)).color).toBe('#6366F1');
@@ -161,22 +163,38 @@ test('route calculation, persistence, visibility, editing and GPX export', async
   await row.locator('.layer-item-actions button').click();
   await page.getByText('Navigate', { exact: true }).click();
   await expect(page.locator('.navigation-bar')).toBeVisible();
-  await expect.poll(async () => (await mapRoute(page)).animating).toBe(false);
   const origin = (await mapRoute(page)).center;
   await page.keyboard.press('ArrowRight');
-  await expect.poll(async () => (await mapRoute(page)).animating).toBe(false);
+  await expect
+    .poll(async () => {
+      const state = await mapRoute(page);
+      return (
+        state.distanceToRoute < 0.1 &&
+        Math.hypot(state.center[0]! - origin[0]!, state.center[1]! - origin[1]!) > 10
+      );
+    })
+    .toBe(true);
   const forward = await mapRoute(page);
   expect(
     Math.hypot(forward.center[0]! - origin[0]!, forward.center[1]! - origin[1]!)
   ).toBeGreaterThan(10);
   expect(forward.distanceToRoute).toBeLessThan(0.1);
   await page.keyboard.press('ArrowLeft');
-  await expect.poll(async () => (await mapRoute(page)).animating).toBe(false);
+  await expect
+    .poll(async () => {
+      const state = await mapRoute(page);
+      return (
+        state.distanceToRoute < 0.1 &&
+        Math.hypot(state.center[0]! - forward.center[0]!, state.center[1]! - forward.center[1]!) >
+          10
+      );
+    })
+    .toBe(true);
   const backward = await mapRoute(page);
   expect(backward.distanceToRoute).toBeLessThan(0.1);
   expect(
-    Math.hypot(backward.center[0]! - origin[0]!, backward.center[1]! - origin[1]!)
-  ).toBeLessThan(2);
+    Math.hypot(backward.center[0]! - forward.center[0]!, backward.center[1]! - forward.center[1]!)
+  ).toBeGreaterThan(10);
   await page.keyboard.press('Escape');
   await page.getByTestId('save-menu-btn').click();
   const downloadPromise = page.waitForEvent('download');

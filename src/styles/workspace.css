@@ -300,3 +300,114 @@ button.layers-section-title {
 [data-palette='christmasTree'] {
   --accent: #ffd700;
 }
+
+/* --- Thème Halloween : Animation lente Orange/Noir avec flash vert + Jumpscare au centre --- */
+@keyframes halloweenSlowPulse {
+  0%,
+  70% {
+    box-shadow:
+      0 0 12px #ff5500,
+      0 0 2px #ff5500;
+    border-color: #ff5500;
+    opacity: 1;
+  }
+  74% {
+    box-shadow: none;
+    border-color: #1a0f28;
+    opacity: 0.15;
+  }
+  78%,
+  82% {
+    box-shadow:
+      0 0 18px #39ff14,
+      0 0 35px #39ff14;
+    border-color: #39ff14;
+    color: #39ff14 !important;
+    opacity: 1;
+  }
+  86% {
+    box-shadow: none;
+    border-color: #1a0f28;
+    opacity: 0.2;
+  }
+  92%,
+  100% {
+    box-shadow:
+      0 0 12px #ff5500,
+      0 0 2px #ff5500;
+    border-color: #ff5500;
+    opacity: 1;
+  }
+}
+
+/* Animation du fantôme avec explosion / jumpscare terrifiant au centre de l'écran */
+@keyframes ghostDrift {
+  0% {
+    transform: translate(-100px, 20vh) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.4;
+  }
+  /* Arrivée au centre (à 50% du cycle) : GROSSE EXPLOSION / JUMPSCARE */
+  48% {
+    transform: translate(45vw, 42vh) scale(1.2);
+    opacity: 0.5;
+    filter: drop-shadow(0 0 20px #39ff14);
+  }
+  50% {
+    transform: translate(50vw, 50vh) scale(4.5) rotate(15deg);
+    opacity: 0.55;
+    filter: drop-shadow(0 0 60px #ff0000) drop-shadow(0 0 90px #39ff14) brightness(2);
+  }
+  /* Disparition subite après l'explosion */
+  53% {
+    transform: translate(50vw, 50vh) scale(6) rotate(-20deg);
+    opacity: 0;
+    filter: drop-shadow(0 0 0px #ff0000);
+  }
+  100% {
+    transform: translate(110vw, 80vh) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-palette='halloween'] .v-btn,
+  [data-palette='halloween'] button,
+  [data-palette='halloween'] .ol-control button {
+    animation: halloweenSlowPulse 6.5s infinite ease-in-out !important;
+  }
+}
+
+[data-palette='halloween'] {
+  --accent: #ff5500;
+}
+
+/* Toile d'araignée décorative nette dans le coin supérieur droit */
+[data-palette='halloween']::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 160px;
+  height: 160px;
+  pointer-events: none;
+  z-index: 999;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' stroke='%238a2be2' stroke-width='2' fill='none'%3E%3Cpath d='M100 0 L0 0 L0 100'/%3E%3Cpath d='M100 0 Q 50 50 0 100'/%3E%3Cpath d='M100 25 Q 40 65 0 75'/%3E%3Cpath d='M100 55 Q 25 75 0 45'/%3E%3Cpath d='M75 0 Q 55 45 75 100'/%3E%3Cpath d='M45 0 Q 35 50 45 100'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 6px rgba(138, 43, 226, 0.8));
+}
+
+/* Fantôme 👻 avec effet d'explosion / jumpscare fulgurant au centre */
+[data-palette='halloween']::before {
+  content: '👻';
+  position: fixed;
+  top: 0;
+  left: 0;
+  font-size: 4.5rem;
+  pointer-events: none;
+  z-index: 998;
+  animation: ghostDrift 20s infinite ease-in-out;
+}

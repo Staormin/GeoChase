@@ -243,6 +243,19 @@ const definitions = [
     '#d67b9a',
     '#c8e1de',
   ],
+  [
+    'halloween',
+    'halloween',
+    true,
+    '#09050f',
+    '#130a1c',
+    '#1e102e',
+    '#ff6600',
+    '#39ff14',
+    '#f2edf9',
+    '#9d8cb5',
+    '#3b2356',
+  ],
 ] as const;
 
 export const palettes: Palette[] = definitions.map(([id, theme]) => ({ id, theme }));

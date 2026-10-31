@@ -1,5 +1,12 @@
 <template>
-  <v-menu v-model="isOpen" :close-on-content-click="false" location="bottom" :target="position">
+  <v-menu
+    v-model="isOpen"
+    attach="body"
+    :close-on-content-click="false"
+    location="bottom"
+    :target="position"
+    :z-index="3000"
+  >
     <template v-if="!position" #activator="{ props: activatorProps }">
       <v-btn
         v-bind="activatorProps"
@@ -12,7 +19,7 @@
 
     <v-list density="compact">
       <!-- Visibility toggle -->
-      <v-list-item @click="handleToggleVisibility">
+      <v-list-item data-testid="toggle-element-visibility" @click="handleToggleVisibility">
         <template #prepend>
           <v-icon :icon="isVisible ? 'mdi-eye' : 'mdi-eye-off'" size="small" />
         </template>
@@ -120,7 +127,8 @@
   <DrawingColorDialog
     v-model="colorPickerOpen"
     :color="getElement()?.color || (elementType === 'polygon' ? '#90EE90' : '#000000')"
-    @save="saveColor"
+    :weight="(getElement() as any)?.weight ?? 4"
+    @save="saveAppearance"
   />
 </template>
 
@@ -170,9 +178,41 @@ function openColorPicker() {
   colorPickerOpen.value = true;
 }
 
-function saveColor(color: string) {
+function saveAppearance(color: string, weight: number) {
+  const element = getElement();
+  if (!element) return;
+
+  const updatedElement = {
+    ...element,
+    color,
+    weight,
+  };
+
+  switch (props.elementType) {
+    case 'route': {
+      layersStore.updateRoute(props.elementId, updatedElement as RouteElement);
+      if (uiStore.isElementVisible('route', props.elementId)) {
+        drawing.redrawRoute(updatedElement as RouteElement);
+      }
+      break;
+    }
+    case 'lineSegment': {
+      layersStore.updateLineSegment(props.elementId, updatedElement as LineSegmentElement);
+      break;
+    }
+    case 'circle': {
+      layersStore.updateCircle(props.elementId, updatedElement as CircleElement);
+      break;
+    }
+    case 'polygon': {
+      layersStore.updatePolygon(props.elementId, updatedElement as PolygonElement);
+      break;
+    }
+  }
+
   drawing.updateElementColor(props.elementType, props.elementId, color);
 }
+
 const uiStore = useUIStore();
 const layersStore = useLayersStore();
 const drawing = useDrawingContext();

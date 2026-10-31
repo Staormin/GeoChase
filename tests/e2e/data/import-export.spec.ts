@@ -265,14 +265,15 @@ test.describe('Import and Export', () => {
 
       // Verify element was created - map should be visible
       await expect(page.locator('#map')).toBeVisible();
+      const points = page.locator('[data-layer-type="point"]');
+      await expect(points).toHaveCount(4);
 
       // Reload page
-      await page.reload();
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(1000);
+      await page.reload({ waitUntil: 'domcontentloaded' });
 
-      // Map should still be visible
+      // The map and all saved points should be restored without waiting for map-tile requests to stop.
       await expect(page.locator('#map')).toBeVisible();
+      await expect(points).toHaveCount(4);
     });
 
     test('should save project to localStorage', async ({ page, blankProject }) => {

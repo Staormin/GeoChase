@@ -1,6 +1,9 @@
 <template>
   <v-app>
     <router-view />
+
+    <!-- Modale des notes de version -->
+    <ReleaseNotesModal />
   </v-app>
 </template>
 

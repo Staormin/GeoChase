@@ -160,7 +160,7 @@ test.describe('Language Settings', () => {
       await page.waitForTimeout(500);
 
       // Reload the page
-      await page.reload({ waitUntil: 'networkidle' });
+      await page.reload({ waitUntil: 'domcontentloaded' });
       await page.waitForSelector('#map', { state: 'visible', timeout: 60_000 });
       await page.waitForTimeout(500);
 

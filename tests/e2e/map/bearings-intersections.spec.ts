@@ -115,28 +115,28 @@ test.describe('Bearings and Intersections', () => {
     });
 
     test('should create multiple points', async ({ page, blankProject }) => {
-      // Create first point
-      await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('48.8566, 2.3522');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
+      const points = page.locator('[data-layer-type="point"]');
+      await expect(points).toHaveCount(3);
 
-      // Create second point
+      // Create the first point with a name to avoid an unrelated reverse-geocoding request.
       await page.locator('[data-testid="draw-point-btn"]').click();
-      await page.waitForTimeout(300);
-      await page.locator('input[placeholder*="48.8566"]').fill('51.5074, -0.1278');
-      await page
-        .locator('button')
-        .filter({ hasText: /Add|Ajouter/i })
-        .click();
-      await page.waitForTimeout(500);
+      let dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible();
+      await dialog.getByLabel('Point Name', { exact: true }).fill('Paris');
+      await dialog.getByLabel('Coordinates', { exact: true }).fill('48.8566, 2.3522');
+      await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+      await expect(dialog).toBeHidden();
+      await expect(points).toHaveCount(4);
 
-      // Both points should be created (modal closes successfully)
-      await expect(page.locator('.v-dialog')).not.toBeVisible();
+      // Wait for the first submission to finish before opening the next form.
+      await page.locator('[data-testid="draw-point-btn"]').click();
+      dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible();
+      await dialog.getByLabel('Point Name', { exact: true }).fill('London');
+      await dialog.getByLabel('Coordinates', { exact: true }).fill('51.5074, -0.1278');
+      await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+      await expect(dialog).toBeHidden();
+      await expect(points).toHaveCount(5);
     });
   });
 

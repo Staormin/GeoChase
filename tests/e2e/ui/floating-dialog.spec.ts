@@ -105,11 +105,11 @@ for (const entry of [
     const title = (await dialog.locator('.v-card-title').first().boundingBox())!;
     await page.mouse.move(title.x + 30, title.y + 20);
     await page.mouse.down();
-    await page.mouse.move(title.x + 110, title.y + 65, { steps: 10 });
+    await page.mouse.move(title.x + 110, title.y + 10, { steps: 10 });
     await page.mouse.up();
     const after = (await content.boundingBox())!;
     expect(after.x - before.x).toBeCloseTo(80, 0);
-    expect(after.y - before.y).toBeCloseTo(45, 0);
+    expect(after.y - before.y).toBeCloseTo(-10, 0);
     await page.locator('#map').click({ position: { x: 1350, y: 850 } });
     await expect(dialog).toBeVisible();
     // Escape belongs to the floating window when focus returns to it.

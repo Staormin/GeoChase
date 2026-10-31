@@ -29,6 +29,7 @@ for (const viewport of [
         'vaporwaveNeon',
         'christmasTree',
         'strawberrymint',
+        'halloween',
       ];
       await page.getByRole('button', { name: 'More', exact: true }).click();
       await expect(page.getByTestId('theme-toggle')).toHaveCount(0);
@@ -53,7 +54,7 @@ for (const viewport of [
       expect(backgrounds.size).toBe(palettes.length);
       await dialog.getByRole('button', { name: 'Close', exact: true }).last().click();
       await page.reload();
-      await expect(page.locator('html')).toHaveAttribute('data-palette', 'strawberrymint');
+      await expect(page.locator('html')).toHaveAttribute('data-palette', 'halloween');
       await page.getByRole('button', { name: 'More', exact: true }).click();
       await page.getByTestId('theme-picker-btn').click();
       await page.getByTestId('palette-classic').click();

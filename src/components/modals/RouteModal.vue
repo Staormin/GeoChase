@@ -1,33 +1,26 @@
 <template>
   <BaseModal
-    :cancel-text="$t('common.cancel')"
+    :cancel-text="cancelText"
     :is-open="true"
     :submit-disabled="busy || !validPoints"
-    :submit-text="busy ? $t('route.calculating') : $t('route.calculate')"
-    :title="$t('route.title')"
+    :submit-text="submitText"
+    :title="titleText"
     @close="close"
     @submit="submit"
   >
-    <p class="text-caption mb-4">{{ $t('route.info') }}</p>
+    <p class="text-caption mb-4">{{ infoText }}</p>
 
-    <v-alert v-if="layers.points.length < 2" class="mb-4" type="info">{{
-      $t('route.needPoints')
-    }}</v-alert>
+    <v-alert v-if="layers.points.length < 2" class="mb-4" type="info">{{ needPointsText }}</v-alert>
 
     <v-text-field
       v-model="name"
       density="compact"
       :disabled="busy"
-      :label="$t('route.name')"
+      :label="nameLabel"
       variant="outlined"
     />
 
-    <CoordinateSelector
-      v-model="start"
-      :disabled="busy"
-      :items="items"
-      :label="$t('route.start')"
-    />
+    <CoordinateSelector v-model="start" :disabled="busy" :items="items" :label="startLabel" />
 
     <div
       v-for="(step, index) in intermediates"
@@ -40,12 +33,12 @@
         class="flex-grow-1"
         :disabled="busy"
         :items="items"
-        :label="$t('route.step', { number: index + 1 })"
+        :label="getStepLabel(index)"
         style="min-width: 0"
       />
 
       <v-btn
-        :aria-label="$t('route.moveUp', { number: index + 1 })"
+        :aria-label="getMoveUpLabel(index)"
         :disabled="busy || index === 0"
         icon="mdi-arrow-up"
         size="small"
@@ -54,7 +47,7 @@
       />
 
       <v-btn
-        :aria-label="$t('route.moveDown', { number: index + 1 })"
+        :aria-label="getMoveDownLabel(index)"
         :disabled="busy || index === intermediates.length - 1"
         icon="mdi-arrow-down"
         size="small"
@@ -63,7 +56,7 @@
       />
 
       <v-btn
-        :aria-label="$t('route.removeStep', { number: index + 1 })"
+        :aria-label="getRemoveStepLabel(index)"
         :disabled="busy"
         icon="mdi-close"
         size="small"
@@ -78,17 +71,17 @@
       prepend-icon="mdi-plus"
       variant="text"
       @click="intermediates.push({ id: uuidv4(), value: null })"
-      >{{ $t('route.addStep') }}</v-btn
+      >{{ addStepText }}</v-btn
     >
 
-    <CoordinateSelector v-model="end" :disabled="busy" :items="items" :label="$t('route.end')" />
+    <CoordinateSelector v-model="end" :disabled="busy" :items="items" :label="endLabel" />
 
     <v-select
       v-model="profile"
       density="compact"
       :disabled="busy"
       :items="profiles"
-      :label="$t('route.profile')"
+      :label="profileLabel"
       variant="outlined"
     />
 
@@ -97,7 +90,7 @@
       density="compact"
       :disabled="busy"
       :items="optimizations"
-      :label="$t('route.optimization')"
+      :label="optimizationLabel"
       variant="outlined"
     />
 
@@ -131,6 +124,25 @@ const end = ref<string | null>(editing?.end ? coord(editing.end) : null);
 const intermediates = ref<Array<{ id: string; value: string | null }>>(
   (editing?.intermediates ?? []).map((point) => ({ id: uuidv4(), value: coord(point) }))
 );
+
+// Textes localisés
+const cancelText = computed(() => t('common.cancel'));
+const submitText = computed(() => (busy.value ? t('route.calculating') : t('route.calculate')));
+const titleText = computed(() => t('route.title'));
+const infoText = computed(() => t('route.info'));
+const needPointsText = computed(() => t('route.needPoints'));
+const nameLabel = computed(() => t('route.name'));
+const startLabel = computed(() => t('route.start'));
+const endLabel = computed(() => t('route.end'));
+const profileLabel = computed(() => t('route.profile'));
+const optimizationLabel = computed(() => t('route.optimization'));
+const addStepText = computed(() => t('route.addStep'));
+
+const getStepLabel = (index: number) => t('route.step', { number: index + 1 });
+const getMoveUpLabel = (index: number) => t('route.moveUp', { number: index + 1 });
+const getMoveDownLabel = (index: number) => t('route.moveDown', { number: index + 1 });
+const getRemoveStepLabel = (index: number) => t('route.removeStep', { number: index + 1 });
+
 const orderedPoints = computed(() => [
   start.value,
   ...intermediates.value.map((step) => step.value),
@@ -218,6 +230,7 @@ async function submit() {
       end: endpoint,
       intermediates: waypoints,
       color: editing?.color ?? '#1976D2',
+      weight: editing?.weight ?? 4,
     };
     if (editing) layers.updateRoute(routeElement.id, routeElement);
     else layers.addRoute(routeElement);

@@ -121,13 +121,13 @@ export function useViewDataSync(mapContainer: MapContainer) {
     view?.on('change:resolution', debouncedSaveViewData);
 
     let restoreTimer: ReturnType<typeof setTimeout> | undefined;
+    // Initial view data is restored during map initialization; restore again only on project changes.
     const stopProjectWatch = watch(
       () => projectsStore.activeProjectId,
       () => {
         clearTimeout(restoreTimer);
         restoreTimer = setTimeout(restoreViewData, 100);
-      },
-      { immediate: true }
+      }
     );
 
     return () => {

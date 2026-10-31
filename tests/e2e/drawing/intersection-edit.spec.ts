@@ -252,6 +252,12 @@ test('ignores hidden snap targets', async ({ page, blankProject }) => {
   await seed(page);
   const target = (await mapState(page)).targetPixel!;
   await page.getByRole('button', { name: 'Open notebook', exact: true }).click();
+  await expect
+    .poll(async () => {
+      const box = await page.getByTestId('layers-sidebar').boundingBox();
+      return box ? box.x + box.width : 0;
+    })
+    .toBeGreaterThan(1);
   await page
     .locator('.layer-item')
     .filter({ hasText: 'Snap target' })
