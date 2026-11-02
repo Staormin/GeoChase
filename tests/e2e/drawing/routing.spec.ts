@@ -260,7 +260,7 @@ test('route notes, nearby search along detours and deletion', async ({ page }) =
   await page.route('https://data.geopf.fr/navigation/itineraire?**', (route) =>
     route.fulfill({ json: { geometry: detour, distance: 8000, duration: 8000 } })
   );
-  await page.route('https://overpass-api.de/api/interpreter', (route) =>
+  await page.route('**/api/interpreter', (route) =>
     route.fulfill({
       contentType: 'text/xml',
       body: '<osm><node id="1" lat="48.879" lon="2.35"><tag k="name" v="Village on the detour"/><tag k="place" v="village"/></node><node id="2" lat="48.851" lon="2.352"><tag k="name" v="Village on the chord"/><tag k="place" v="village"/></node></osm>',

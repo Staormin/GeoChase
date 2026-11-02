@@ -23,7 +23,7 @@ const mockElevationResponse = {
 
 // Helper to setup API mocks
 async function setupApiMocks(page: any) {
-  await page.route('**/overpass-api.de/api/interpreter', (route: any) => {
+  await page.route('**/api/interpreter', (route: any) => {
     route.fulfill({
       status: 200,
       contentType: 'application/xml',

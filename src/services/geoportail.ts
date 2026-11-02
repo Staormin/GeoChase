@@ -30,7 +30,8 @@ export interface AddressSearchResult {
 }
 
 const COMPLETION_API = 'https://data.geopf.fr/geocodage/completion';
-const OVERPASS_API = 'https://overpass-api.de/api/interpreter';
+export const PUBLIC_OVERPASS_API = 'https://overpass-api.de/api/interpreter';
+export const OVERPASS_API = import.meta.env.VITE_OVERPASS_URL?.trim() || PUBLIC_OVERPASS_API;
 const ELEVATION_API = 'https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json';
 
 /**
