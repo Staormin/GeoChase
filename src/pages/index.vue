@@ -65,6 +65,7 @@
   <v-navigation-drawer
     v-if="projectsStore.hasPdf()"
     v-model="uiStore.pdfPanelOpen"
+    data-testid="pdf-panel"
     location="right"
     :style="panelStyle"
     :width="pdfPanelDisplayWidth"

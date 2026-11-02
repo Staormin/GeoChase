@@ -132,6 +132,29 @@ describe('useViewDataSync', () => {
       expect(mockView.setZoom).toHaveBeenCalledWith(12);
     });
 
+    it('keeps panels and map view on initial load, which map initialization already restored', () => {
+      vi.spyOn(projectsStore, 'getViewData').mockReturnValue({
+        topPanelOpen: false,
+        sidePanelOpen: false,
+        pdfPanelOpen: true,
+        pdfCurrentPage: 3,
+        mapView: { lat: 51.5, lon: -0.12, zoom: 12 },
+      });
+      // The user reopened the sidebar while startup was still running.
+      uiStore.topBarOpen = true;
+      uiStore.sidebarOpen = true;
+
+      viewDataSync.restoreViewData({ initialLoad: true });
+
+      expect(uiStore.topBarOpen).toBe(true);
+      expect(uiStore.sidebarOpen).toBe(true);
+      expect(mockView.setCenter).not.toHaveBeenCalled();
+      expect(mockView.setZoom).not.toHaveBeenCalled();
+      // The PDF panel state is only restored here.
+      expect(uiStore.pdfPanelOpen).toBe(true);
+      expect(uiStore.pdfCurrentPage).toBe(3);
+    });
+
     it('should restore pdfPanelOpen when present in view data', () => {
       const setPdfPanelOpenSpy = vi.spyOn(uiStore, 'setPdfPanelOpen');
       const mockViewData = {

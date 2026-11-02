@@ -1,5 +1,5 @@
 <template>
-  <FloatingDialog v-model="open" max-width="580" scrollable>
+  <FloatingDialog v-model="open" max-height="min(760px, 85vh)" max-width="580" scrollable>
     <v-card class="theme-picker">
       <v-card-title class="theme-picker-heading">
         <span>{{ $t('workspace.themes') }}</span>

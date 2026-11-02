@@ -81,7 +81,7 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(300);
 
       // Panel should be visible
-      await expect(page.locator('.v-navigation-drawer--right')).toBeVisible();
+      await expect(page.locator('[data-testid="pdf-panel"]')).toBeVisible();
     });
 
     test('should close PDF panel when PDF button clicked again', async ({ page, blankProject }) => {
@@ -92,14 +92,14 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(300);
 
       // Panel should be visible
-      await expect(page.locator('.v-navigation-drawer--right')).toBeVisible();
+      await expect(page.locator('[data-testid="pdf-panel"]')).toBeVisible();
 
       // Click PDF button again to close
       await page.locator('[data-testid="pdf-btn"]').click();
       await page.waitForTimeout(500);
 
       // Panel should be hidden (check for the drawer being not visible)
-      await expect(page.locator('.v-navigation-drawer--right:not([inert])')).not.toBeVisible();
+      await expect(page.locator('[data-testid="pdf-panel"]:not([inert])')).not.toBeVisible();
     });
   });
 
@@ -139,7 +139,7 @@ test.describe('PDF Panel', () => {
 
       // Get initial width
       const initialWidth = await page
-        .locator('.v-navigation-drawer--right')
+        .locator('[data-testid="pdf-panel"]')
         .evaluate((el) => el.clientWidth);
 
       // Drag resize handle to the left (increase width)
@@ -160,7 +160,7 @@ test.describe('PDF Panel', () => {
 
       // Get new width
       const newWidth = await page
-        .locator('.v-navigation-drawer--right')
+        .locator('[data-testid="pdf-panel"]')
         .evaluate((el) => el.clientWidth);
 
       // Width should have increased
@@ -180,17 +180,17 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(300);
 
       // Panel should be visible
-      await expect(page.locator('.v-navigation-drawer--right')).toBeVisible();
+      await expect(page.locator('[data-testid="pdf-panel"]')).toBeVisible();
 
       // Click delete button in toolbar (now in PdfViewer component)
       await page
-        .locator('.v-navigation-drawer--right button')
+        .locator('[data-testid="pdf-panel"] button')
         .filter({ has: page.locator('.mdi-delete') })
         .click();
       await page.waitForTimeout(300);
 
       // Panel should be hidden after delete
-      await expect(page.locator('.v-navigation-drawer--right')).not.toBeVisible();
+      await expect(page.locator('[data-testid="pdf-panel"]')).not.toBeVisible();
 
       // Success toast should appear
       await expect(page.getByText(/deleted|supprimé/i)).toBeVisible();
@@ -210,7 +210,7 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(300);
 
       // Input field should appear
-      await expect(page.locator('.v-navigation-drawer--right input[type="number"]')).toBeVisible();
+      await expect(page.locator('[data-testid="pdf-panel"] input[type="number"]')).toBeVisible();
     });
 
     test('should navigate to entered page number', async ({ page, blankProject }) => {
@@ -225,7 +225,7 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(300);
 
       // Clear and enter page 3
-      const pageInput = page.locator('.v-navigation-drawer--right input[type="number"]');
+      const pageInput = page.locator('[data-testid="pdf-panel"] input[type="number"]');
       await pageInput.fill('3');
       await pageInput.press('Enter');
       await page.waitForTimeout(400);
@@ -246,7 +246,7 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(300);
 
       // Press Escape to cancel
-      const pageInput = page.locator('.v-navigation-drawer--right input[type="number"]');
+      const pageInput = page.locator('[data-testid="pdf-panel"] input[type="number"]');
       await pageInput.press('Escape');
       await page.waitForTimeout(300);
 
@@ -266,7 +266,7 @@ test.describe('PDF Panel', () => {
 
       // Fit to page button should be visible
       const fitToPageBtn = page.locator(
-        '.v-navigation-drawer--right button .mdi-fit-to-screen-outline'
+        '[data-testid="pdf-panel"] button .mdi-fit-to-screen-outline'
       );
       await expect(fitToPageBtn).toBeVisible();
 
@@ -286,7 +286,7 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(500);
 
       // Rotate button should be visible
-      const rotateBtn = page.locator('.v-navigation-drawer--right button .mdi-rotate-right');
+      const rotateBtn = page.locator('[data-testid="pdf-panel"] button .mdi-rotate-right');
       await expect(rotateBtn).toBeVisible();
 
       // Hover to show tooltip
@@ -305,7 +305,7 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(500);
 
       // Download button should be visible
-      const downloadBtn = page.locator('.v-navigation-drawer--right button .mdi-download');
+      const downloadBtn = page.locator('[data-testid="pdf-panel"] button .mdi-download');
       await expect(downloadBtn).toBeVisible();
 
       // Hover to show tooltip
@@ -324,12 +324,12 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(500);
 
       // Get initial canvas dimensions
-      const canvas = page.locator('.v-navigation-drawer--right canvas').first();
+      const canvas = page.locator('[data-testid="pdf-panel"] canvas').first();
       const initialBox = await canvas.boundingBox();
 
       // Click rotate button
       await page
-        .locator('.v-navigation-drawer--right button')
+        .locator('[data-testid="pdf-panel"] button')
         .filter({ has: page.locator('.mdi-rotate-right') })
         .click();
       await page.waitForTimeout(500);
@@ -356,9 +356,7 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(500);
 
       // Thumbnails button should be visible (outline icon when closed)
-      const thumbnailsBtn = page.locator(
-        '.v-navigation-drawer--right button .mdi-view-grid-outline'
-      );
+      const thumbnailsBtn = page.locator('[data-testid="pdf-panel"] button .mdi-view-grid-outline');
       await expect(thumbnailsBtn).toBeVisible();
     });
 
@@ -371,15 +369,13 @@ test.describe('PDF Panel', () => {
 
       // Click thumbnails toggle button
       await page
-        .locator('.v-navigation-drawer--right button')
+        .locator('[data-testid="pdf-panel"] button')
         .filter({ has: page.locator('.mdi-view-grid-outline') })
         .click();
       await page.waitForTimeout(500);
 
       // Thumbnails sidebar should appear with multiple canvas elements (one per page)
-      const thumbnailCanvases = page.locator(
-        '.v-navigation-drawer--right .bg-surface-light canvas'
-      );
+      const thumbnailCanvases = page.locator('[data-testid="pdf-panel"] .bg-surface-light canvas');
       await expect(thumbnailCanvases).toHaveCount(3); // 3 pages
     });
 
@@ -395,13 +391,13 @@ test.describe('PDF Panel', () => {
 
       // Open thumbnails
       await page
-        .locator('.v-navigation-drawer--right button')
+        .locator('[data-testid="pdf-panel"] button')
         .filter({ has: page.locator('.mdi-view-grid-outline') })
         .click();
       await page.waitForTimeout(500);
 
       // Click on the third thumbnail (page 3)
-      const thumbnails = page.locator('.v-navigation-drawer--right .bg-surface-light canvas');
+      const thumbnails = page.locator('[data-testid="pdf-panel"] .bg-surface-light canvas');
       await thumbnails.nth(2).click();
       await page.waitForTimeout(400);
 
@@ -421,20 +417,18 @@ test.describe('PDF Panel', () => {
 
       // Open thumbnails
       await page
-        .locator('.v-navigation-drawer--right button')
+        .locator('[data-testid="pdf-panel"] button')
         .filter({ has: page.locator('.mdi-view-grid-outline') })
         .click();
       await page.waitForTimeout(500);
 
       // Thumbnails should be visible (use more specific selector for the thumbnails sidebar)
-      const thumbnailCanvases = page.locator(
-        '.v-navigation-drawer--right .bg-surface-light canvas'
-      );
+      const thumbnailCanvases = page.locator('[data-testid="pdf-panel"] .bg-surface-light canvas');
       await expect(thumbnailCanvases).toHaveCount(3);
 
       // Click toggle again (now has filled icon)
       await page
-        .locator('.v-navigation-drawer--right button')
+        .locator('[data-testid="pdf-panel"] button')
         .filter({ has: page.locator('.mdi-view-grid') })
         .click();
       await page.waitForTimeout(300);
@@ -459,7 +453,7 @@ test.describe('PDF Panel', () => {
       await expect(page.getByText('1 / 3')).toBeVisible();
 
       // Get the PDF canvas and scroll down on it
-      const pdfCanvas = page.locator('.v-navigation-drawer--right canvas').first();
+      const pdfCanvas = page.locator('[data-testid="pdf-panel"] canvas').first();
       await pdfCanvas.scrollIntoViewIfNeeded();
 
       // Scroll down (positive deltaY)
@@ -481,7 +475,7 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(500);
 
       // Go to page 2 first using scroll down
-      const pdfCanvas = page.locator('.v-navigation-drawer--right canvas').first();
+      const pdfCanvas = page.locator('[data-testid="pdf-panel"] canvas').first();
       await pdfCanvas.dispatchEvent('wheel', { deltaY: 100 });
       await page.waitForTimeout(400);
 
@@ -510,7 +504,7 @@ test.describe('PDF Panel', () => {
       await expect(page.getByText('1 / 3')).toBeVisible();
 
       // Try to scroll up
-      const pdfCanvas = page.locator('.v-navigation-drawer--right canvas').first();
+      const pdfCanvas = page.locator('[data-testid="pdf-panel"] canvas').first();
       await pdfCanvas.dispatchEvent('wheel', { deltaY: -100 });
       await page.waitForTimeout(400);
 
@@ -529,7 +523,7 @@ test.describe('PDF Panel', () => {
       await page.waitForTimeout(500);
 
       // Navigate to page 3 (last page) - scroll down twice
-      const pdfCanvas = page.locator('.v-navigation-drawer--right canvas').first();
+      const pdfCanvas = page.locator('[data-testid="pdf-panel"] canvas').first();
       await pdfCanvas.dispatchEvent('wheel', { deltaY: 100 });
       await page.waitForTimeout(400);
       await pdfCanvas.dispatchEvent('wheel', { deltaY: 100 });

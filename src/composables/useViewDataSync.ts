@@ -61,7 +61,7 @@ export function useViewDataSync(mapContainer: MapContainer) {
    * Restore view data from the active project
    * Used when switching projects (initial load is handled during map initialization)
    */
-  const restoreViewData = () => {
+  const restoreViewData = (options: { initialLoad?: boolean } = {}) => {
     const viewData = projectsStore.getViewData();
     if (!viewData || !viewData.mapView || !mapContainer.map.value) {
       return;
@@ -69,9 +69,12 @@ export function useViewDataSync(mapContainer: MapContainer) {
 
     const view = mapContainer.map.value.getView();
 
-    // Restore UI state FIRST (topBar, sidebar, pdfPanel states)
-    uiStore.topBarOpen = viewData.topPanelOpen;
-    uiStore.sidebarOpen = viewData.sidePanelOpen;
+    // Map initialization already restored the bars and the map view on first load; doing it
+    // again once startup finishes would undo anything the user changed in the meantime.
+    if (!options.initialLoad) {
+      uiStore.topBarOpen = viewData.topPanelOpen;
+      uiStore.sidebarOpen = viewData.sidePanelOpen;
+    }
     if (viewData.pdfPanelOpen !== undefined) {
       uiStore.setPdfPanelOpen(viewData.pdfPanelOpen);
     }
@@ -87,6 +90,8 @@ export function useViewDataSync(mapContainer: MapContainer) {
     if (viewData.pdfScrollPosition) {
       uiStore.setPdfScrollPosition(viewData.pdfScrollPosition);
     }
+
+    if (options.initialLoad) return;
 
     // Force map size update to account for panel states
     mapContainer.map.value.updateSize();
@@ -121,11 +126,14 @@ export function useViewDataSync(mapContainer: MapContainer) {
     view?.on('change:resolution', debouncedSaveViewData);
 
     let restoreTimer: ReturnType<typeof setTimeout> | undefined;
+    let initialLoad = true;
     const stopProjectWatch = watch(
       () => projectsStore.activeProjectId,
       () => {
         clearTimeout(restoreTimer);
-        restoreTimer = setTimeout(restoreViewData, 100);
+        const options = { initialLoad };
+        initialLoad = false;
+        restoreTimer = setTimeout(() => restoreViewData(options), 100);
       },
       { immediate: true }
     );

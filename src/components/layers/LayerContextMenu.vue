@@ -117,7 +117,9 @@
     </v-list>
   </v-menu>
 
+  <!-- One per list row: mount it only while open, so closed rows cost nothing. -->
   <DrawingColorDialog
+    v-if="colorPickerOpen"
     v-model="colorPickerOpen"
     :color="getElement()?.color || (elementType === 'polygon' ? '#90EE90' : '#000000')"
     @save="saveColor"

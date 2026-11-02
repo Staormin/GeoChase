@@ -716,7 +716,8 @@ function handlePdfClick() {
   min-height: 76px;
   padding: 14px 24px;
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) minmax(200px, 540px) minmax(200px, 1fr);
+  /* The actions never shrink below their content; the search field gives way instead. */
+  grid-template-columns: minmax(200px, 1fr) minmax(200px, 540px) minmax(max-content, 1fr);
   align-items: center;
   gap: 32px;
 }

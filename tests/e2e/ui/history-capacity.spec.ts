@@ -84,7 +84,10 @@ test('1,000 edits on 1,000 drawings stay small with an imported image and PDF', 
     .filter({ has: page.locator('input[value="image"]') })
     .click();
   await page.getByTestId('create-project-btn').click();
-  await page.locator('input[type="file"]').setInputFiles('public/images/legende-ign.png');
+  await page
+    .getByRole('dialog')
+    .locator('input[type="file"]')
+    .setInputFiles('public/images/legende-ign.png');
   await page.getByRole('button', { name: 'Known ratio', exact: true }).click();
   await page.getByRole('spinbutton', { name: 'Metres per pixel', exact: true }).fill('10');
   await page.getByRole('button', { name: 'Create project', exact: true }).click();
@@ -138,7 +141,10 @@ test('1,000 edits on 1,000 drawings stay small with an imported image and PDF', 
   });
 
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Recalibrate', exact: true })).toBeVisible();
+  // Same allowance as the first reload: 1,000 drawings take a while to restore under load.
+  await expect(page.getByRole('button', { name: 'Recalibrate', exact: true })).toBeVisible({
+    timeout: 30_000,
+  });
   await expect(page.getByTestId('undo-btn')).toHaveAttribute('title', /1000/);
   await expect(page.locator('[data-layer-id="line-0"] .layer-item-name')).toHaveText(
     'Revision 1000'
@@ -148,6 +154,8 @@ test('1,000 edits on 1,000 drawings stay small with an imported image and PDF', 
     'Revision 999'
   );
   await page.reload();
+  // Redo stays disabled until the 1,000 saved steps are read back, slower under load.
+  await expect(page.getByTestId('redo-btn')).toBeEnabled({ timeout: 30_000 });
   await page.getByTestId('redo-btn').click();
   await expect(page.locator('[data-layer-id="line-0"] .layer-item-name')).toHaveText(
     'Revision 1000'
@@ -196,6 +204,8 @@ test('a browser quota error drops old undo steps and preserves saved drawings', 
   await expect(page.locator('.layer-item-name').getByText('Second', { exact: true })).toBeVisible();
   await expect(page.getByTestId('undo-btn')).toBeDisabled();
   await page.reload();
+  // Redo stays disabled until the 1,000 saved steps are read back, slower under load.
+  await expect(page.getByTestId('redo-btn')).toBeEnabled({ timeout: 30_000 });
   await page.getByTestId('redo-btn').click();
   await expect(page.locator('.layer-item-name').getByText('Third', { exact: true })).toBeVisible();
 });

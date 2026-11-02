@@ -71,12 +71,17 @@ const emit = defineEmits<{ save: [color: string] }>();
 const selected = ref('#000000');
 const recent = ref<string[]>([]);
 const valid = computed(() => isDrawingColor(selected.value));
-watch(isOpen, (open) => {
-  if (open) {
-    selected.value = isDrawingColor(props.color) ? props.color : '#000000';
-    recent.value = getRecentDrawingColors();
-  }
-});
+watch(
+  isOpen,
+  (open) => {
+    if (open) {
+      selected.value = isDrawingColor(props.color) ? props.color : '#000000';
+      recent.value = getRecentDrawingColors();
+    }
+  },
+  // Also when mounted already open, as list rows do to stay cheap while closed.
+  { immediate: true }
+);
 function save() {
   if (!valid.value) return;
   const color = selected.value.toUpperCase();

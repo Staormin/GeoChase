@@ -364,7 +364,8 @@ export function useIntersectionLineEditing(
         if (editing) finish();
         else if (hoveredId) clearHover();
       },
-      { deep: true }
+      // Elements are replaced or get new top-level fields on change; no need to walk geometry.
+      { deep: 2 }
     );
     stopCancelWatch = watch(
       () => ui.intersectionLineEdit?.lineId,

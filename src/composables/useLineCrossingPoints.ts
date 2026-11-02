@@ -150,7 +150,8 @@ export function useLineCrossingPoints(mapContainer: MapContainer) {
         () => ui.elementVisibility,
       ],
       clearHover,
-      { deep: true }
+      // Elements are replaced or get new top-level fields on change; no need to walk geometry.
+      { deep: 2 }
     );
   }
 

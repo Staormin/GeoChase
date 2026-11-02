@@ -39,18 +39,14 @@
         :key="category.type"
         :aria-keyshortcuts="visibilityShortcut(category.key)"
         :aria-label="categoryVisibilityTitle(category.type)"
-        :aria-pressed="areAllTargetsVisible(categoryVisibilityTargets(category.type))"
+        :aria-pressed="categoryVisibility[category.type].allVisible"
         class="visibility-button"
-        :class="{
-          'visibility-button-active': areAllTargetsVisible(
-            categoryVisibilityTargets(category.type)
-          ),
-        }"
+        :class="{ 'visibility-button-active': categoryVisibility[category.type].allVisible }"
         :data-visibility-category="category.type"
-        :disabled="categoryVisibilityTargets(category.type).length === 0"
+        :disabled="categoryVisibility[category.type].targets.length === 0"
         :title="`${categoryVisibilityTitle(category.type)} · ${visibilityShortcut(category.key)}`"
         type="button"
-        @click="toggleVisibilityTargets(categoryVisibilityTargets(category.type))"
+        @click="toggleVisibilityTargets(categoryVisibility[category.type].targets)"
       >
         <v-icon :icon="category.icon" size="18" />
       </button>
@@ -1279,10 +1275,17 @@ function toggleElementGroupExpanded(groupId: string) {
   expandedElementGroups.value[groupId] = expandedElementGroups.value[groupId] === false;
 }
 
+/** Each category's targets and state, built once per change rather than several times per render. */
+const categoryVisibility = computed(() =>
+  Object.fromEntries(
+    visibilityCategories.map(({ type }) => {
+      const targets = categoryVisibilityTargets(type);
+      return [type, { targets, allVisible: areAllTargetsVisible(targets) }];
+    })
+  )
+);
 function categoryVisibilityTitle(type: VisibilityElementType): string {
-  const action = areAllTargetsVisible(categoryVisibilityTargets(type))
-    ? 'hideCategory'
-    : 'showCategory';
+  const action = categoryVisibility.value[type]!.allVisible ? 'hideCategory' : 'showCategory';
   return t(`layers.${action}`, { category: t(`layers.visibilityCategories.${type}`) });
 }
 

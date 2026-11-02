@@ -132,9 +132,8 @@ test.describe('Search Along Path', () => {
       // Search panel header should be visible
       await expect(page.locator('text=/Results|Résultats/i').first()).toBeVisible();
 
-      // There should be some form inputs visible
-      const inputs = page.locator('input');
-      await expect(inputs.first()).toBeVisible();
+      // There should be some form inputs visible (hidden file inputs elsewhere don't count)
+      await expect(page.locator('input:visible').first()).toBeVisible();
     });
   });
 });

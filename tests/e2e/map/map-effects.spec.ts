@@ -216,27 +216,36 @@ for (const [up, left] of [
     await page.keyboard.down(left!);
     await expect(tank).toHaveAttribute('style', /rotate\(-45deg\)/);
     await page.keyboard.press('Space');
-    await page.waitForTimeout(100);
     const box = (await tank.boundingBox())!;
-    const shot = await page.locator('.game-effects').evaluate((canvas: HTMLCanvasElement) => {
-      const { data, width } = canvas
-        .getContext('2d')!
-        .getImageData(0, 0, canvas.width, canvas.height);
-      let x = 0,
-        y = 0,
-        count = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        if (data[i]! > 240 && data[i + 1]! > 200 && data[i + 2]! > 100 && data[i + 3]! > 0) {
-          x += (i / 4) % width;
-          y += Math.floor(i / 4 / width);
-          count++;
+    const findShot = () =>
+      page.locator('.game-effects').evaluate((canvas: HTMLCanvasElement) => {
+        const { data, width } = canvas
+          .getContext('2d')!
+          .getImageData(0, 0, canvas.width, canvas.height);
+        let x = 0,
+          y = 0,
+          count = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i]! > 240 && data[i + 1]! > 200 && data[i + 2]! > 100 && data[i + 3]! > 0) {
+            x += (i / 4) % width;
+            y += Math.floor(i / 4 / width);
+            count++;
+          }
         }
-      }
-      return { x: x / count / devicePixelRatio, y: y / count / devicePixelRatio, count };
-    });
-    expect(shot.count).toBeGreaterThan(0);
-    expect(shot.x).toBeLessThan(box.x + box.width / 2 - 15);
-    expect(shot.y).toBeLessThan(box.y + box.height / 2 - 15);
+        return { x: x / count / devicePixelRatio, y: y / count / devicePixelRatio, count };
+      });
+    // Under load the shell's frames come later than any fixed delay: wait until it is
+    // visible and has travelled up-left from the tank.
+    await expect
+      .poll(async () => {
+        const shot = await findShot();
+        return (
+          shot.count > 0 &&
+          shot.x < box.x + box.width / 2 - 15 &&
+          shot.y < box.y + box.height / 2 - 15
+        );
+      })
+      .toBe(true);
     await page.keyboard.up(up!);
     await page.keyboard.up(left!);
   });
