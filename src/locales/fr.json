@@ -510,7 +510,9 @@
         "points": "Enregistrer des points",
         "pointsContent": "Gérez les coordonnées et réutilisez les points comme centres géométriques.",
         "projects": "Gérer des projets",
-        "projectsContent": "Enregistrez le travail, choisissez une projection et exportez au format GPX."
+        "projectsContent": "Enregistrez le travail, choisissez une projection et exportez au format GPX.",
+        "assistant": "Assistant IA",
+        "assistantContent": "Demandez des lieux, des constructions ou le calage d’une image en langage courant, avec des exemples prêts à essayer."
       },
       "search": {
         "address": {
@@ -1025,6 +1027,125 @@
         "item4": "L’image et son calibrage sont conservés localement dans ce navigateur, pour ce projet. Le fichier image et son calibrage ne sont pas inclus dans les exports JSON : conservez le fichier original et vos valeurs de calibrage.",
         "item5": "Le type de fond est choisi à la création : un projet image ne propose pas de sélecteur de fonds de carte. Pour travailler sur une carte géographique, créez ou ouvrez un projet de ce type. Recalibrer apparaît uniquement dans les projets image."
       }
+    },
+    "assistantSection": {
+      "analysis": {
+        "content": "Les chiffres viennent des calculs de l’application et des services publics (IGN, OpenStreetMap, Wikimedia), pas de l’estimation du modèle.",
+        "item1": "La distance au sol et le cap, calculés selon la projection du projet.",
+        "item2": "Altitudes de départ, d’arrivée, minimale et maximale, dénivelés, et un point créé au sommet. « Quelle est l’altitude de ces points ? » marche aussi.",
+        "item3": "Un itinéraire IGN avec sa distance et sa durée réelles. Précisez « en voiture » ou « le plus rapide » si besoin.",
+        "item4": "Après avoir collé une photo, l’assistant récupère des photos de ces lieux sur Wikimedia et les compare. Il indique les lieux sans photo disponible et ne conclut jamais sur un lieu qu’il n’a pas vu.",
+        "label1": "« Quelle distance et quel cap entre Croisement 1 et Melun ? »",
+        "label2": "« Donne le profil d’altitude de cette ligne et place le point le plus haut. »",
+        "label3": "« Trace l’itinéraire à pied de Fontainebleau à Melun. »",
+        "label4": "« Compare ma photo avec les églises du projet. »",
+        "title": "Exemples : mesures et analyses"
+      },
+      "attachments": {
+        "content": "Jusqu’à 4 pièces jointes par message : images PNG, JPEG, WebP ou GIF et PDF non chiffrés, de 10 Mo maximum chacun.",
+        "item1": "Collez une capture d’écran ou une image dans le champ de saisie (Ctrl+V), ou utilisez le trombone pour choisir un fichier.",
+        "item2": "Le bouton carte joint la vue affichée avec ses limites géographiques, par exemple pour demander « Que représente cette zone ? ».",
+        "item3": "Si le projet contient un PDF, son bouton le joint en un clic, par exemple pour « Place les lieux cités dans ce document ».",
+        "item4": "Les 3 dernières pièces jointes sont renvoyées avec les messages suivants, pour poser plusieurs questions sur la même image. Elles coûtent à chaque envoi : Oublier les retire.",
+        "label1": "Coller une image",
+        "label2": "Capture de la carte",
+        "label3": "PDF du projet",
+        "label4": "Mémoire",
+        "title": "Pièces jointes et mémoire"
+      },
+      "connect": {
+        "content": "L’assistant utilise votre propre clé d’API OpenAI, Anthropic (Claude) ou Google Gemini. Les requêtes sont facturées sur votre compte par ce fournisseur ; la clé reste dans ce navigateur et n’est envoyée qu’à lui.",
+        "item1": "Cliquez sur la baguette magique, en haut à droite, pour ouvrir le panneau Assistant.",
+        "item2": "Collez votre clé : le fournisseur est reconnu automatiquement quand c’est possible, sinon choisissez-le. Cliquez sur Charger les modèles.",
+        "item3": "Choisissez un modèle et, s’il le permet, l’effort de réflexion. Auto convient la plupart du temps ; un effort élevé est plus lent et plus cher, mais plus fiable pour les constructions en plusieurs étapes et le calage d’images. Cliquez ensuite sur Ouvrir la conversation.",
+        "item4": "Cochez Mémoriser la clé uniquement sur un appareil personnel. Effacer la clé la supprime de ce navigateur.",
+        "label1": "Étape 1",
+        "label2": "Étape 2",
+        "label3": "Étape 3",
+        "label4": "Étape 4",
+        "title": "Connecter l’assistant"
+      },
+      "constructions": {
+        "content": "L’assistant calcule chaque construction avec les mêmes règles que les outils manuels et la projection du projet : il ne calcule jamais les coordonnées de tête.",
+        "item1": "Deux cercles, puis leurs croisements nommés « 1 » et « 2 ». Ajoutez « garde celui au nord » pour n’en conserver qu’un.",
+        "item2": "Une ligne entre les deux points, puis un point placé sur elle. Ensuite, « mets-le depuis l’autre extrémité » le déplace en gardant la même fraction (aperçu à confirmer).",
+        "item3": "Une ligne centrée sur le milieu, dont chaque point est à égale distance des deux villes. Sur le même modèle : milieu, barycentre de plusieurs points, bissectrice d’un angle.",
+        "item4": "Le sens est choisi d’après la direction indiquée (nord, sud, est, ouest). Sans direction ni longueur, l’assistant vous les demande.",
+        "item5": "Il prolonge la ligne, et trouve le croisement même quand les segments tracés ne se touchent pas.",
+        "item6": "Un polygone et la liste des points qu’il contient, avec sa surface. Fonctionne aussi pour les points situés dans deux cercles à la fois.",
+        "label1": "« Trouve les points à 12 km de Fontainebleau et 10 km de Melun. »",
+        "label2": "« Trace la ligne Fontainebleau–Melun et place un point au tiers en partant de Melun. »",
+        "label3": "« Trace la médiatrice de Fontainebleau et Melun sur 20 km. »",
+        "label4": "« Depuis ce point sur la ligne, trace la perpendiculaire vers le nord sur 5 km. »",
+        "label5": "« Prolonge cette ligne de 6 km et donne-moi son croisement avec l’autre. »",
+        "label6": "« Fais une zone avec ces trois points et dis-moi quels points sont dedans. »",
+        "title": "Exemples : constructions"
+      },
+      "edits": {
+        "content": "L’assistant se souvient des éléments de la conversation : « le », « ce cercle », « l’autre extrémité » désignent les éléments dont il vient de parler.",
+        "item1": "Renomme le dernier élément cité, en conservant ses liens avec les autres éléments.",
+        "item2": "Modifie le rayon du cercle existant ; l’aperçu montre l’ancien en rouge et le nouveau en violet avant d’appliquer.",
+        "item3": "Seul l’élément désigné est supprimé, après confirmation. Un point qui forme une zone, ou une ligne dont dépendent d’autres constructions, est refusé tant que celles-ci existent.",
+        "item4": "Couleurs des lignes, cercles, zones et itinéraires, et visibilité de tout élément. Les points gardent leur style.",
+        "item5": "Crée la note, ou la complète si l’élément en a déjà une.",
+        "item6": "Télécharge le fichier GPX une fois la demande appliquée.",
+        "label1": "« Renomme-le Point de départ. »",
+        "label2": "« Mets plutôt le cercle à 15 km. »",
+        "label3": "« Supprime juste ce cercle. »",
+        "label4": "« Mets le cercle de Melun en rouge et masque l’itinéraire. »",
+        "label5": "« Ajoute une note à ce point : candidat principal. »",
+        "label6": "« Exporte le projet en GPX. »",
+        "title": "Exemples : corriger et organiser"
+      },
+      "how": {
+        "content": "Les créations et les renommages s’appliquent directement à la fin de la demande. Les suppressions et les déplacements s’affichent d’abord en aperçu sur la carte (violet : proposé, rouge : avant ou supprimé) et attendent que vous cliquiez sur Appliquer les modifications. La conversation est conservée pour chaque projet.",
+        "item1": "Cliquez un point, une ligne ou un cercle sur la carte ou dans le carnet avant d’écrire : « ce point », « cette ligne » le désigne. La sélection s’affiche au-dessus du champ de saisie.",
+        "item2": "Les éléments créés ou modifiés apparaissent sous la réponse : cliquez-les pour centrer la carte. La carte cadre aussi automatiquement ce que la demande a ajouté.",
+        "item3": "Si plusieurs éléments correspondent, l’assistant propose des choix cliquables au lieu de deviner. Cliquer un choix relance la demande avec cet élément.",
+        "item4": "Annuler, sous la conversation, défait toute la dernière demande. Arrêter interrompt une demande en cours sans rien appliquer.",
+        "label1": "Désigner un élément",
+        "label2": "Suivre la réponse",
+        "label3": "Lever une ambiguïté",
+        "label4": "Revenir en arrière",
+        "title": "Comment il travaille"
+      },
+      "intro": "Décrivez en langage courant ce que vous voulez sur la carte : l’assistant le réalise avec les outils de GeoChase, sans inventer de coordonnées. Il prépare tout, puis applique la demande d’un seul coup quand il a terminé ; Annuler défait la demande entière.",
+      "limits": {
+        "item1": "Une demande compte au plus 12 échanges avec le modèle et 36 actions. Pour un travail long, découpez-le en plusieurs messages.",
+        "item2": "Géocodage, itinéraires et altitudes IGN couvrent la France. OpenStreetMap et Wikimedia dépendent des contributions : un lieu peu connu peut manquer.",
+        "item3": "Chaque demande envoie au fournisseur les éléments du projet (noms, coordonnées, notes). Les images et PDF ne partent que si vous les joignez.",
+        "item4": "L’assistant ne fonctionne pas dans un projet image, ni pendant qu’un outil de dessin ou une fenêtre est ouvert : terminez-les d’abord.",
+        "label1": "Taille d’une demande",
+        "label2": "Couverture",
+        "label3": "Confidentialité",
+        "label4": "Quand il est indisponible",
+        "title": "Bon à savoir"
+      },
+      "overlay": {
+        "content": "L’assistant peut positionner une image superposée (ajoutée avec le bouton Image), un PDF ou une image joints à la conversation, ou le PDF du projet. Il regarde l’image avec une grille, zoome sur les détails que vous décrivez, vérifie sa position avec des repères, puis calcule l’emplacement, la rotation et la taille. Un PDF importé garde la taille de sa page (21 × 29,7 cm pour un A4) : une échelle comme 1:1 000 000 donne donc sa vraie taille.",
+        "item1": "Le premier repère tombe exactement sur Fontainebleau et l’image est tournée pour que le second pointe vers Chambord. L’échelle étant imposée, le second repère peut tomber un peu à côté : l’assistant indique cet écart et l’échelle que les deux repères donneraient seuls.",
+        "item2": "Les deux repères tombent exactement sur leurs lieux et l’échelle est déduite. Déplacer une image déjà présente passe par l’aperçu (contour rouge avant, violet après) à confirmer.",
+        "item3": "Avec trois repères ou plus, il calcule le meilleur ajustement et donne l’écart de chacun : un écart nettement plus grand signale un repère mal placé ou mal décrit.",
+        "item4": "Choisissez des détails visibles et uniques (une pointe, un angle, un croisement) et des lieux précis : « château de Chambord » plutôt que « Chambord » si c’est le château qui compte. Pour une photo ou un scan, indiquez sa largeur imprimée si vous voulez imposer une échelle.",
+        "label1": "« Mets le haut du poteau de gauche sur Fontainebleau et la marque au-dessus du rond sur Chambord, à l’échelle 1:1 000 000. »",
+        "label2": "« Recale-la sans imposer l’échelle. »",
+        "label3": "« Cale ce plan avec la gare, l’église et le pont. »",
+        "label4": "Bien décrire",
+        "title": "Exemple : caler une image ou un PDF sur la carte"
+      },
+      "places": {
+        "content": "Écrivez simplement les lieux voulus. Le géocodage couvre la France ; une commune est placée à son centre géographique.",
+        "item1": "Trois points, un au centre de chaque commune. Si un nom désigne plusieurs communes, l’assistant demande laquelle.",
+        "item2": "Pour un fait historique, il cherche d’abord des sources sur le web, distingue tombe, restes et monument, puis joint les sources en note du point créé.",
+        "item3": "Il interroge OpenStreetMap autour du point Melun et place les lieux trouvés. Fonctionne aussi avec « dans ce cercle », et pour les fontaines, sommets, châteaux, phares, musées…",
+        "item4": "Un point à une distance et un cap donnés, sans tracer de ligne.",
+        "label1": "« Place Fontainebleau, Melun et Provins. »",
+        "label2": "« Place la tombe de Du Guesclin. »",
+        "label3": "« Place les églises à moins de 3 km de Melun. »",
+        "label4": "« Mets un point à 3 km au nord-est de Fontainebleau. »",
+        "title": "Exemples : placer des lieux"
+      },
+      "title": "Assistant IA"
     }
   },
   "layers": {

@@ -510,7 +510,9 @@
         "points": "Save points",
         "pointsContent": "Manage coordinates and reuse points as geometry centers.",
         "projects": "Manage projects",
-        "projectsContent": "Save work, choose a projection and export GPX files."
+        "projectsContent": "Save work, choose a projection and export GPX files.",
+        "assistant": "AI assistant",
+        "assistantContent": "Ask for places, constructions or image calibration in plain words, with ready-to-try examples."
       },
       "search": {
         "address": {
@@ -1025,6 +1027,125 @@
         "item4": "The image and its calibration are saved locally in this browser for this project. The image file and calibration are not included in JSON exports: keep the original file and your calibration values.",
         "item5": "The basemap type is chosen at creation: image projects have no basemap selector. To work on a geographic map, create or open a project of that type. Recalibrate is only shown for image projects."
       }
+    },
+    "assistantSection": {
+      "analysis": {
+        "content": "Figures come from the app’s calculations and public services (IGN, OpenStreetMap, Wikimedia), not from the model’s estimate.",
+        "item1": "The ground distance and bearing, computed with the project’s projection.",
+        "item2": "Start, end, minimum and maximum elevation, ascent and descent, plus a point at the summit. “What is the elevation of these points?” works too.",
+        "item3": "An IGN route with its real distance and duration. Say “by car” or “fastest” if needed.",
+        "item4": "After you paste a photo, the assistant fetches photos of these places from Wikimedia and compares them. It names the places without a photo and never draws a conclusion about a place it has not seen.",
+        "label1": "“What distance and bearing between Crossing 1 and Melun?”",
+        "label2": "“Give me the elevation profile of this line and place its highest point.”",
+        "label3": "“Draw the walking route from Fontainebleau to Melun.”",
+        "label4": "“Compare my photo with the churches in the project.”",
+        "title": "Examples: measurements and analysis"
+      },
+      "attachments": {
+        "content": "Up to 4 attachments per message: PNG, JPEG, WebP or GIF images and unencrypted PDFs, up to 10 MB each.",
+        "item1": "Paste a screenshot or an image into the input field (Ctrl+V), or use the paperclip to choose a file.",
+        "item2": "The map button attaches the current view with its geographic bounds, for instance to ask “What does this area show?”.",
+        "item3": "When the project has a PDF, its button attaches it in one click, for instance for “Place the places named in this document”.",
+        "item4": "The last 3 attachments are sent again with the following messages, so you can ask several questions about the same image. They cost each time they are sent: Forget removes them.",
+        "label1": "Paste an image",
+        "label2": "Map capture",
+        "label3": "Project PDF",
+        "label4": "Memory",
+        "title": "Attachments and memory"
+      },
+      "connect": {
+        "content": "The assistant uses your own OpenAI, Anthropic (Claude) or Google Gemini API key. Requests are billed to your account by that provider; the key stays in this browser and is only sent to it.",
+        "item1": "Click the magic wand at the top right to open the Assistant panel.",
+        "item2": "Paste your key: the provider is detected when possible, otherwise choose it. Click Load models.",
+        "item3": "Choose a model and, when it allows it, the reasoning effort. Auto suits most requests; high effort is slower and costs more, but is more reliable for multi-step constructions and image calibration. Then click Open conversation.",
+        "item4": "Tick Remember the key only on a personal device. Forget key removes it from this browser.",
+        "label1": "Step 1",
+        "label2": "Step 2",
+        "label3": "Step 3",
+        "label4": "Step 4",
+        "title": "Connect the assistant"
+      },
+      "constructions": {
+        "content": "The assistant computes each construction with the same rules as the manual tools and the project’s projection: it never works out coordinates by itself.",
+        "item1": "Two circles, then their crossings named “1” and “2”. Add “keep the northern one” to keep only one.",
+        "item2": "A line between the two points, then a point placed on it. Then “measure it from the other end” moves it while keeping the same fraction (preview to confirm).",
+        "item3": "A line centred on the midpoint, every point of which is equally far from both towns. Same idea for a midpoint, the centroid of several points, or an angle bisector.",
+        "item4": "The side follows the direction you give (north, south, east, west). Without a direction or a length, the assistant asks for it.",
+        "item5": "It extends the line, and finds the crossing even when the drawn segments do not touch.",
+        "item6": "A polygon with its area and the list of points inside it. Also works for points lying in two circles at once.",
+        "label1": "“Find the points 12 km from Fontainebleau and 10 km from Melun.”",
+        "label2": "“Draw the Fontainebleau–Melun line and put a point one third of the way from Melun.”",
+        "label3": "“Draw the perpendicular bisector of Fontainebleau and Melun over 20 km.”",
+        "label4": "“From this point on the line, draw the perpendicular towards the north over 5 km.”",
+        "label5": "“Extend this line by 6 km and give me where it crosses the other one.”",
+        "label6": "“Make a zone with these three points and tell me which points are inside.”",
+        "title": "Examples: constructions"
+      },
+      "edits": {
+        "content": "The assistant remembers the elements of the conversation: “it”, “this circle”, “the other end” refer to the elements it just talked about.",
+        "item1": "Renames the last element mentioned, keeping its links with other elements.",
+        "item2": "Changes the radius of the existing circle; the preview shows the old one in red and the new one in purple before applying.",
+        "item3": "Only the element you pointed at is deleted, after confirmation. A point that forms a zone, or a line other constructions depend on, is refused while those exist.",
+        "item4": "Colours of lines, circles, zones and routes, and visibility of any element. Points keep their style.",
+        "item5": "Creates the note, or adds to it if the element already has one.",
+        "item6": "Downloads the GPX file once the request is applied.",
+        "label1": "“Rename it Starting point.”",
+        "label2": "“Make the circle 15 km instead.”",
+        "label3": "“Delete just this circle.”",
+        "label4": "“Make the Melun circle red and hide the route.”",
+        "label5": "“Add a note to this point: main candidate.”",
+        "label6": "“Export the project as GPX.”",
+        "title": "Examples: correcting and organising"
+      },
+      "how": {
+        "content": "Creations and renames apply directly at the end of the request. Deletions and moves are first previewed on the map (purple: proposed, red: before or removed) and wait for you to click Apply changes. The conversation is kept for each project.",
+        "item1": "Click a point, line or circle on the map or in the notebook before writing: “this point” or “this line” then refers to it. The selection is shown above the input field.",
+        "item2": "Created or modified elements are listed under the answer: click them to centre the map. The map also frames what the request added.",
+        "item3": "When several elements match, the assistant offers clickable choices instead of guessing. Clicking a choice sends the request again with that element.",
+        "item4": "Undo, under the conversation, reverts the whole last request. Stop interrupts a running request without applying anything.",
+        "label1": "Point at an element",
+        "label2": "Follow the answer",
+        "label3": "Resolve ambiguity",
+        "label4": "Go back",
+        "title": "How it works"
+      },
+      "intro": "Describe in plain words what you want on the map: the assistant does it with GeoChase’s own tools, without inventing coordinates. It prepares everything, then applies the request in one go when it has finished; Undo reverts the whole request.",
+      "limits": {
+        "item1": "A request has at most 12 exchanges with the model and 36 actions. Split long work into several messages.",
+        "item2": "IGN geocoding, routes and elevations cover France. OpenStreetMap and Wikimedia depend on contributions: a little-known place may be missing.",
+        "item3": "Each request sends the project’s elements (names, coordinates, notes) to the provider. Images and PDFs are only sent when you attach them.",
+        "item4": "The assistant does not work in an image project, nor while a drawing tool or a dialog is open: finish those first.",
+        "label1": "Size of a request",
+        "label2": "Coverage",
+        "label3": "Privacy",
+        "label4": "When it is unavailable",
+        "title": "Good to know"
+      },
+      "overlay": {
+        "content": "The assistant can place an image overlay (added with the Image button), a PDF or image attached to the conversation, or the project PDF. It looks at the image with a grid, zooms in on the details you describe, checks its positions with markers, then computes the placement, rotation and size. An imported PDF keeps its page size (21 × 29.7 cm for A4), so a scale such as 1:1,000,000 gives its true size.",
+        "item1": "The first anchor lands exactly on Fontainebleau and the image is rotated so the second points at Chambord. Because the scale is fixed, the second anchor may land slightly off: the assistant reports that gap and the scale the two anchors alone would give.",
+        "item2": "Both anchors land exactly on their places and the scale is derived. Moving an image that is already there goes through the preview (red outline before, purple after) to confirm.",
+        "item3": "With three anchors or more, it computes the best fit and reports each one’s gap: a much larger gap points to an anchor placed or described wrongly.",
+        "item4": "Choose visible, unique details (a tip, a corner, a crossing) and precise places: “Château de Chambord” rather than “Chambord” if the castle is what matters. For a photo or scan, give its printed width if you want to force a scale.",
+        "label1": "“Put the top of the left pole on Fontainebleau and the mark above the round thing on Chambord, at 1:1,000,000 scale.”",
+        "label2": "“Calibrate it again without forcing the scale.”",
+        "label3": "“Calibrate this plan with the station, the church and the bridge.”",
+        "label4": "Describe well",
+        "title": "Example: calibrating an image or PDF on the map"
+      },
+      "places": {
+        "content": "Simply write the places you want. Geocoding covers France; a town is placed at its geographic centre.",
+        "item1": "Three points, one at the centre of each town. If a name matches several towns, the assistant asks which one.",
+        "item2": "For a historical fact, it first searches the web for sources, tells tombs, remains and memorials apart, then attaches the sources as a note on the new point.",
+        "item3": "It queries OpenStreetMap around the Melun point and places what it finds. Also works with “inside this circle”, and for fountains, peaks, castles, lighthouses, museums…",
+        "item4": "A point at a given distance and bearing, without drawing a line.",
+        "label1": "“Place Fontainebleau, Melun and Provins.”",
+        "label2": "“Place the tomb of Du Guesclin.”",
+        "label3": "“Place the churches within 3 km of Melun.”",
+        "label4": "“Put a point 3 km north-east of Fontainebleau.”",
+        "title": "Examples: placing places"
+      },
+      "title": "AI assistant"
     }
   },
   "layers": {

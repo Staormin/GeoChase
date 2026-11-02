@@ -231,9 +231,35 @@ interface Section {
 }
 
 const uiStore = useUIStore();
-const { t } = useI18n();
+const { t, te } = useI18n();
 const isOpen = ref(false);
 const activeTabId = ref('getting-started');
+
+/**
+ * Assistant section: every text, example labels included, comes from
+ * tutorial.assistantSection.<part> (title, content, labelN, itemN).
+ */
+const ASSISTANT_PARTS = [
+  { part: 'connect', icon: 'mdi-key-variant', items: 4, content: true },
+  { part: 'how', icon: 'mdi-head-cog-outline', items: 4, content: true },
+  { part: 'places', icon: 'mdi-map-marker-plus-outline', items: 4, content: true },
+  { part: 'constructions', icon: 'mdi-vector-intersection', items: 6, content: true },
+  { part: 'analysis', icon: 'mdi-chart-line', items: 4, content: true },
+  { part: 'edits', icon: 'mdi-pencil-outline', items: 6, content: true },
+  {
+    part: 'overlay',
+    icon: 'mdi-image-filter-center-focus-weak',
+    items: 4,
+    content: true,
+    badge: true,
+  },
+  { part: 'attachments', icon: 'mdi-paperclip', items: 4, content: true },
+  { part: 'limits', icon: 'mdi-information-outline', items: 4, content: false },
+];
+const assistantKey = (part: string, key: string) => `tutorial.assistantSection.${part}.${key}`;
+function assistantKeys(key: (part: string) => string) {
+  return Object.fromEntries(ASSISTANT_PARTS.map(({ part }) => [`assistant-${part}`, key(part)]));
+}
 
 const DEFAULT_DATA: Section[] = [
   {
@@ -302,6 +328,12 @@ const DEFAULT_DATA: Section[] = [
         content: 'Sauvegardes, projections et exports GPX.',
         linkTarget: 'projects',
       },
+      {
+        id: 'feat-assistant',
+        title: '',
+        icon: 'mdi-auto-fix',
+        linkTarget: 'assistant',
+      },
     ],
   },
   {
@@ -365,6 +397,22 @@ const DEFAULT_DATA: Section[] = [
           'Le bouton au milieu du bord gauche ouvre ou masque le carnet des éléments. Les boutons + et − en bas à droite règlent le zoom de la carte. Le bouton rond des outils, juste en dessous, ouvre la règle de mesure.',
       },
     ],
+  },
+  {
+    id: 'assistant',
+    title: '',
+    icon: 'mdi-auto-fix',
+    intro: '',
+    subsections: ASSISTANT_PARTS.map(({ part, icon, items, content, badge }) => ({
+      id: `assistant-${part}`,
+      title: '',
+      icon,
+      // Its text comes from subsectionBadgeKeys.
+      ...(badge ? { badge: 'advanced' } : {}),
+      // Any non-empty value shows the paragraph; its text comes from the translations.
+      ...(content ? { content: part } : {}),
+      items: Array.from({ length: items }, () => ({ text: '' })),
+    })),
   },
   {
     id: 'drawing',
@@ -1003,6 +1051,7 @@ const sectionTitleKeys: Record<string, string> = {
   points: 'layers.points',
   projects: 'tutorial.projects',
   'image-map': 'tutorial.imageMapSection.title',
+  assistant: 'tutorial.assistantSection.title',
   pdf: 'tutorial.pdf',
   tips: 'tutorial.tipsTricks',
 };
@@ -1016,6 +1065,7 @@ const featureTitleKeys: Record<string, string> = {
   'feat-elevation': 'tutorial.guideContent.cards.elevation',
   'feat-points': 'tutorial.guideContent.cards.points',
   'feat-projects': 'tutorial.guideContent.cards.projects',
+  'feat-assistant': 'tutorial.guideContent.cards.assistant',
 };
 
 const featureContentKeys: Record<string, string> = {
@@ -1027,9 +1077,11 @@ const featureContentKeys: Record<string, string> = {
   'feat-elevation': 'tutorial.guideContent.cards.elevationContent',
   'feat-points': 'tutorial.guideContent.cards.pointsContent',
   'feat-projects': 'tutorial.guideContent.cards.projectsContent',
+  'feat-assistant': 'tutorial.guideContent.cards.assistantContent',
 };
 
 const subsectionTitleKeys: Record<string, string> = {
+  ...assistantKeys((part) => assistantKey(part, 'title')),
   'image-map-import': 'tutorial.imageMapSection.import.title',
   'image-map-points': 'tutorial.imageMapSection.points.title',
   'image-map-ratio': 'tutorial.imageMapSection.ratio.title',
@@ -1063,6 +1115,7 @@ const subsectionTitleKeys: Record<string, string> = {
 };
 
 const subsectionContentKeys: Record<string, string> = {
+  ...assistantKeys((part) => assistantKey(part, 'content')),
   'interface-toolbar': 'tutorial.guideContent.interface.toolbar.content',
   'interface-more-menu': 'tutorial.guideContent.interface.moreMenu.content',
   'interface-sidebar': 'tutorial.guideContent.interface.sidebar.content',
@@ -1082,6 +1135,12 @@ const subsectionContentKeys: Record<string, string> = {
 };
 
 const subsectionItemKeys: Record<string, string[]> = {
+  ...Object.fromEntries(
+    ASSISTANT_PARTS.map(({ part, items }) => [
+      `assistant-${part}`,
+      Array.from({ length: items }, (_, index) => assistantKey(part, `item${index + 1}`)),
+    ])
+  ),
   'image-map-import': Array.from(
     { length: 3 },
     (_, index) => `tutorial.imageMapSection.import.item${index + 1}`
@@ -1244,7 +1303,16 @@ const subsectionItemKeys: Record<string, string[]> = {
   ],
 };
 
+/** Bold label before an item: the example request, or the topic of a tip. */
+const subsectionLabelKeys: Record<string, string[]> = Object.fromEntries(
+  ASSISTANT_PARTS.map(({ part, items }) => [
+    `assistant-${part}`,
+    Array.from({ length: items }, (_, index) => assistantKey(part, `label${index + 1}`)),
+  ])
+);
+
 const subsectionBadgeKeys: Record<string, string> = {
+  'assistant-overlay': 'tutorial.guideContent.badges.advanced',
   'draw-line': 'tutorial.guideContent.badges.essential',
   'draw-intersection-edit': 'tutorial.guideContent.badges.advanced',
   'search-path': 'tutorial.guideContent.badges.analysis',
@@ -1290,6 +1358,8 @@ function subsectionContent(subsection: Subsection): string {
 }
 
 function detailLabel(subsection: Subsection, index: number, fallback?: string): string {
+  const labelKey = subsectionLabelKeys[subsection.id]?.[index];
+  if (labelKey && te(labelKey)) return String(t(labelKey));
   return subsectionItemKeys[subsection.id]?.[index] ? '' : (fallback ?? '');
 }
 
@@ -1311,6 +1381,7 @@ function sectionIntro(id: string, fallback: string): string {
     points: 'tutorial.pointsSection.intro',
     projects: 'tutorial.projectsSection.intro',
     'image-map': 'tutorial.imageMapSection.intro',
+    assistant: 'tutorial.assistantSection.intro',
     pdf: 'tutorial.pdfSection.intro',
     tips: 'tutorial.guideContent.intros.tips',
   };
