@@ -92,7 +92,7 @@ export function useNoteTooltips(mapRef: MapContainer) {
    * Create and attach an overlay tooltip for the given note
    */
   function bindNoteTooltip(note: NoteElement) {
-    if (!mapRef.map?.value || !note.id) {
+    if (!mapRef.map?.value || !note.id || !uiStore.isElementVisible('note', note.id)) {
       return;
     }
 
@@ -192,7 +192,8 @@ export function useNoteTooltips(mapRef: MapContainer) {
     }
 
     const linkedNotes = layersStore.notes.filter(
-      (note) => note.linkedElementType && note.linkedElementId
+      (note) =>
+        note.linkedElementType && note.linkedElementId && uiStore.isElementVisible('note', note.id)
     );
 
     if (currentZoom >= MIN_ZOOM_FOR_NOTES) {
@@ -266,6 +267,7 @@ export function useNoteTooltips(mapRef: MapContainer) {
       for (const note of layersStore.notes) {
         if (note.linkedElementType === 'image') refreshNoteTooltip(note.id);
       }
+      updateNoteTooltips();
     },
     { deep: true }
   );

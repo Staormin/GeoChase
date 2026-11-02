@@ -126,6 +126,8 @@ export interface NoteElement {
 }
 
 export type ElementType = 'image' | 'route' | 'circle' | 'lineSegment' | 'point' | 'polygon';
+// Notes can be hidden too, but are not drawing elements a note could be linked to.
+export type VisibilityElementType = ElementType | 'note';
 export type DrawingElement =
   ImageElement | RouteElement | CircleElement | LineSegmentElement | PointElement | PolygonElement;
 

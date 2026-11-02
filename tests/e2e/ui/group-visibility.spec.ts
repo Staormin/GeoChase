@@ -125,6 +125,7 @@ for (const { type, title, source } of sections) {
     await group.getByTitle('Hide all items in group', { exact: true }).click();
     await expectMapFeature(page, source, id('group'), false);
     await expectMapFeature(page, source, id('other'), true);
+    await expect(group.locator('[data-layer-id="note"]')).toHaveClass(/layer-item-hidden/);
     await page.getByTitle(showTitle, { exact: true }).click();
     await expectMapFeature(page, source, id('outside'), true);
     await expectMapFeature(page, source, id('group'), false);
@@ -135,7 +136,7 @@ for (const { type, title, source } of sections) {
     await expect(group.locator('[data-layer-id="note"]')).not.toHaveClass(/layer-item-hidden/);
     await expect(
       page.locator('[data-element-group-id="notes"] .layers-section-actions button').first()
-    ).toBeDisabled();
+    ).toBeEnabled();
   });
 }
 

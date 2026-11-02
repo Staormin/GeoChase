@@ -991,6 +991,7 @@
       "point": "points",
       "circle": "circles",
       "lineSegment": "lines",
+      "note": "notes",
       "polygon": "polygons",
       "route": "routes"
     }

@@ -208,9 +208,7 @@
             :class="[
               dropClasses(member.type, member.element.id),
               {
-                'layer-item-hidden':
-                  member.type !== 'note' &&
-                  !uiStore.isElementVisible(member.type, member.element.id),
+                'layer-item-hidden': !uiStore.isElementVisible(member.type, member.element.id),
               },
             ]"
             :data-group-id="group.id"
@@ -251,6 +249,26 @@
                 /></template>
 
                 <v-list density="compact">
+                  <v-list-item @click="toggleNoteVisibility(member.element)"
+                    ><template #prepend
+                      ><v-icon
+                        :icon="
+                          uiStore.isElementVisible('note', member.element.id)
+                            ? 'mdi-eye'
+                            : 'mdi-eye-off'
+                        "
+                        size="small"
+                    /></template>
+
+                    <v-list-item-title>{{
+                      $t(
+                        uiStore.isElementVisible('note', member.element.id)
+                          ? 'contextMenu.hide'
+                          : 'contextMenu.show'
+                      )
+                    }}</v-list-item-title></v-list-item
+                  >
+
                   <v-list-item @click="ungroupElement('note', member.element.id)"
                     ><v-list-item-title>{{
                       $t('contextMenu.removeFromGroup')
@@ -724,26 +742,44 @@
 
       <!-- Notes -->
       <div v-if="filteredNotes.length > 0">
-        <button
-          :aria-expanded="notesExpanded"
-          class="layers-section-header notes-section-toggle"
-          type="button"
-          @click="notesExpanded = !notesExpanded"
-        >
-          <span class="layers-section-title"
-            >{{ $t('layers.notes') }} ({{ filteredNotes.length
-            }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.noteCount}` : '' }})</span
+        <div class="layers-section-header">
+          <button
+            :aria-expanded="notesExpanded"
+            class="layers-section-title"
+            type="button"
+            @click="notesExpanded = !notesExpanded"
           >
+            {{ $t('layers.notes') }} ({{ filteredNotes.length
+            }}{{ searchQuery ? ` ${$t('common.of')} ${layersStore.noteCount}` : '' }})
 
-          <span class="collapse-icon">{{ notesExpanded ? '▼' : '▶' }}</span>
-        </button>
+            <span aria-hidden="true" class="collapse-icon">{{ notesExpanded ? '▼' : '▶' }}</span>
+          </button>
+
+          <div class="layers-section-actions">
+            <v-btn
+              color="primary"
+              :icon="allNotesVisible ? 'mdi-eye-off' : 'mdi-eye'"
+              size="x-small"
+              :title="
+                $t(allNotesVisible ? 'layers.hideCategory' : 'layers.showCategory', {
+                  category: $t('layers.visibilityCategories.note'),
+                })
+              "
+              variant="text"
+              @click.stop="toggleAllElementsOfType('note')"
+            />
+          </div>
+        </div>
 
         <div v-show="notesExpanded" class="layer-items">
           <div
             v-for="note in filteredNotes"
             :key="note.id"
             class="layer-item"
-            :class="dropClasses('note', note.id)"
+            :class="{
+              ...dropClasses('note', note.id),
+              'layer-item-hidden': !uiStore.isElementVisible('note', note.id),
+            }"
             :data-layer-id="note.id"
             data-layer-type="note"
             @click="handleNoteClick(note)"
@@ -781,6 +817,28 @@
                 </template>
 
                 <v-list density="compact">
+                  <v-list-item
+                    data-testid="note-toggle-visibility"
+                    @click="toggleNoteVisibility(note)"
+                  >
+                    <template #prepend>
+                      <v-icon
+                        :icon="
+                          uiStore.isElementVisible('note', note.id) ? 'mdi-eye' : 'mdi-eye-off'
+                        "
+                        size="small"
+                      />
+                    </template>
+
+                    <v-list-item-title>{{
+                      $t(
+                        uiStore.isElementVisible('note', note.id)
+                          ? 'contextMenu.hide'
+                          : 'contextMenu.show'
+                      )
+                    }}</v-list-item-title>
+                  </v-list-item>
+
                   <v-list-item @click="handleEditNote(note)">
                     <template #prepend>
                       <v-icon icon="mdi-pencil" size="small" />
@@ -897,13 +955,13 @@ import type {
   CircleElement,
   DrawingElement,
   ElementGroup,
-  ElementType,
   ImageElement,
   LineSegmentElement,
   NoteElement,
   PointElement,
   PolygonElement,
   RouteElement,
+  VisibilityElementType,
 } from '@/types/project';
 import { toLonLat } from 'ol/proj';
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
@@ -1221,7 +1279,7 @@ function toggleElementGroupExpanded(groupId: string) {
   expandedElementGroups.value[groupId] = expandedElementGroups.value[groupId] === false;
 }
 
-function categoryVisibilityTitle(type: ElementType): string {
+function categoryVisibilityTitle(type: VisibilityElementType): string {
   const action = areAllTargetsVisible(categoryVisibilityTargets(type))
     ? 'hideCategory'
     : 'showCategory';
@@ -1229,12 +1287,13 @@ function categoryVisibilityTitle(type: ElementType): string {
 }
 
 function groupVisibilityTargets(group: ElementGroup): VisibilityTarget[] {
-  return displayedGroupMembers(group).flatMap((member) =>
-    member.type === 'note' ? [] : [{ type: member.type, id: member.element.id }]
-  );
+  return displayedGroupMembers(group).map((member) => ({
+    type: member.type,
+    id: member.element.id,
+  }));
 }
 
-function sectionVisibilityTargets(type: ElementType): VisibilityTarget[] {
+function sectionVisibilityTargets(type: VisibilityElementType): VisibilityTarget[] {
   const sections = {
     image: filteredImages,
     route: filteredRoutes,
@@ -1242,6 +1301,7 @@ function sectionVisibilityTargets(type: ElementType): VisibilityTarget[] {
     lineSegment: filteredLines,
     point: filteredPoints,
     polygon: filteredPolygons,
+    note: filteredNotes,
   };
   return sections[type].value.map((element) => ({ type, id: element.id }));
 }
@@ -1462,6 +1522,7 @@ const allLinesVisible = computed(() =>
   areAllTargetsVisible(sectionVisibilityTargets('lineSegment'))
 );
 const allPointsVisible = computed(() => areAllTargetsVisible(sectionVisibilityTargets('point')));
+const allNotesVisible = computed(() => areAllTargetsVisible(sectionVisibilityTargets('note')));
 const allPolygonsVisible = computed(() =>
   areAllTargetsVisible(sectionVisibilityTargets('polygon'))
 );
@@ -2071,6 +2132,10 @@ function handleEditNote(note: NoteElement) {
   }
 }
 
+function toggleNoteVisibility(note: NoteElement) {
+  toggleVisibilityTargets([{ type: 'note', id: note.id }]);
+}
+
 function handleDeleteNote(note: NoteElement) {
   if (note.id && confirm(`Are you sure you want to delete the note "${note.title}"?`)) {
     layersStore.deleteNote(note.id);
@@ -2078,7 +2143,7 @@ function handleDeleteNote(note: NoteElement) {
   }
 }
 
-function toggleAllElementsOfType(elementType: ElementType) {
+function toggleAllElementsOfType(elementType: VisibilityElementType) {
   toggleVisibilityTargets(sectionVisibilityTargets(elementType));
 }
 
@@ -2241,11 +2306,6 @@ onBeforeUnmount(cancelElementDrag);
   transition: background 0.2s ease;
   border-radius: 4px;
   margin-bottom: 4px;
-}
-
-.notes-section-toggle {
-  width: 100%;
-  text-align: left;
 }
 
 .layers-section-header:hover {

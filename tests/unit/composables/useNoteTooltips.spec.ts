@@ -755,4 +755,39 @@ describe('useNoteTooltips', () => {
       expect(mockMapRef.map.value.addOverlay).toHaveBeenCalled();
     });
   });
+
+  describe('Note visibility', () => {
+    const note = {
+      id: 'note-1',
+      title: 'Hidden Note',
+      content: '',
+      linkedElementType: 'circle' as const,
+      linkedElementId: 'circle-1',
+    };
+
+    it('does not bind a tooltip for a hidden note', () => {
+      layersStore.addNote(note);
+      uiStore.setElementVisibility('note', note.id, false);
+
+      const tooltips = useNoteTooltips(mockMapRef);
+      tooltips.bindNoteTooltip(note);
+
+      expect(mockMapRef.map.value.addOverlay).not.toHaveBeenCalled();
+    });
+
+    it('removes and restores the tooltip when the note visibility changes', async () => {
+      layersStore.addNote(note);
+      useNoteTooltips(mockMapRef);
+      expect(mockMapRef.map.value.addOverlay).toHaveBeenCalledTimes(1);
+
+      uiStore.setElementVisibility('note', note.id, false);
+      await nextTick();
+      expect(mockMapRef.map.value.removeOverlay).toHaveBeenCalledTimes(1);
+      expect(document.querySelector('.note-tooltip')).toBeNull();
+
+      uiStore.setElementVisibility('note', note.id, true);
+      await nextTick();
+      expect(mockMapRef.map.value.addOverlay).toHaveBeenCalledTimes(2);
+    });
+  });
 });

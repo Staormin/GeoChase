@@ -1,21 +1,22 @@
 import type { useDrawing } from '@/composables/useDrawing';
-import type { ElementType } from '@/types/project';
+import type { VisibilityElementType } from '@/types/project';
 import { onBeforeUnmount, onMounted } from 'vue';
 import { useLayersStore } from '@/stores/layers';
 import { useUIStore } from '@/stores/ui';
 
 export interface VisibilityTarget {
-  type: ElementType;
+  type: VisibilityElementType;
   id: string;
 }
 
-export const visibilityCategories: { type: ElementType; icon: string; key: string }[] = [
+export const visibilityCategories: { type: VisibilityElementType; icon: string; key: string }[] = [
   { type: 'point', icon: 'mdi-map-marker-outline', key: 'a' },
   { type: 'circle', icon: 'mdi-circle-outline', key: 'c' },
   { type: 'lineSegment', icon: 'mdi-vector-line', key: 's' },
   { type: 'polygon', icon: 'mdi-vector-polygon', key: 'v' },
   { type: 'image', icon: 'mdi-image-outline', key: 'i' },
   { type: 'route', icon: 'mdi-routes', key: 'r' },
+  { type: 'note', icon: 'mdi-note-text-outline', key: 'n' },
 ];
 export const mapVisibilityKey = 'x';
 export const visibilityShortcut = (key: string) => `Alt+${key.toUpperCase()}`;
@@ -26,7 +27,7 @@ export function useElementVisibility(
   const layers = useLayersStore();
   const ui = useUIStore();
 
-  function categoryVisibilityTargets(type: ElementType): VisibilityTarget[] {
+  function categoryVisibilityTargets(type: VisibilityElementType): VisibilityTarget[] {
     const categories = {
       point: layers.points,
       circle: layers.circles,
@@ -34,6 +35,7 @@ export function useElementVisibility(
       polygon: layers.polygons,
       image: layers.images,
       route: layers.routes,
+      note: layers.notes,
     };
     return categories[type].map((element) => ({ type, id: element.id }));
   }
