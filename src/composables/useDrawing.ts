@@ -372,9 +372,19 @@ export function useDrawing(mapRef: MapContainer) {
     }
   };
 
+  type RedrawOptions = {
+    fitBounds?: boolean;
+    /** Frame only these elements, like placing them manually, instead of the whole project. */
+    fitOnly?: ReadonlySet<string>;
+    animatePointIds?: string[];
+  };
   // Redraw all elements on map (useful after loading project)
   // eslint-disable-next-line complexity
-  const redrawAllElements = ({ fitBounds = true }: { fitBounds?: boolean } = {}) => {
+  const redrawAllElements = (options: RedrawOptions = {}) => {
+    const { fitBounds = true, fitOnly, animatePointIds = [] } = options;
+    const framed = <T extends { id: string }>(list: T[]) =>
+      fitOnly ? list.filter((element) => fitOnly.has(element.id)) : list;
+    pointDrawing.cancelPointArrivals();
     const ui = useUIStore();
     // Clear only map layers using VectorSources, not the store (store is already populated)
     mapRef.routesSource?.value?.clear();
@@ -450,15 +460,21 @@ export function useDrawing(mapRef: MapContainer) {
       }
     }
 
-    // Fly to all elements if any exist with animation
+    // Fly to all elements (or the framed ones) if any exist with animation
     // Skip if skipAutoFly flag is set (when restoring saved view data)
+    const fitImages = framed(layersStore.images);
+    const fitRoutes = framed(routes);
+    const fitCircles = framed(circles);
+    const fitLines = framed(lineSegments);
+    const fitPoints = framed(points);
+    const fitPolygons = framed(polygons);
     if (
-      (layersStore.images.length > 0 ||
-        routes.length > 0 ||
-        circles.length > 0 ||
-        lineSegments.length > 0 ||
-        points.length > 0 ||
-        polygons.length > 0) &&
+      (fitImages.length > 0 ||
+        fitRoutes.length > 0 ||
+        fitCircles.length > 0 ||
+        fitLines.length > 0 ||
+        fitPoints.length > 0 ||
+        fitPolygons.length > 0) &&
       mapRef.flyToBoundsWithPanels &&
       fitBounds
     ) {
@@ -468,7 +484,7 @@ export function useDrawing(mapRef: MapContainer) {
         minLon = 180,
         maxLon = -180;
 
-      for (const image of layersStore.images) {
+      for (const image of fitImages) {
         for (const corner of imageCorners(image)) {
           const [lon, lat] = toLonLat(corner);
           minLat = Math.min(minLat, lat!);
@@ -477,7 +493,7 @@ export function useDrawing(mapRef: MapContainer) {
           maxLon = Math.max(maxLon, lon!);
         }
       }
-      for (const route of routes) {
+      for (const route of fitRoutes) {
         for (const [lon, lat] of route.coordinates) {
           minLat = Math.min(minLat, lat);
           maxLat = Math.max(maxLat, lat);
@@ -485,7 +501,7 @@ export function useDrawing(mapRef: MapContainer) {
           maxLon = Math.max(maxLon, lon);
         }
       }
-      for (const circle of circles) {
+      for (const circle of fitCircles) {
         const lat = circle.center.lat;
         const lon = circle.center.lon;
         const radiusInDegrees = circle.radius / 111; // Approximate: 111km per degree
@@ -495,7 +511,7 @@ export function useDrawing(mapRef: MapContainer) {
         maxLon = Math.max(maxLon, lon + radiusInDegrees);
       }
 
-      for (const segment of lineSegments) {
+      for (const segment of fitLines) {
         const path =
           isGeodesic() && segment.endpoint && segment.mode !== 'parallel'
             ? sampleLine(
@@ -513,14 +529,14 @@ export function useDrawing(mapRef: MapContainer) {
         }
       }
 
-      for (const point of points) {
+      for (const point of fitPoints) {
         minLat = Math.min(minLat, point.coordinates.lat);
         maxLat = Math.max(maxLat, point.coordinates.lat);
         minLon = Math.min(minLon, point.coordinates.lon);
         maxLon = Math.max(maxLon, point.coordinates.lon);
       }
 
-      for (const polygon of polygons) {
+      for (const polygon of fitPolygons) {
         // Resolve point IDs to coordinates for bounds calculation
         for (const pointId of polygon.pointIds) {
           const point = layersStore.points.find((p) => p.id === pointId);
@@ -533,13 +549,25 @@ export function useDrawing(mapRef: MapContainer) {
         }
       }
 
+      if (fitOnly) {
+        // Same minimum frame as placing a single point manually (~1 km around it).
+        const padding = 0.01;
+        if (maxLat - minLat < 2 * padding) [minLat, maxLat] = [minLat - padding, maxLat + padding];
+        if (maxLon - minLon < 2 * padding) [minLon, maxLon] = [minLon - padding, maxLon + padding];
+      }
+
       if (minLat <= maxLat && minLon <= maxLon) {
-        mapRef.flyToBoundsWithPanels([
-          [minLat, minLon],
-          [maxLat, maxLon],
-        ]);
+        mapRef.flyToBoundsWithPanels(
+          [
+            [minLat, minLon],
+            [maxLat, maxLon],
+          ],
+          animatePointIds.length > 0 ? { duration: 0.35 } : undefined
+        );
       }
     }
+    if (animatePointIds.length > 0)
+      pointDrawing.animatePointArrivals(animatePointIds, fitBounds ? 350 : 0);
   };
 
   function updateElementColor(elementType: string, elementId: string, color: string) {

@@ -4,6 +4,7 @@
 
   <MapEffects />
   <MapImages />
+  <AssistantPanel />
 
   <!-- Fullscreen map -->
   <div
@@ -105,6 +106,7 @@ import type { useNoteTooltips } from '@/composables/useNoteTooltips';
 import { computed, onBeforeUnmount, onMounted, provide, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDisplay } from 'vuetify';
+import AssistantPanel from '@/components/assistant/AssistantPanel.vue';
 import MapImages from '@/components/layers/MapImages.vue';
 import MapControls from '@/components/layout/MapControls.vue';
 import ToolsButton from '@/components/layout/ToolsButton.vue';
@@ -129,12 +131,14 @@ import { useHistory } from '@/composables/useHistory';
 import { useMap } from '@/composables/useMap';
 import { usePrecisionLens } from '@/composables/usePrecisionLens';
 import { useViewDataSync } from '@/composables/useViewDataSync';
+import { useAssistantStore } from '@/stores/assistant';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
 
 const { t } = useI18n();
 const uiStore = useUIStore();
 const projectsStore = useProjectsStore();
+const assistant = useAssistantStore();
 const { width: screenWidth } = useDisplay();
 const topBarHeight = ref(64);
 // Keep room for the panel toggle and its margins on narrow screens.
@@ -243,7 +247,8 @@ const pdfPanelDisplayWidth = computed(() =>
   )
 );
 
-const mapContainer = useMap('map', uiStore, { sidebarWidth, topBarHeight });
+const rightPanelWidth = computed(() => (assistant.open && screenWidth.value >= 960 ? 440 : 0));
+const mapContainer = useMap('map', uiStore, { sidebarWidth, topBarHeight, rightPanelWidth });
 const drawing = useDrawing(mapContainer);
 useVisibilityShortcuts(drawing);
 const precisionLens = usePrecisionLens(mapContainer);

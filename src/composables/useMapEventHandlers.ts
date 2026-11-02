@@ -188,6 +188,7 @@ export function useMapEventHandlers(mapContainer: ReturnType<typeof useMap>) {
         ) {
           const element = elementAt(event.pixel);
           if (element) {
+            uiStore.selectedMapElement = { ...element };
             uiStore.sidebarOpen = true;
             uiStore.sidebarElementRequest = { ...element };
             const rect = map!.getViewport()?.getBoundingClientRect();
@@ -199,6 +200,9 @@ export function useMapEventHandlers(mapContainer: ReturnType<typeof useMap>) {
             clearHover();
             return false;
           }
+          // Clicking elsewhere ends the selection, so the assistant never
+          // receives a stale element as "what the user clicked".
+          uiStore.selectedMapElement = null;
         }
         return true;
       },

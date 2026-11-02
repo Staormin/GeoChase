@@ -40,7 +40,7 @@ const ELEVATION_API = 'https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/ele
  * @param coordinates Array of {lat, lon} coordinate pairs
  * @returns Map of coordinate strings to elevation values
  */
-async function fetchElevations(
+export async function fetchElevations(
   coordinates: Array<{ lat: number; lon: number }>
 ): Promise<Map<string, number>> {
   const elevationMap = new Map<string, number>();
@@ -170,7 +170,11 @@ async function fetchElevations(
  * @param limit Maximum number of results to return
  * @returns Array of search results
  */
-export async function searchAddress(query: string, limit = 8): Promise<AddressSearchResult[]> {
+export async function searchAddress(
+  query: string,
+  limit = 8,
+  signal?: AbortSignal
+): Promise<AddressSearchResult[]> {
   if (!query.trim()) {
     return [];
   }
@@ -181,7 +185,9 @@ export async function searchAddress(query: string, limit = 8): Promise<AddressSe
       limit: limit.toString(),
     });
 
-    const response = await fetch(`${COMPLETION_API}?${params.toString()}`);
+    const response = await fetch(`${COMPLETION_API}?${params.toString()}`, {
+      signal: AbortSignal.any([AbortSignal.timeout(15_000), ...(signal ? [signal] : [])]),
+    });
 
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
@@ -423,7 +429,7 @@ class RequestQueue {
   }
 }
 
-const requestQueue = new RequestQueue();
+export const overpassQueue = new RequestQueue();
 
 /**
  * Helper: Get type value from XML tags
@@ -632,7 +638,7 @@ export async function searchLocationsNearPath(
   `;
 
   // Fetch from Overpass API
-  const response = await requestQueue.add(async () => {
+  const response = await overpassQueue.add(async () => {
     return await fetch(OVERPASS_API, {
       method: 'POST',
       body: overpassQuery,

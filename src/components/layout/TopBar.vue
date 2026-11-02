@@ -92,6 +92,17 @@
             <div v-if="imageMaps.canSearch" class="topbar-address"><SidebarAddressSearch /></div>
 
             <div class="header-actions">
+              <v-btn
+                :aria-expanded="assistant.open"
+                :aria-label="$t('assistant.title')"
+                color="primary"
+                data-testid="assistant-toggle"
+                icon="mdi-auto-fix"
+                :title="$t('assistant.title')"
+                variant="tonal"
+                @click="assistant.open = !assistant.open"
+              />
+
               <v-menu location="bottom end">
                 <template #activator="{ props }">
                   <v-btn
@@ -393,11 +404,13 @@ import MapLegendModal from '@/components/modals/MapLegendModal.vue';
 import SidebarAddressSearch from '@/components/sidebar/SidebarAddressSearch.vue';
 import { useImageImport } from '@/composables/useImageImport';
 import { useProjectFiles } from '@/composables/useProjectFiles';
+import { useAssistantStore } from '@/stores/assistant';
 import { useImageMapStore } from '@/stores/imageMap';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
 
 const themePickerOpen = ref(false);
+const assistant = useAssistantStore();
 
 const emit = defineEmits<{ resize: [height: number] }>();
 const toolbarContent = ref<HTMLElement | null>(null);

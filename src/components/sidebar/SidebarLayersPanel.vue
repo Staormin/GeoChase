@@ -1610,6 +1610,7 @@ function handleDeleteElement(elementType: string, elementId: string) {
 
 function handleGoTo(elementType: MapElementRequest['elementType'], element: DrawingElement) {
   if (isDragging.value || Date.now() < suppressClickUntil) return;
+  uiStore.selectedMapElement = { elementType, elementId: element.id };
   uiStore.mapElementHighlightRequest = { elementType, elementId: element.id };
   let lat: number;
   let lon: number;

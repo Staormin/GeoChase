@@ -11,6 +11,7 @@ import Overlay from 'ol/Overlay';
 import { fromLonLat } from 'ol/proj';
 import { Icon, Style } from 'ol/style';
 import { v4 as uuidv4 } from 'uuid';
+import { getCurrentScope, onScopeDispose } from 'vue';
 import { useLayersStore } from '@/stores/layers';
 
 const DEFAULT_COLOR = '#000000';
@@ -20,6 +21,99 @@ const DEFAULT_MARKER_ICON = `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhla
 
 export function usePointDrawing(mapRef: MapContainer) {
   const layersStore = useLayersStore();
+  const arrivals = new Set<() => void>();
+
+  function cancelPointArrivals() {
+    for (const finish of arrivals) finish();
+  }
+  if (getCurrentScope()) onScopeDispose(cancelPointArrivals);
+
+  // Animate a visual copy only: coordinates, persistence and history stay atomic.
+  function animatePointArrivals(ids: string[], delay = 0) {
+    cancelPointArrivals();
+    const map = mapRef.map?.value;
+    const source = mapRef.pointsSource?.value;
+    if (
+      !map ||
+      !source ||
+      !Element.prototype.animate ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+      return;
+    let index = 0;
+    for (const id of ids) {
+      const feature = source.getFeatureById(id);
+      const point = layersStore.points.find((p) => p.id === id);
+      if (!feature || !point) continue;
+      const style = feature.getStyle();
+      const label = map
+        .getOverlays()
+        .getArray()
+        .find((overlay) => overlay.get('id') === `label-${id}`)
+        ?.getElement();
+      const marker = document.createElement('img');
+      marker.src = DEFAULT_MARKER_ICON;
+      marker.alt = '';
+      marker.className = 'point-arrival';
+      marker.dataset.pointId = id;
+      marker.style.cssText =
+        'display:block;width:25px;height:41px;pointer-events:none;transform-origin:50% 100%;will-change:transform,opacity';
+      const overlay = new Overlay({
+        element: marker,
+        positioning: 'bottom-center',
+        stopEvent: false,
+      });
+      overlay.setPosition(fromLonLat([point.coordinates.lon, point.coordinates.lat]));
+      feature.setStyle([]);
+      if (label) label.style.visibility = 'hidden';
+      map.addOverlay(overlay);
+      const animation = marker.animate(
+        [
+          {
+            transform: 'translateY(-54px) scale(0.92)',
+            opacity: 0,
+            offset: 0,
+            easing: 'cubic-bezier(.4,0,1,1)',
+          },
+          { transform: 'translateY(-42px) scale(1)', opacity: 1, offset: 0.15, easing: 'ease-in' },
+          {
+            transform: 'translateY(0) scale(1.1,0.9)',
+            opacity: 1,
+            offset: 0.6,
+            easing: 'ease-out',
+          },
+          {
+            transform: 'translateY(-8px) scale(0.98,1.02)',
+            opacity: 1,
+            offset: 0.8,
+            easing: 'ease-in',
+          },
+          { transform: 'translateY(0) scale(1)', opacity: 1, offset: 1 },
+        ],
+        { duration: 320, delay: delay + index++ * 120, fill: 'both' }
+      );
+      const finish = () => {
+        arrivals.delete(finish);
+        animation.removeEventListener('finish', finish);
+        animation.removeEventListener('cancel', finish);
+        animation.cancel();
+        source.un('removefeature', onSourceChange);
+        source.un('clear', onSourceChange);
+        // Never resurrect a removed or replaced feature after undo/project change.
+        if (source.getFeatureById(id) === feature) feature.setStyle(style);
+        if (label) label.style.visibility = '';
+        map.removeOverlay(overlay);
+      };
+      const onSourceChange = () => {
+        if (source.getFeatureById(id) !== feature) finish();
+      };
+      source.on('removefeature', onSourceChange);
+      source.on('clear', onSourceChange);
+      animation.addEventListener('finish', finish);
+      animation.addEventListener('cancel', finish);
+      arrivals.add(finish);
+    }
+  }
 
   const generateId = () => uuidv4();
 
@@ -172,6 +266,8 @@ export function usePointDrawing(mapRef: MapContainer) {
   };
 
   return {
+    animatePointArrivals,
+    cancelPointArrivals,
     drawPoint,
     redrawPointOnMap,
   };

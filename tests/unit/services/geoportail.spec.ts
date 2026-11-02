@@ -330,7 +330,9 @@ describe('geoportail service', () => {
 
       await searchAddress('test', 5);
 
-      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('limit=5'));
+      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('limit=5'), {
+        signal: expect.any(AbortSignal),
+      });
     });
   });
 

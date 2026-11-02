@@ -92,7 +92,7 @@ export interface PointElement {
   coordinates: { lat: number; lon: number };
   elevation?: number;
   // Recorded only for generated points; ordinary coordinate points remain fixed.
-  construction?: { lineId: string; distanceKm?: number; fromEnd?: boolean };
+  construction?: { lineId: string; distanceKm?: number; fraction?: number; fromEnd?: boolean };
   color?: string;
   noteId?: string; // ID of the linked note (one-to-one)
   createdAt?: number;
@@ -187,6 +187,8 @@ export interface ImageElement {
   pivot?: { x: number; y: number };
   /** Existing point used as a fixed map pivot; local pivot remains a fallback. */
   pivotPointId?: string;
+  /** Physical paper size in metres, known for PDF pages; lets the image be set to a map scale. */
+  paper?: { width: number; height: number };
   groupId?: string;
   listOrder?: number;
   noteId?: string;

@@ -13,6 +13,11 @@ declare module 'vue' {
   export interface GlobalComponents {
     AddPointOnSegmentModal: typeof import('./components/modals/AddPointOnSegmentModal.vue')['default']
     AngleLineModal: typeof import('./components/modals/AngleLineModal.vue')['default']
+    AssistantComposer: typeof import('./components/assistant/AssistantComposer.vue')['default']
+    AssistantMessages: typeof import('./components/assistant/AssistantMessages.vue')['default']
+    AssistantPanel: typeof import('./components/assistant/AssistantPanel.vue')['default']
+    AssistantPreview: typeof import('./components/assistant/AssistantPreview.vue')['default']
+    AssistantSettings: typeof import('./components/assistant/AssistantSettings.vue')['default']
     AzimuthLineModal: typeof import('./components/modals/AzimuthLineModal.vue')['default']
     BaseModal: typeof import('./components/shared/BaseModal.vue')['default']
     BearingsModal: typeof import('./components/modals/BearingsModal.vue')['default']

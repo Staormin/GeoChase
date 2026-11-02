@@ -95,6 +95,7 @@ function rebuildConstructions(
     if (line.endpoint) {
       if (
         edit &&
+        construction.fraction === undefined &&
         construction.distanceKm !== undefined &&
         construction.distanceKm >
           after.getDistance(
@@ -109,15 +110,26 @@ function rebuildConstructions(
         line.pointsOnLine = line.pointsOnLine?.filter((id) => id !== point.id);
         return point.coordinates;
       }
-      point.coordinates =
-        construction.distanceKm === undefined
-          ? { ...line.endpoint }
-          : after.pointAtDistance(
-              line.center,
-              line.endpoint,
-              construction.distanceKm,
-              construction.fromEnd
-            );
+      if (construction.fraction === undefined) {
+        point.coordinates =
+          construction.distanceKm === undefined
+            ? { ...line.endpoint }
+            : after.pointAtDistance(
+                line.center,
+                line.endpoint,
+                construction.distanceKm,
+                construction.fromEnd
+              );
+      } else {
+        const origin = construction.fromEnd ? line.endpoint : line.center;
+        const end = construction.fromEnd ? line.center : line.endpoint;
+        point.coordinates = after.interpolateLine(origin, end, construction.fraction);
+        construction.distanceKm =
+          after.getDistance(
+            [origin.lon, origin.lat],
+            [point.coordinates.lon, point.coordinates.lat]
+          ) / 1000;
+      }
     }
     return point.coordinates;
   }

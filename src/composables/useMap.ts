@@ -29,6 +29,7 @@ export type MapContainer = ReturnType<typeof useMap>;
 interface MapPanelSizes {
   sidebarWidth: Readonly<Ref<number>>;
   topBarHeight: Readonly<Ref<number>>;
+  rightPanelWidth?: Readonly<Ref<number>>;
 }
 
 export function useMap(
@@ -487,6 +488,7 @@ export function useMap(
       if (uiStore.sidebarOpen) {
         paddingLeft += panelSizes?.sidebarWidth.value ?? 640;
       }
+      paddingRight += panelSizes?.rightPanelWidth?.value ?? 0;
     }
 
     // Reduce margins when panels leave only a narrow strip of map visible.
@@ -494,9 +496,11 @@ export function useMap(
     if (size?.[0] && size[1]) {
       const leftInset = Math.min(paddingLeft - 50, Math.max(0, size[0] - 1));
       const topInset = Math.min(paddingTop - 50, Math.max(0, size[1] - 1));
-      paddingRight = Math.min(50, (size[0] - leftInset) / 4);
+      const rightInset = Math.min(paddingRight - 50, Math.max(0, size[0] - leftInset - 1));
+      const horizontalMargin = Math.min(50, (size[0] - leftInset - rightInset) / 4);
+      paddingRight = rightInset + horizontalMargin;
       paddingBottom = Math.min(50, (size[1] - topInset) / 4);
-      paddingLeft = leftInset + paddingRight;
+      paddingLeft = leftInset + horizontalMargin;
       paddingTop = topInset + paddingBottom;
     }
 

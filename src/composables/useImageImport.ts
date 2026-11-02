@@ -114,6 +114,7 @@ export function useImageImport(imageFileInput: Ref<HTMLInputElement | null>) {
       height: paper
         ? (paper.paperHeight * context.denominator) / metersPerUnit
         : dimensions.height * context.resolution,
+      ...(paper ? { paper: { width: paper.paperWidth, height: paper.paperHeight } } : {}),
     });
     ui.selectedImageId = id;
   }

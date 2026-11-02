@@ -234,3 +234,40 @@ describe('changing existing constructions', () => {
     expect(JSON.stringify(data)).toBe(snapshot);
   });
 });
+
+it('keeps a fractional construction through export, reload and a projection change', () => {
+  const data = empty();
+  const center = { lat: 30, lon: -10 };
+  const endpoint = { lat: 65, lon: 40 };
+  data.lineSegments.push({
+    id: 'fraction-line',
+    name: 'Slope',
+    mode: 'coordinate',
+    center,
+    endpoint,
+    pointsOnLine: ['fraction-point'],
+  });
+  data.points.push({
+    id: 'fraction-point',
+    name: 'Third from end',
+    coordinates: mercator.interpolateLine(endpoint, center, 1 / 3),
+    construction: { lineId: 'fraction-line', fraction: 1 / 3, distanceKm: 100, fromEnd: true },
+  });
+  const reloaded = parseProjectJSON(
+    JSON.stringify({ name: 'Fractions', projection: 'mercator', data })
+  ).data;
+  expect(reloaded.points[0]?.construction?.fraction).toBe(1 / 3);
+  const converted = changeProjectProjection(reloaded, 'mercator', 'geodesic');
+  const expected = geo.interpolateLine(endpoint, center, 1 / 3);
+  expect(converted.points[0]!.coordinates.lat).toBeCloseTo(expected.lat, 8);
+  expect(converted.points[0]!.coordinates.lon).toBeCloseTo(expected.lon, 8);
+  const back = changeProjectProjection(converted, 'geodesic', 'mercator');
+  expect(back.points[0]!.coordinates.lat).toBeCloseTo(data.points[0]!.coordinates.lat, 8);
+  for (const fraction of [-1, 1.1, '1/3', null]) {
+    const invalid = {
+      ...data,
+      points: [{ ...data.points[0], construction: { ...data.points[0]!.construction, fraction } }],
+    };
+    expect(() => parseProjectJSON(JSON.stringify({ name: 'Invalid', data: invalid }))).toThrow();
+  }
+});

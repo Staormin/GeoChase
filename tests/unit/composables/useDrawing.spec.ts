@@ -51,6 +51,8 @@ vi.mock('@/composables/useLineDrawing', () => ({
 vi.mock('@/composables/usePointDrawing', () => ({
   usePointDrawing: vi.fn(function () {
     return {
+      animatePointArrivals: vi.fn(),
+      cancelPointArrivals: vi.fn(),
       drawPoint: mockDrawPoint,
       redrawPointOnMap: mockRedrawPointOnMap,
     };
@@ -919,6 +921,27 @@ describe('useDrawing', () => {
       drawing.redrawAllElements();
 
       expect(mockMapRef.flyToBoundsWithPanels).toHaveBeenCalled();
+    });
+
+    it('frames only the requested elements, with a minimum frame around a point', () => {
+      layersStore.addCircle({
+        id: 'circle-1',
+        name: 'Big circle',
+        center: { lat: 45, lon: 5 },
+        radius: 500,
+      });
+      layersStore.addPoint({ id: 'p1', name: 'New', coordinates: { lat: 48.8566, lon: 2.3522 } });
+
+      drawing.redrawAllElements({ fitOnly: new Set(['p1']) });
+
+      const [[minLat, minLon], [maxLat, maxLon]] =
+        mockMapRef.flyToBoundsWithPanels.mock.calls[0][0];
+      expect([minLat, minLon, maxLat, maxLon].map((value: number) => value.toFixed(4))).toEqual([
+        '48.8466',
+        '2.3422',
+        '48.8666',
+        '2.3622',
+      ]);
     });
 
     it('should calculate correct bounds including circle radius', () => {

@@ -127,6 +127,11 @@ function validatePoint(point: unknown): point is PointElement {
           (typeof point.construction.distanceKm === 'number' &&
             Number.isFinite(point.construction.distanceKm) &&
             point.construction.distanceKm >= 0)) &&
+        (point.construction.fraction === undefined ||
+          (typeof point.construction.fraction === 'number' &&
+            Number.isFinite(point.construction.fraction) &&
+            point.construction.fraction >= 0 &&
+            point.construction.fraction <= 1)) &&
         (point.construction.fromEnd === undefined ||
           typeof point.construction.fromEnd === 'boolean')))
   );
@@ -152,6 +157,13 @@ function validateImagePivot(value: unknown): boolean {
       Number.isFinite(value.x) &&
       typeof value.y === 'number' &&
       Number.isFinite(value.y))
+  );
+}
+
+function validateImagePaper(value: unknown): boolean {
+  const positive = (size: unknown) => typeof size === 'number' && Number.isFinite(size) && size > 0;
+  return (
+    value === undefined || (isRecord(value) && positive(value.width) && positive(value.height))
   );
 }
 
@@ -182,6 +194,7 @@ function validateImage(value: unknown): value is ImageElement {
     value.opacity >= 0 &&
     value.opacity <= 1 &&
     validateImagePivot(value.pivot) &&
+    validateImagePaper(value.paper) &&
     (value.pivotPointId === undefined ||
       (typeof value.pivotPointId === 'string' && value.pivotPointId.length > 0)) &&
     typeof value.keepAspectRatio === 'boolean'

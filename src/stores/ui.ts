@@ -91,6 +91,7 @@ export const useUIStore = defineStore('ui', () => {
   const sidebarOpen = ref(true);
   const sidebarElementRequest = ref<MapElementRequest | null>(null);
   const mapElementHighlightRequest = ref<MapElementRequest | null>(null);
+  const selectedMapElement = ref<MapElementRequest | null>(null);
   const sidebarHoverRequest = ref<MapElementRequest | null>(null);
   const leftSidebarOpen = ref(false);
   const elementVisibility = ref<Record<string, boolean>>({});
@@ -446,6 +447,7 @@ export const useUIStore = defineStore('ui', () => {
     sidebarElementRequest,
     mapElementHighlightRequest,
     sidebarHoverRequest,
+    selectedMapElement,
     leftSidebarOpen,
     elementVisibility,
     editingElement,
