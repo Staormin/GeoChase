@@ -139,7 +139,7 @@ export function useLineCrossingPoints(mapContainer: MapContainer) {
     map.on('click', click);
     map.on('dblclick', doubleClick);
     map.on('movestart', clearHover);
-    map.getViewport().addEventListener('pointerleave', clearHover);
+    map.getViewport()?.addEventListener('pointerleave', clearHover);
     mapContainer.linesSource.value?.on('change', clearHover);
     stopWatch = watch(
       [
@@ -163,7 +163,7 @@ export function useLineCrossingPoints(mapContainer: MapContainer) {
     map?.un('click', click);
     map?.un('dblclick', doubleClick);
     map?.un('movestart', clearHover);
-    map?.getViewport().removeEventListener('pointerleave', clearHover);
+    map?.getViewport()?.removeEventListener('pointerleave', clearHover);
     mapContainer.linesSource.value?.un('change', clearHover);
     map?.removeLayer(markerLayer);
   }

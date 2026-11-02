@@ -123,7 +123,9 @@ export function useMapEffects(canvas: Ref<HTMLCanvasElement | null>) {
 
   function visibleArea() {
     const map = mapContainer.map.value!;
-    const rect = map.getTargetElement().getBoundingClientRect();
+    const rect =
+      map.getTargetElement()?.getBoundingClientRect() ??
+      new DOMRect(0, 0, ...(map.getSize() ?? [0, 0]));
     const sidebar = document
       .querySelector('[data-testid="layers-sidebar"]')
       ?.getBoundingClientRect();

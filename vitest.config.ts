@@ -27,6 +27,7 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: ['./tests/unit/setup.ts'],
+    fsModuleCache: true,
     exclude: [
       '**/node_modules/**',
       '**/dist/**',

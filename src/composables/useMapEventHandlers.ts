@@ -190,11 +190,12 @@ export function useMapEventHandlers(mapContainer: ReturnType<typeof useMap>) {
           if (element) {
             uiStore.sidebarOpen = true;
             uiStore.sidebarElementRequest = { ...element };
-            const rect = map!.getViewport().getBoundingClientRect();
-            contextMenu.value = {
-              ...element,
-              position: [rect.left + event.pixel[0]!, rect.top + event.pixel[1]!],
-            };
+            const rect = map!.getViewport()?.getBoundingClientRect();
+            if (rect)
+              contextMenu.value = {
+                ...element,
+                position: [rect.left + event.pixel[0]!, rect.top + event.pixel[1]!],
+              };
             clearHover();
             return false;
           }
@@ -204,9 +205,9 @@ export function useMapEventHandlers(mapContainer: ReturnType<typeof useMap>) {
     });
     map.addInteraction(interaction);
     const viewport = map.getViewport();
-    viewport.addEventListener('pointermove', handlePointerMove);
-    viewport.addEventListener('pointerleave', clearHover);
-    viewport.addEventListener('contextmenu', handleAltRightContextMenu, true);
+    viewport?.addEventListener('pointermove', handlePointerMove);
+    viewport?.addEventListener('pointerleave', clearHover);
+    viewport?.addEventListener('contextmenu', handleAltRightContextMenu, true);
     map.on('movestart', clearHover);
     const stopWatch = watch(
       () => [available(), uiStore.elementVisibility],
@@ -237,9 +238,9 @@ export function useMapEventHandlers(mapContainer: ReturnType<typeof useMap>) {
         map.removeLayer(clickedLayer);
         map.removeLayer(sidebarHoverLayer);
       }
-      viewport.removeEventListener('pointermove', handlePointerMove);
-      viewport.removeEventListener('pointerleave', clearHover);
-      viewport.removeEventListener('contextmenu', handleAltRightContextMenu, true);
+      viewport?.removeEventListener('pointermove', handlePointerMove);
+      viewport?.removeEventListener('pointerleave', clearHover);
+      viewport?.removeEventListener('contextmenu', handleAltRightContextMenu, true);
       map.un('movestart', clearHover);
     };
   };

@@ -568,7 +568,7 @@ export function useFreeHandDrawing(
             if (!wasDragging) return true;
             uiStore.freeHandDrawing.draggingFromPoint = false;
             const target = document.elementFromPoint(original.clientX, original.clientY);
-            if (!target || !map.getViewport().contains(target)) cancelGesture();
+            if (!target || !map.getViewport()?.contains(target)) cancelGesture();
             else if (intersectionLock || snapPoint(event)) void handleMapClick(event);
             else handleMouseMove(event);
             return false;
@@ -577,7 +577,7 @@ export function useFreeHandDrawing(
         },
       });
       map.addInteraction(pointInteraction);
-      map.getViewport().addEventListener('pointercancel', cancelPointer);
+      map.getViewport()?.addEventListener('pointercancel', cancelPointer);
       window.addEventListener('blur', cancelGesture);
       document.addEventListener('keydown', handleAlt);
       document.addEventListener('keyup', handleAlt);
@@ -607,7 +607,7 @@ export function useFreeHandDrawing(
     document.removeEventListener('keydown', handleAlt);
     document.removeEventListener('keyup', handleAlt);
     const map = mapContainer.map.value;
-    map?.getViewport().removeEventListener('pointercancel', cancelPointer);
+    map?.getViewport()?.removeEventListener('pointercancel', cancelPointer);
     if (pointInteraction) map?.removeInteraction(pointInteraction);
     stopToolWatch?.();
     stopToolWatch = undefined;

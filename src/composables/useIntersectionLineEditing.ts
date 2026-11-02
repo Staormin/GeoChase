@@ -347,7 +347,7 @@ export function useIntersectionLineEditing(
     map.addInteraction(pointerInteraction);
     map.on('click', click);
     map.on('dblclick', doubleClick);
-    map.getViewport().addEventListener('pointerleave', clearHover);
+    map.getViewport()?.addEventListener('pointerleave', clearHover);
     document.addEventListener('keydown', keydown);
     stopWatch = watch(
       [
@@ -384,7 +384,7 @@ export function useIntersectionLineEditing(
     map?.removeInteraction(pointerInteraction);
     map?.un('click', click);
     map?.un('dblclick', doubleClick);
-    map?.getViewport().removeEventListener('pointerleave', clearHover);
+    map?.getViewport()?.removeEventListener('pointerleave', clearHover);
     map?.removeLayer(handleLayer);
     document.removeEventListener('keydown', keydown);
   }

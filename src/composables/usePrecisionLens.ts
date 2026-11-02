@@ -155,8 +155,8 @@ export function usePrecisionLens(mapRef: MapContainer, options: PrecisionLensOpt
 
     // Get coordinate at cursor position on main map
     const mainMap = mapRef.map.value;
-    const mapContainer = mainMap.getTargetElement();
-    const rect = mapContainer.getBoundingClientRect();
+    const rect = mainMap.getTargetElement()?.getBoundingClientRect();
+    if (!rect) return;
     const pixel = [mouseEvent.clientX - rect.left, mouseEvent.clientY - rect.top];
     const coordinate = mainMap.getCoordinateFromPixel(pixel);
 
@@ -188,8 +188,7 @@ export function usePrecisionLens(mapRef: MapContainer, options: PrecisionLensOpt
 
     // Add mouse move listener
     if (mapRef.map?.value) {
-      const mapContainer = mapRef.map.value.getTargetElement();
-      mapContainer.addEventListener('mousemove', updateLens);
+      mapRef.map.value.getTargetElement()?.addEventListener('mousemove', updateLens);
     }
   }
 
@@ -210,8 +209,7 @@ export function usePrecisionLens(mapRef: MapContainer, options: PrecisionLensOpt
 
     // Remove mouse move listener
     if (mapRef.map?.value) {
-      const mapContainer = mapRef.map.value.getTargetElement();
-      mapContainer.removeEventListener('mousemove', updateLens);
+      mapRef.map.value.getTargetElement()?.removeEventListener('mousemove', updateLens);
     }
   }
 
