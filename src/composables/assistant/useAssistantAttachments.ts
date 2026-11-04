@@ -10,6 +10,35 @@ const FILE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'appli
 export const ATTACHMENT_ACCEPT = FILE_TYPES.join(',');
 export const MAX_ATTACHMENTS = 4;
 
+/** Image overlays are <img> elements above the map canvases, drawn where they are displayed. */
+function drawImageOverlays(
+  context: CanvasRenderingContext2D,
+  viewport: HTMLElement | undefined,
+  scale: number
+) {
+  const origin = viewport?.getBoundingClientRect();
+  if (!origin) return;
+  for (const overlay of viewport!.querySelectorAll<HTMLElement>('.map-image')) {
+    const image = overlay.querySelector('img');
+    if (!image?.naturalWidth || overlay.style.display === 'none') continue;
+    const box = overlay.getBoundingClientRect();
+    const { a, b } = new DOMMatrix(getComputedStyle(overlay).transform);
+    const width = overlay.offsetWidth;
+    const height = overlay.offsetHeight;
+    context.globalAlpha = Number(image.style.opacity || 1);
+    context.setTransform(
+      scale,
+      0,
+      0,
+      scale,
+      scale * (box.left + box.width / 2 - origin.left),
+      scale * (box.top + box.height / 2 - origin.top)
+    );
+    context.rotate(Math.atan2(b, a));
+    context.drawImage(image, -width / 2, -height / 2, width, height);
+  }
+}
+
 /** Builds request attachments; failures throw AIError('capture' | 'attachment'). */
 export function useAssistantAttachments() {
   const map = useMapContext();
@@ -19,7 +48,8 @@ export function useAssistantAttachments() {
   function captureMap(name: string): AIAttachment {
     const olMap = map.map.value;
     const size = olMap?.getSize();
-    if (!olMap || !size) throw new AIError('capture');
+    // A hidden map has a size of 0, which would give an empty image.
+    if (!olMap || !size?.[0] || !size[1]) throw new AIError('capture');
     olMap.renderSync();
     const scale = Math.min(1, MAX_CAPTURE_SIDE / Math.max(size[0]!, size[1]!));
     const canvas = document.createElement('canvas');
@@ -40,6 +70,7 @@ export function useAssistantAttachments() {
         context.transform(...(matrix as [number, number, number, number, number, number]));
       context.drawImage(layer, 0, 0);
     }
+    drawImageOverlays(context, olMap.getViewport(), scale);
     let url: string;
     try {
       url = canvas.toDataURL('image/jpeg', 0.85);
