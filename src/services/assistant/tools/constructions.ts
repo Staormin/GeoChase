@@ -2,6 +2,7 @@ import type { LatLon } from '../../geometry';
 import type { ToolContext } from '../context';
 import type { AssistantTool } from './shared';
 import { fromLonLat, toLonLat } from 'ol/proj';
+import { isRecord } from '@/utils/guards';
 import { findNearestLineCrossing } from '../../lineCrossings';
 import { idList, number, text } from '../context';
 import {
@@ -15,7 +16,9 @@ import {
   extendedLineIntersection,
   pointOnLine,
 } from '../geometry';
-import { bool, defineTool, ids, num, str } from './shared';
+import { LIMITS } from '../limits';
+import { planSize } from '../plan';
+import { bool, defineTool, ids, num, schema, str } from './shared';
 
 const keep = {
   type: 'string',
@@ -97,6 +100,35 @@ function perpendicularFromPoint(ctx: ToolContext, input: Record<string, unknown>
     endPointId: staged.id,
   });
   return { ...drawn, foot_point_id: staged.id, coordinates, distance_km: foot.distanceKm };
+}
+
+/** All or nothing: every pair is checked before any line is staged. */
+function createLines(ctx: ToolContext, input: Record<string, unknown>) {
+  const { lines } = input;
+  if (
+    !Array.isArray(lines) ||
+    lines.length === 0 ||
+    lines.length + planSize(ctx.plan) > LIMITS.changes
+  )
+    throw new Error(`Provide between 1 and ${LIMITS.changes} lines`);
+  const pairs = lines.map((item: unknown) => {
+    if (!isRecord(item)) throw new Error('Invalid line');
+    const start = ctx.point(item.start_point_id);
+    const end = ctx.point(item.end_point_id);
+    if (start.id === end.id) throw new Error('Choose two different points');
+    return { start, end, name: text(item.name) };
+  });
+  return pairs.map(({ start, end, name }) => ({
+    name,
+    ...ctx.stageLine({
+      name,
+      mode: 'coordinate',
+      center: { ...start.coordinates },
+      endpoint: { ...end.coordinates },
+      startPointId: start.id,
+      endPointId: end.id,
+    }),
+  }));
 }
 
 function perpendicular(ctx: ToolContext, input: Record<string, unknown>) {
@@ -252,6 +284,17 @@ export const constructionTools: AssistantTool[] = [
         });
       },
     }
+  ),
+  defineTool(
+    'create_lines',
+    `Create several straight lines between existing or prepared points in one undo step, ${LIMITS.changes} at most per call. Either all are created or none.`,
+    {
+      lines: {
+        type: 'array',
+        items: schema({ start_point_id: str, end_point_id: str, name: str }),
+      },
+    },
+    { ...prepare, run: createLines }
   ),
   defineTool(
     'create_azimuth_line',

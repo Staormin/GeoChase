@@ -18,6 +18,8 @@ async function elevations(ctx: ToolContext, points: LatLon[]) {
   return points.map((p) => map.get(`${p.lat.toFixed(6)}_${p.lon.toFixed(6)}`) ?? null);
 }
 
+const MAX_RESULTS = 200;
+
 export const analysisTools: AssistantTool[] = [
   defineTool(
     'get_place_photos',
@@ -289,7 +291,7 @@ export const analysisTools: AssistantTool[] = [
   ),
   defineTool(
     'search_osm',
-    'Find named OpenStreetMap objects with a tag around a point or inside a circle (area_type circle uses its radius; radius_km is then ignored). Examples: amenity=place_of_worship, historic=*, natural=peak, amenity=fountain, tourism=museum, man_made=lighthouse. Results have location IDs usable with create_points. The area is limited to a 50 km radius; the 25 closest results are returned. A * value can time out: prefer a precise value, or a small radius.',
+    'Find named OpenStreetMap objects with a tag around a point or inside a circle (area_type circle uses its radius; radius_km is then ignored). Examples: amenity=place_of_worship, historic=*, natural=peak, amenity=fountain, tourism=museum, man_made=lighthouse. Results have location IDs usable with create_points. The area is limited to a 50 km radius; results are sorted by distance, and count gives the total when limit cuts the list. A * value can time out: prefer a precise value, or a small radius.',
     {
       tag_key: str,
       tag_value: { type: 'string', description: 'Tag value, or * for any value.' },
@@ -297,6 +299,7 @@ export const analysisTools: AssistantTool[] = [
       area_type: { type: 'string', enum: ['point', 'circle'] },
       area_id: str,
       radius_km: num,
+      limit: { type: 'number', description: `Results to return, ${MAX_RESULTS} at most.` },
     },
     {
       activity: 'osm',
@@ -313,6 +316,7 @@ export const analysisTools: AssistantTool[] = [
                 radiusKm: number(input.radius_km, 0, 50),
               };
         ctx.budget('network');
+        const limit = number(input.limit ?? 25, 1, MAX_RESULTS);
         const { places, partial } = await searchOsmPlaces(
           {
             key: text(input.tag_key, 40),
@@ -333,7 +337,7 @@ export const analysisTools: AssistantTool[] = [
         return {
           count: matches.length,
           ...(partial ? { warning: 'The search ran out of time: other results may exist.' } : {}),
-          results: matches.slice(0, 25).map((p) => ({
+          results: matches.slice(0, limit).map((p) => ({
             location_id: ctx.registerLocation({ ...p.coordinates, label: p.name }),
             name: p.name,
             tag: p.tag,

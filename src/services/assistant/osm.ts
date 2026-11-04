@@ -24,6 +24,8 @@ const FAILURES: Record<Failure, string> = {
   unreachable: 'OpenStreetMap did not answer. Tell the user to try again later.',
 };
 const BUSY_STATUSES = new Set([429, 503, 504]);
+/** Objects asked of the server; reaching it means others may have been left out. */
+const MAX_OBJECTS = 500;
 const KEY = /^[a-z][\w:]{0,39}$/;
 const VALUE = /^[\p{L}\d_ :;.'-]{1,60}$/u;
 
@@ -81,7 +83,7 @@ export async function searchOsmPlaces(
   const filter = value === '*' ? `["${key}"]` : `["${key}"="${value.replaceAll('"', '')}"]`;
   const around = `(around:${Math.round(radiusKm * 1000)},${center.lat},${center.lon})`;
   // Shorter than the request timeout, so that the server can say it ran out of time.
-  const query = `[out:json][timeout:20];nwr${filter}["name"]${around};out center 200;`;
+  const query = `[out:json][timeout:20];nwr${filter}["name"]${around};out center ${MAX_OBJECTS};`;
   const { data, partial } = await askServers(query, signal);
   const places: OsmPlace[] = [];
   for (const element of data.elements as unknown[]) {
@@ -98,5 +100,5 @@ export async function searchOsmPlaces(
       coordinates: { lat, lon },
     });
   }
-  return { places, partial };
+  return { places, partial: partial || (data.elements as unknown[]).length >= MAX_OBJECTS };
 }
