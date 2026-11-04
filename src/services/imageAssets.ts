@@ -45,17 +45,14 @@ export async function writeImageAsset(id: string, blob: Blob): Promise<void> {
 export async function inspectImageAsset(blob: Blob): Promise<{ width: number; height: number }> {
   if (!MIME_TYPES.has(blob.type) || blob.size === 0 || blob.size > MAX_BYTES)
     throw new Error('Unsupported image');
-  const url = URL.createObjectURL(blob);
+  // Not Image.decode(): it waits for the tab to be drawn, which never happens in the background.
+  const bitmap = await createImageBitmap(blob);
   try {
-    const image = new Image();
-    image.src = url;
-    await image.decode();
-    const width = image.naturalWidth;
-    const height = image.naturalHeight;
+    const { width, height } = bitmap;
     if (!width || !height || width * height > 100_000_000) throw new Error('Image too large');
     return { width, height };
   } finally {
-    URL.revokeObjectURL(url);
+    bitmap.close();
   }
 }
 
