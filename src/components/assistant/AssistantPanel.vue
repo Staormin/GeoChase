@@ -18,6 +18,7 @@
         </div>
 
         <v-btn
+          v-if="tab === 'assistant'"
           :aria-label="t('assistant.settings')"
           :disabled="request.busy.value"
           icon="mdi-tune-variant"
@@ -35,14 +36,16 @@
         />
       </header>
 
+      <v-tabs v-model="tab" class="assistant-tabs" color="primary" density="compact" grow>
+        <v-tab data-testid="assistant-tab-chat" value="assistant">{{ t('assistant.title') }}</v-tab>
+        <v-tab data-testid="assistant-tab-mcp" value="mcp">{{ t('assistant.mcp.tab') }}</v-tab>
+      </v-tabs>
+
       <div ref="scrollArea" class="assistant-scroll">
-        <AssistantClaudeBridge
-          v-if="configOpen || !assistant.connected"
-          :last-action="bridge.lastAction.value"
-        />
+        <AssistantMcp v-if="tab === 'mcp'" />
 
         <AssistantSettings
-          v-if="configOpen || !assistant.connected"
+          v-else-if="configOpen || !assistant.connected"
           :busy="request.busy.value"
           :connecting="connecting"
           @connect="connect"
@@ -73,7 +76,7 @@
         </template>
 
         <v-alert
-          v-if="request.error.value"
+          v-if="tab === 'assistant' && request.error.value"
           class="ma-4"
           data-testid="assistant-error"
           density="compact"
@@ -82,12 +85,19 @@
           >{{ request.error.value }}</v-alert
         >
 
-        <p v-if="request.stopped.value && !configOpen" class="assistant-stopped" role="status">
+        <p
+          v-if="tab === 'assistant' && request.stopped.value && !configOpen"
+          class="assistant-stopped"
+          role="status"
+        >
           {{ t('assistant.stopped') }}
         </p>
       </div>
 
-      <footer v-if="assistant.connected && !configOpen" class="assistant-footer">
+      <footer
+        v-if="tab === 'assistant' && assistant.connected && !configOpen"
+        class="assistant-footer"
+      >
         <div v-if="assistant.messages.length > 0" class="assistant-conversation-actions">
           <v-btn
             :disabled="request.busy.value || !history.canUndo"
@@ -153,7 +163,8 @@ const assistant = useAssistantStore();
 const history = useHistoryStore();
 const request = useAssistantRequest();
 // Lives with the panel, which stays mounted while closed, so Claude can work with it hidden.
-const bridge = useClaudeBridge();
+useClaudeBridge();
+const tab = ref<'assistant' | 'mcp'>('assistant');
 const configOpen = ref(!assistant.settings.apiKey);
 const connecting = ref(false);
 const scrollArea = ref<HTMLElement>();
@@ -262,6 +273,10 @@ onBeforeUnmount(() => connection?.abort());
 }
 .assistant-heading strong {
   font-size: 17px;
+}
+.assistant-tabs {
+  flex: none;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.1);
 }
 .assistant-scroll {
   flex: 1;

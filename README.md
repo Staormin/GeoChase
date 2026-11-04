@@ -119,8 +119,7 @@ You need [Node.js](https://nodejs.org) 20 or later.
      }
      ```
 
-2. In GeoChase, open the assistant panel (magic wand, top right), then its settings, and
-   turn on **Let Claude control this map**. This choice is remembered in your browser.
+2. In GeoChase, open the assistant panel (magic wand, top right), go to its **MCP** tab, and turn on **Allow control of this map**. Its log lists every operation. This choice is remembered in your browser.
 3. Keep GeoChase open on a project, and ask Claude, for example: "Place the castles of
    Fontainebleau and Chambord, then draw a 20 km circle around each."
 

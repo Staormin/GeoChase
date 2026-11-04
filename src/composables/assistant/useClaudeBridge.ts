@@ -1,8 +1,8 @@
 import type { LayerSnapshot } from './useAssistantProject';
 import type { BridgeCall, BridgeResult } from '@/services/assistant/bridge';
 import type { AssistantPlan, AssistantReference } from '@/services/assistant/plan';
-import { onBeforeUnmount, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
+import type { BridgeLogEntry } from '@/stores/assistant';
+import { onBeforeUnmount, watch } from 'vue';
 import { createAssistantExecutor } from '@/services/assistant/agent';
 import {
   BRIDGE_PROTOCOL,
@@ -11,12 +11,15 @@ import {
   bridgeResult,
   bridgeTools,
   CAPTURE_MAP,
+  changeCounts,
+  inputSummary,
   isBridgeTool,
   REDO,
   UNDO,
   uniqueReferences,
 } from '@/services/assistant/bridge';
 import { createToolMemory } from '@/services/assistant/context';
+import { LIMITS } from '@/services/assistant/limits';
 import { changedReferences, planSize } from '@/services/assistant/plan';
 import { AIError, withImages } from '@/services/assistant/providers';
 import { useAssistantStore } from '@/stores/assistant';
@@ -49,7 +52,6 @@ const FAILURES: Record<string, string> = {
  * against the current project and its changes are applied at once, as one undo step.
  */
 export function useClaudeBridge() {
-  const { t } = useI18n();
   const assistant = useAssistantStore();
   const layers = useLayersStore();
   const projects = useProjectsStore();
@@ -62,7 +64,7 @@ export function useClaudeBridge() {
     applier.currentElement
   );
 
-  const lastAction = ref('');
+  let recentElements: AssistantReference[] = [];
   let socket: WebSocket | undefined;
   let retry = 0;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
@@ -79,13 +81,9 @@ export function useClaudeBridge() {
     send({ type: 'hello', project: projects.activeProject?.name ?? null, tools: bridgeTools() });
   }
 
-  /** Elements Claude placed earlier in this project, for "it" and "the other one". */
+  /** Elements placed earlier in this project, for "it" and "the other one". */
   function recent(): AssistantReference[] {
-    return uniqueReferences(
-      assistant.messages
-        .flatMap((m) => m.elements ?? [])
-        .filter((ref) => !!applier.currentElement(ref))
-    );
+    return recentElements.filter((ref) => !!applier.currentElement(ref));
   }
 
   /** A capture right after a change would catch the zoom animation and unloaded tiles. */
@@ -113,7 +111,6 @@ export function useClaudeBridge() {
     if (undo) history.undo();
     else history.redo();
     await history.flush();
-    lastAction.value = call.name;
     return bridgeResult(call.id, {
       status: undo ? 'undone' : 'redone',
       undo_steps: history.undoCount,
@@ -121,7 +118,11 @@ export function useClaudeBridge() {
     });
   }
 
-  async function run(call: BridgeCall, signal: AbortSignal): Promise<BridgeResult> {
+  async function run(
+    call: BridgeCall,
+    signal: AbortSignal,
+    entry: BridgeLogEntry
+  ): Promise<BridgeResult> {
     if (!isBridgeTool(call.name)) return bridgeError(call.id, `Unknown tool ${call.name}`);
     const reason = unavailableReason.value;
     if (reason) return bridgeError(call.id, UNAVAILABLE[reason]!);
@@ -156,33 +157,30 @@ export function useClaudeBridge() {
         call.id,
         'The project changed while the tool ran. Nothing was applied; retry.'
       );
-    await apply(call.name, executor.plan, snapshot);
+    await apply(executor.plan, snapshot, entry);
     return bridgeResult(call.id, output, executor.plan);
   }
 
-  async function apply(tool: string, plan: AssistantPlan, snapshot: LayerSnapshot) {
-    const effects = plan.effects.focus || plan.effects.exportGpx;
-    if (planSize(plan) === 0 && !effects) return;
+  async function apply(plan: AssistantPlan, snapshot: LayerSnapshot, entry: BridgeLogEntry) {
+    if (planSize(plan) === 0 && !plan.effects.focus && !plan.effects.exportGpx) return;
     await applier.apply(plan, snapshot);
-    lastAction.value = tool;
-    if (planSize(plan) > 0) summarize(tool, plan);
+    if (planSize(plan) === 0) return;
+    entry.changes = changeCounts(plan);
+    recentElements = uniqueReferences([...recentElements, ...changedReferences(plan)]);
   }
 
-  /** Claude's calls share one message, so a session cannot push the conversation out of history. */
-  function summarize(tool: string, plan: AssistantPlan) {
-    const last = assistant.messages.at(-1);
-    const previous = last?.claude ? last : undefined;
-    const count = (previous?.claudeChanges ?? 0) + planSize(plan);
-    const message = {
-      role: 'assistant' as const,
-      claude: true,
-      claudeChanges: count,
-      text: t('assistant.claude.applied', { tool, count }),
-      elements: uniqueReferences([...(previous?.elements ?? []), ...changedReferences(plan)]),
-      sources: [...(previous?.sources ?? []), ...plan.sources],
-    };
-    if (previous) assistant.messages[assistant.messages.length - 1] = message;
-    else assistant.addMessage(message);
+  /** Adds a call to the log and returns its live entry, to update when the call ends. */
+  function logCall(call: BridgeCall): BridgeLogEntry {
+    const log = assistant.bridgeLog;
+    log.unshift({
+      id: call.id,
+      tool: call.name,
+      input: inputSummary(call.input),
+      at: Date.now(),
+      status: 'running',
+    });
+    log.splice(LIMITS.bridgeLog);
+    return log[0]!;
   }
 
   function handle(message: unknown) {
@@ -190,6 +188,7 @@ export function useClaudeBridge() {
     if (message.type === 'cancel') running.get(String(message.id))?.abort();
     if (message.type !== 'call' || typeof message.id !== 'string') return;
     const call = message as unknown as BridgeCall;
+    const entry = logCall(call);
     const controller = new AbortController();
     running.set(call.id, controller);
     queue = queue.then(async () => {
@@ -201,7 +200,7 @@ export function useClaudeBridge() {
         })
       );
       try {
-        result = await Promise.race([run(call, controller.signal), cancelled]);
+        result = await Promise.race([run(call, controller.signal, entry), cancelled]);
       } catch (error) {
         result = bridgeError(
           call.id,
@@ -215,6 +214,8 @@ export function useClaudeBridge() {
         );
       }
       running.delete(call.id);
+      entry.status = result.isError ? 'error' : 'done';
+      if (result.isError) entry.error = result.text;
       send(result);
     });
   }
@@ -277,11 +278,9 @@ export function useClaudeBridge() {
     () => projects.activeProjectId,
     () => {
       for (const controller of running.values()) controller.abort();
-      lastAction.value = '';
+      recentElements = [];
       hello();
     }
   );
   onBeforeUnmount(disconnect);
-
-  return { lastAction };
 }

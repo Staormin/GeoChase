@@ -1027,3 +1027,45 @@ test('a pasted image is remembered for the next message and compared with real p
   await expect(page.getByTestId('assistant-remembered')).toHaveCount(0);
   expect(blankProject.id).toBeTruthy();
 });
+
+test('runs MCP calls on the map and lists them in the MCP tab, not in the chat', async ({
+  page,
+  blankProject,
+}) => {
+  const results: Record<string, unknown>[] = [];
+  let server: { send: (message: string) => void } | undefined;
+  await page.routeWebSocket('ws://127.0.0.1:47777', (socket) => {
+    server = socket;
+    socket.onMessage((data) => {
+      const message = JSON.parse(String(data));
+      if (message.type === 'result') results.push(message);
+    });
+  });
+  const call = (id: string, name: string, input: unknown) =>
+    server!.send(JSON.stringify({ type: 'call', id, name, input }));
+
+  await page.getByTestId('assistant-toggle').click();
+  await page.getByTestId('assistant-tab-mcp').click();
+  const log = page.getByTestId('assistant-mcp-log');
+  await expect(page.getByTestId('assistant-mcp').getByText('No operations yet.')).toBeVisible();
+
+  await page.getByTestId('assistant-mcp-toggle').locator('input').check();
+  await expect(page.getByTestId('assistant-mcp-status')).toHaveText(/Connected/);
+
+  call('1', 'create_circle', { point_id: 'point-1', radius_km: 5, name: 'MCP circle' });
+  await expect(log.locator('li').first()).toContainText('create_circle');
+  await expect(log.locator('li').first()).toContainText('MCP circle');
+  await expect(log.locator('li').first()).toContainText('1 created');
+  expect(JSON.parse(String(results[0]!.text)).applied_to_map.created[0].name).toBe('MCP circle');
+
+  call('2', 'create_circle', { point_id: 'nope', radius_km: 5, name: 'Refused' });
+  await expect(log.locator('li').first()).toContainText('Unknown point ID');
+  await expect(log.locator('.mcp-log-error')).toHaveCount(1);
+  expect(results[1]!.isError).toBe(true);
+
+  await page.getByRole('button', { name: 'Clear', exact: true }).click();
+  await expect(log).toHaveCount(0);
+  await expect(page.locator('.layer-item-name').getByText('MCP circle')).toHaveCount(1);
+  await page.getByTestId('assistant-tab-chat').click();
+  await expect(page.getByTestId('assistant-panel').getByText('MCP circle')).toHaveCount(0);
+});

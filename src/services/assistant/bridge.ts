@@ -1,5 +1,6 @@
 import type { AssistantPlan, AssistantReference } from './plan';
 import type { AITool } from './providers';
+import { isRecord } from '@/utils/guards';
 import { createdElements, planSize } from './plan';
 import { imagesOf } from './providers';
 import { assistantTools } from './tools';
@@ -126,6 +127,31 @@ export function uniqueReferences(list: AssistantReference[], limit = 20): Assist
 
 function refs(type: string, list: { id: string; name: string }[]) {
   return list.map(({ id, name }) => ({ type, id, name }));
+}
+
+export type BridgeChanges = Record<'created' | 'updated' | 'deleted', number>;
+
+/** How much a call changed, for the log. Notes, colours and visibility count as updates. */
+export function changeCounts(plan: AssistantPlan): BridgeChanges {
+  const { created, deleted } = appliedChanges(plan);
+  return {
+    created: created.length,
+    deleted: deleted.length,
+    updated: planSize(plan) - created.length - deleted.length,
+  };
+}
+
+/** The readable part of a call's arguments: names and text, not IDs or numbers. */
+export function inputSummary(input: unknown): string {
+  if (!isRecord(input)) return '';
+  const values = Object.entries(input).flatMap(([key, value]) => {
+    if (typeof value === 'string') return key.endsWith('_id') ? [] : [value.trim()];
+    if (key === 'points' && Array.isArray(value))
+      return value.flatMap((point) => (isRecord(point) && point.name ? [String(point.name)] : []));
+    return [];
+  });
+  const summary = values.filter(Boolean).join(' · ');
+  return summary.length > 80 ? `${summary.slice(0, 79)}…` : summary;
 }
 
 /** Everything a call wrote, since its own output only says "prepared". */

@@ -1,3 +1,4 @@
+import type { BridgeChanges } from '@/services/assistant/bridge';
 import type { AssistantChoice, AssistantReference } from '@/services/assistant/plan';
 import type {
   AIAttachment,
@@ -21,10 +22,17 @@ export interface AssistantMessage {
   elements?: AssistantReference[];
   choice?: AssistantChoice;
   attachments?: string[];
-  /** Written by Claude through the MCP bridge rather than by the in-app assistant. */
-  claude?: boolean;
-  /** Changes this message sums up: Claude's successive calls share one message. */
-  claudeChanges?: number;
+}
+/** One tool call received through the MCP bridge, for the log shown in the panel. */
+export interface BridgeLogEntry {
+  id: string;
+  tool: string;
+  /** What the call was about, in a few readable words. */
+  input: string;
+  at: number;
+  status: 'running' | 'done' | 'error';
+  error?: string;
+  changes?: BridgeChanges;
 }
 export type BridgeState = 'off' | 'connecting' | 'connected';
 
@@ -47,6 +55,8 @@ export const useAssistantStore = defineStore('assistant', () => {
   // Claude bridge: whether this browser accepts commands from the local MCP server.
   const bridgeEnabled = ref(false);
   const bridgeState = ref<BridgeState>('off');
+  // Newest first, for this session only.
+  const bridgeLog = ref<BridgeLogEntry[]>([]);
   try {
     bridgeEnabled.value = localStorage.getItem(BRIDGE_KEY) === '1';
   } catch {
@@ -180,5 +190,6 @@ export const useAssistantStore = defineStore('assistant', () => {
     clearConversation,
     bridgeEnabled,
     bridgeState,
+    bridgeLog,
   };
 });

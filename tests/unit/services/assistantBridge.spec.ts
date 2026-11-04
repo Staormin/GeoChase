@@ -6,6 +6,8 @@ import {
   bridgeResult,
   bridgeTools,
   CAPTURE_MAP,
+  changeCounts,
+  inputSummary,
   REDO,
   UNDO,
   uniqueReferences,
@@ -196,6 +198,43 @@ describe('Claude bridge', () => {
       'https://example.org/roncevaux'
     );
     await expect(create(createToolMemory())).rejects.toThrow(/research_places/);
+  });
+});
+
+describe('operations log', () => {
+  it('summarises a call with its readable arguments, not its IDs', () => {
+    expect(inputSummary({ query: 'Chartres' })).toBe('Chartres');
+    expect(inputSummary({ point_id: 'abc', radius_km: 5, name: 'Cercle' })).toBe('Cercle');
+    expect(
+      inputSummary({
+        points: [
+          { location_id: 'place-1', name: 'Blois' },
+          { location_id: 'place-2', name: 'Tours' },
+        ],
+      })
+    ).toBe('Blois · Tours');
+    expect(inputSummary({ name: 'x'.repeat(200) })).toHaveLength(80);
+    expect(inputSummary(undefined)).toBe('');
+  });
+
+  it('counts what a call changed', async () => {
+    const executor = createAssistantExecutor(
+      {
+        ...project(),
+        points: [{ id: 'p', name: 'P', coordinates: { lat: 48, lon: 2 } }],
+        circles: [{ id: 'k', name: 'K', center: { lat: 48, lon: 2 }, radius: 5 }],
+      },
+      settings,
+      new AbortController().signal,
+      [],
+      createToolMemory('test')
+    );
+    await executor.execute('create_circle', { point_id: 'p', radius_km: 9, name: 'New' });
+    await executor.execute('resize_circle', { circle_id: 'k', radius_km: 7 });
+    await executor.execute('delete_elements', {
+      elements: [{ element_type: 'point', element_id: 'p' }],
+    });
+    expect(changeCounts(executor.plan)).toEqual({ created: 1, updated: 1, deleted: 1 });
   });
 });
 
@@ -573,6 +612,15 @@ describe('OpenStreetMap failures', () => {
     await expect(searchOsmPlaces(options, signal)).resolves.toMatchObject({ partial: true });
   });
 
+  it('flags a search that reaches the server object limit', async () => {
+    const elements = Array.from({ length: 500 }, () => element);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => answer({ elements }))
+    );
+    await expect(searchOsmPlaces(options, signal)).resolves.toMatchObject({ partial: true });
+  });
+
   it('tells a search that is too broad from busy or unreachable servers', async () => {
     vi.stubGlobal(
       'fetch',
@@ -591,5 +639,78 @@ describe('OpenStreetMap failures', () => {
       vi.fn(() => Promise.reject(new TypeError('network')))
     );
     await expect(searchOsmPlaces(options, signal)).rejects.toThrow(/did not answer/);
+  });
+});
+
+describe('large results and batches', () => {
+  const center = { lat: 48, lon: 2 };
+  const runner = () =>
+    createAssistantExecutor(
+      {
+        ...project(),
+        points: [
+          { id: 'o', name: 'O', coordinates: center },
+          ...Array.from({ length: 30 }, (_, i) => ({
+            id: `p${i}`,
+            name: `P${i}`,
+            coordinates: { lat: 48 + i / 100, lon: 2 },
+          })),
+        ],
+      },
+      settings,
+      new AbortController().signal,
+      [],
+      createToolMemory('test')
+    );
+  const line = (i: number) => ({ start_point_id: 'o', end_point_id: `p${i}`, name: `Line ${i}` });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('creates many lines in one call', async () => {
+    const executor = runner();
+    const output = (await executor.execute('create_lines', {
+      lines: Array.from({ length: 30 }, (_, i) => line(i)),
+    })) as { status: string }[];
+    expect(output).toHaveLength(30);
+    expect(executor.plan.lines).toHaveLength(30);
+    expect(executor.plan.lines[0]).toMatchObject({ startPointId: 'o', endPointId: 'p0' });
+  });
+
+  it('creates no line when one of the batch is invalid', async () => {
+    const executor = runner();
+    await expect(
+      executor.execute('create_lines', {
+        lines: [line(0), { start_point_id: 'o', end_point_id: 'nope', name: 'Bad' }],
+      })
+    ).rejects.toThrow(/Unknown point/);
+    expect(executor.plan.lines).toHaveLength(0);
+    await expect(executor.execute('create_lines', { lines: [] })).rejects.toThrow(/between 1/);
+  });
+
+  it('returns up to the requested number of OpenStreetMap results', async () => {
+    const elements = Array.from({ length: 60 }, (_, i) => ({
+      type: 'node',
+      lat: 48 + i / 10_000,
+      lon: 2,
+      tags: { name: `Église ${i}`, amenity: 'place_of_worship' },
+    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(Response.json({ elements })))
+    );
+    const search = (limit?: number) =>
+      runner().execute('search_osm', {
+        tag_key: 'amenity',
+        tag_value: 'place_of_worship',
+        name_contains: '',
+        area_type: 'point',
+        area_id: 'o',
+        radius_km: 20,
+        limit,
+      }) as Promise<{ count: number; results: unknown[] }>;
+    await expect(search(60)).resolves.toMatchObject({ count: 60 });
+    expect((await search(60)).results).toHaveLength(60);
+    expect((await search()).results).toHaveLength(25);
+    await expect(search(500)).rejects.toThrow();
   });
 });

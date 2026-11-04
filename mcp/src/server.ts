@@ -4,8 +4,8 @@
  *
  *   Claude ⇄ stdio (MCP) ⇄ this process ⇄ ws://127.0.0.1:47777 ⇄ the tab
  *
- * The tab connects once "Let Claude control this map" is on in the assistant
- * settings, and announces its tools: the in-app assistant's own, so both stay in
+ * The tab connects once "Allow control of this map" is on in the assistant panel's
+ * MCP tab, and announces its tools: the in-app assistant's own, so both stay in
  * step. They are cached on disk so Claude lists them even before a tab connects.
  * Protocol: src/services/assistant/bridge.ts.
  *
@@ -70,7 +70,7 @@ function status() {
   if (!listening)
     return `Another GeoChase MCP server (probably another Claude session) holds port ${PORT}. Close it, or retry later; this one takes over when the port is free.`;
   if (!tab)
-    return `No GeoChase tab is connected. Ask the user to open ${APP_URL} (or their dev server), open the assistant panel (magic wand, top right), and turn on "Let Claude control this map" in its settings.`;
+    return `No GeoChase tab is connected. Ask the user to open ${APP_URL} (or their dev server), open the assistant panel (magic wand, top right), and turn on "Allow control of this map" in its MCP tab.`;
   return `Connected to GeoChase. Open project: ${tabProject ?? 'none (ask the user to open or create one)'}.`;
 }
 

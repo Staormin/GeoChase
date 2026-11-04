@@ -13,8 +13,8 @@ declare module 'vue' {
   export interface GlobalComponents {
     AddPointOnSegmentModal: typeof import('./components/modals/AddPointOnSegmentModal.vue')['default']
     AngleLineModal: typeof import('./components/modals/AngleLineModal.vue')['default']
-    AssistantClaudeBridge: typeof import('./components/assistant/AssistantClaudeBridge.vue')['default']
     AssistantComposer: typeof import('./components/assistant/AssistantComposer.vue')['default']
+    AssistantMcp: typeof import('./components/assistant/AssistantMcp.vue')['default']
     AssistantMessages: typeof import('./components/assistant/AssistantMessages.vue')['default']
     AssistantPanel: typeof import('./components/assistant/AssistantPanel.vue')['default']
     AssistantPreview: typeof import('./components/assistant/AssistantPreview.vue')['default']

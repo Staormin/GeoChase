@@ -12,4 +12,5 @@ export const LIMITS = {
   messageChars: 6000,
   savedMessages: 40,
   rememberedAttachments: 3,
+  bridgeLog: 200,
 } as const;
