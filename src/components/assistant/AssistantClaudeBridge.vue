@@ -5,7 +5,6 @@
     data-testid="assistant-claude"
   >
     <h2>{{ t('assistant.claude.title') }}</h2>
-    <p>{{ t('assistant.claude.hint') }}</p>
 
     <v-switch
       v-model="assistant.bridgeEnabled"

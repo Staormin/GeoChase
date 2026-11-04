@@ -23,7 +23,6 @@
       "connected": "Claude is connected to this map.",
       "connecting": "Waiting for the GeoChase MCP server… Start Claude Code or Claude Desktop with the geochase server.",
       "enable": "Let Claude control this map",
-      "hint": "Claude Code or Claude Desktop can use the assistant’s tools on this map through GeoChase’s local MCP server, with no API key here. Each action is applied at once and can be reverted with Undo.",
       "lastAction": "Last action: {tool}",
       "off": "Off.",
       "title": "Claude (MCP)"
