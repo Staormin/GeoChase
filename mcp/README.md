@@ -34,7 +34,7 @@ Claude starts and stops it.
    ```
 
 2. In [GeoChase](https://staormin.github.io/GeoChase/), open the assistant panel (magic
-   wand, top right), then its settings, and turn on **Let Claude control this map**. This
+   wand, top right), go to its **MCP** tab, and turn on **Allow control of this map**. Its log lists every operation. This
    choice is remembered in your browser.
 
 3. Keep GeoChase open on a project, and ask Claude, for example: "Place the castles of

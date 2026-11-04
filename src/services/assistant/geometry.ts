@@ -281,6 +281,34 @@ export function isInsidePolygon(point: LatLon, vertices: LatLon[]): boolean {
 }
 
 /** Position on a finite displayed line from a fraction or a distance, from either end. */
+/** Closest place of a finite line to a point, as a fraction of its displayed path. */
+export function closestOnLine(start: LatLon, end: LatLon, point: LatLon, geometry: Geometry) {
+  const at = (fraction: number) => geometry.interpolateLine(start, end, fraction);
+  const distance = (fraction: number) => {
+    const { lat, lon } = at(fraction);
+    return geometry.getDistance([lon, lat], [point.lon, point.lat]);
+  };
+  const SAMPLES = 64;
+  let best = 0;
+  for (let i = 1; i <= SAMPLES; i++) if (distance(i / SAMPLES) < distance(best / SAMPLES)) best = i;
+  // Narrow down between the two neighbours of the best sample.
+  let low = Math.max(0, (best - 1) / SAMPLES);
+  let high = Math.min(1, (best + 1) / SAMPLES);
+  for (let step = 0; step < 60 && high - low > 1e-9; step++) {
+    const third = (high - low) / 3;
+    if (distance(low + third) < distance(high - third)) high -= third;
+    else low += third;
+  }
+  const fraction = (low + high) / 2;
+  return {
+    fraction,
+    coordinates: at(fraction),
+    distanceKm: distance(fraction) / 1000,
+    /** False when the foot of the perpendicular would be beyond an end of the line. */
+    withinLine: fraction > 1e-6 && fraction < 1 - 1e-6,
+  };
+}
+
 export function pointOnLine(
   line: LineSegmentElement,
   input: Record<string, unknown>,

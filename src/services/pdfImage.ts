@@ -32,7 +32,8 @@ export async function renderPdfImage(document: PDFDocumentProxy, pageNumber: num
     const viewport = page.getViewport({ scale });
     canvas.width = Math.max(1, Math.ceil(viewport.width));
     canvas.height = Math.max(1, Math.ceil(viewport.height));
-    await page.render({ canvas, viewport, background: 'white' }).promise;
+    // The default intent draws on animation frames, which never come in a background tab.
+    await page.render({ canvas, viewport, background: 'white', intent: 'print' }).promise;
     const encode = (type: string) =>
       new Promise<Blob>((resolve, reject) =>
         canvas.toBlob(

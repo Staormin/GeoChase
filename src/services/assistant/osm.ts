@@ -16,23 +16,28 @@ const OVERPASS_SERVERS = [
     'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   ]),
 ];
+type Failure = 'timeout' | 'busy' | 'unreachable';
+const FAILURES: Record<Failure, string> = {
+  timeout:
+    'OpenStreetMap ran out of time: this search is too broad. Use a specific tag value or a smaller radius.',
+  busy: 'The OpenStreetMap servers are busy. Try again in a minute.',
+  unreachable: 'OpenStreetMap did not answer. Tell the user to try again later.',
+};
+const BUSY_STATUSES = new Set([429, 503, 504]);
+/** Objects asked of the server; reaching it means others may have been left out. */
+const MAX_OBJECTS = 500;
 const KEY = /^[a-z][\w:]{0,39}$/;
 const VALUE = /^[\p{L}\d_ :;.'-]{1,60}$/u;
 
-/** Named OpenStreetMap objects with a given tag around a point. Tags are validated, never interpolated raw. */
-export async function searchOsmPlaces(
-  options: { key: string; value: string; center: LatLon; radiusKm: number },
-  signal: AbortSignal
-): Promise<OsmPlace[]> {
-  const { key, value, center, radiusKm } = options;
-  if (!KEY.test(key)) throw new Error('Invalid OpenStreetMap tag key');
-  if (value !== '*' && !VALUE.test(value)) throw new Error('Invalid OpenStreetMap tag value');
-  if (!Number.isFinite(radiusKm) || radiusKm <= 0 || radiusKm > 50)
-    throw new Error('Radius must be between 0 and 50 km');
-  const filter = value === '*' ? `["${key}"]` : `["${key}"="${value.replaceAll('"', '')}"]`;
-  const around = `(around:${Math.round(radiusKm * 1000)},${center.lat},${center.lon})`;
-  const query = `[out:json][timeout:25];nwr${filter}["name"]${around};out center 200;`;
-  let data: unknown;
+/** A query that hits the server's time limit still answers 200, with what it found so far. */
+function isCutShort(data: Record<string, unknown>) {
+  return typeof data.remark === 'string' && /runtime error|timed out/i.test(data.remark);
+}
+
+/** Asks each server in turn until one completes the query, else keeps the fullest partial answer. */
+async function askServers(query: string, signal: AbortSignal) {
+  let data: Record<string, unknown> | undefined;
+  let failure: Failure = 'unreachable';
   for (const server of OVERPASS_SERVERS) {
     try {
       // Shares the app's Overpass queue so searches never overlap on a rate-limited server.
@@ -45,17 +50,43 @@ export async function searchOsmPlaces(
         })
       );
       if (response.ok) {
-        data = await response.json();
-        break;
+        const answer: unknown = await response.json();
+        if (!isRecord(answer) || !Array.isArray(answer.elements)) continue;
+        if (!isCutShort(answer)) return { data: answer, partial: false };
+        failure = 'timeout';
+        if (answer.elements.length > ((data?.elements as unknown[]) ?? []).length) data = answer;
+      } else if (BUSY_STATUSES.has(response.status) && failure !== 'timeout') {
+        failure = 'busy';
       }
-    } catch {
+    } catch (error) {
       signal.throwIfAborted();
+      if (error instanceof DOMException && error.name === 'TimeoutError') failure = 'timeout';
     }
   }
-  if (!isRecord(data) || !Array.isArray(data.elements))
-    throw new Error('OpenStreetMap did not answer. Tell the user to try again later.');
+  if (!data) throw new Error(FAILURES[failure]);
+  return { data, partial: true };
+}
+
+/**
+ * Named OpenStreetMap objects with a given tag around a point. Tags are validated, never
+ * interpolated raw. `partial` means the servers stopped before the end: more may exist.
+ */
+export async function searchOsmPlaces(
+  options: { key: string; value: string; center: LatLon; radiusKm: number },
+  signal: AbortSignal
+): Promise<{ places: OsmPlace[]; partial: boolean }> {
+  const { key, value, center, radiusKm } = options;
+  if (!KEY.test(key)) throw new Error('Invalid OpenStreetMap tag key');
+  if (value !== '*' && !VALUE.test(value)) throw new Error('Invalid OpenStreetMap tag value');
+  if (!Number.isFinite(radiusKm) || radiusKm <= 0 || radiusKm > 50)
+    throw new Error('Radius must be between 0 and 50 km');
+  const filter = value === '*' ? `["${key}"]` : `["${key}"="${value.replaceAll('"', '')}"]`;
+  const around = `(around:${Math.round(radiusKm * 1000)},${center.lat},${center.lon})`;
+  // Shorter than the request timeout, so that the server can say it ran out of time.
+  const query = `[out:json][timeout:20];nwr${filter}["name"]${around};out center ${MAX_OBJECTS};`;
+  const { data, partial } = await askServers(query, signal);
   const places: OsmPlace[] = [];
-  for (const element of data.elements) {
+  for (const element of data.elements as unknown[]) {
     if (!isRecord(element) || !isRecord(element.tags)) continue;
     const position = isRecord(element.center) ? element.center : element;
     const { lat, lon } = position;
@@ -69,5 +100,5 @@ export async function searchOsmPlaces(
       coordinates: { lat, lon },
     });
   }
-  return places;
+  return { places, partial: partial || (data.elements as unknown[]).length >= MAX_OBJECTS };
 }

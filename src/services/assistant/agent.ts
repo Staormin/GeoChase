@@ -23,6 +23,7 @@ export function createAssistantExecutor(
     if (!isRecord(input)) throw new Error('Arguments must be an object');
     const tool = findTool(name);
     if (!tool) throw new Error('Unknown tool');
+    if (tool.bridgeOnly && !ctx.bridged) throw new Error('Unknown tool');
     if (tool.writes && planSize(ctx.plan) >= LIMITS.changes) throw new AIError('limit');
     return tool.run(ctx, input);
   }
@@ -66,7 +67,9 @@ export async function runAssistant(options: {
     ...(options.documents ?? []),
   ]);
   const system = systemPrompt(options.locale, executor.project());
-  const definitions = assistantTools.map((tool) => tool.definition);
+  const definitions = assistantTools
+    .filter((tool) => !tool.bridgeOnly)
+    .map((tool) => tool.definition);
   const history: Record<string, unknown>[] = options.conversation
     .slice(-LIMITS.historyMessages)
     .map((m) =>

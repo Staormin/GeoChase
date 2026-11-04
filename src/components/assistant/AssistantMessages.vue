@@ -11,15 +11,7 @@
       class="assistant-message"
       :class="message.role"
     >
-      <strong>{{
-        t(
-          message.role === 'user'
-            ? 'assistant.you'
-            : message.claude
-              ? 'assistant.claude.author'
-              : 'assistant.title'
-        )
-      }}</strong>
+      <strong>{{ t(message.role === 'user' ? 'assistant.you' : 'assistant.title') }}</strong>
 
       <p>{{ message.text }}</p>
 

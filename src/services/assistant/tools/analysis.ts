@@ -5,7 +5,7 @@ import { normalizeName } from '@/utils/names';
 import { fetchElevations } from '../../geoportail';
 import { calculateRoute } from '../../routing';
 import { idList, number, text } from '../context';
-import { isInsidePolygon } from '../geometry';
+import { closestOnLine, isInsidePolygon } from '../geometry';
 import { searchOsmPlaces } from '../osm';
 import { findPlacePhoto } from '../photos';
 import { withImages } from '../providers';
@@ -17,6 +17,8 @@ async function elevations(ctx: ToolContext, points: LatLon[]) {
   ctx.signal.throwIfAborted();
   return points.map((p) => map.get(`${p.lat.toFixed(6)}_${p.lon.toFixed(6)}`) ?? null);
 }
+
+const MAX_RESULTS = 200;
 
 export const analysisTools: AssistantTool[] = [
   defineTool(
@@ -54,6 +56,54 @@ export const analysisTools: AssistantTool[] = [
           },
           photos.map(({ photo }) => photo.image)
         );
+      },
+    }
+  ),
+  defineTool(
+    'measure_line',
+    'Length in kilometers and bearing in degrees of an existing finite line, with its endpoints, including lines that have no point at their ends.',
+    { line_id: str },
+    {
+      activity: 'read',
+      writes: false,
+      run(ctx, input) {
+        const line = ctx.line(input.line_id);
+        const end = ctx.geometry.getSegmentEndpoint(line);
+        if (line.mode === 'parallel' || !end) throw new Error('Choose a finite segment');
+        return {
+          length_km: ctx.distanceKm(line.center, end),
+          bearing_degrees: ctx.geometry.calculateBearing(
+            line.center.lat,
+            line.center.lon,
+            end.lat,
+            end.lon
+          ),
+          start: line.center,
+          end,
+        };
+      },
+    }
+  ),
+  defineTool(
+    'measure_point_to_line',
+    'Shortest ground distance in kilometers from a point to a finite line, with the closest place on the line as a location ID usable with create_points. foot_on_line is false when that place is an end of the line, not a perpendicular foot.',
+    { point_id: str, line_id: str },
+    {
+      activity: 'read',
+      writes: false,
+      run(ctx, input) {
+        const from = ctx.point(input.point_id).coordinates;
+        const line = ctx.line(input.line_id);
+        const end = ctx.geometry.getSegmentEndpoint(line);
+        if (line.mode === 'parallel' || !end) throw new Error('Choose a finite segment');
+        const foot = closestOnLine(line.center, end, from, ctx.geometry);
+        return {
+          distance_km: foot.distanceKm,
+          foot_on_line: foot.withinLine,
+          fraction_of_line: foot.fraction,
+          location_id: ctx.registerLocation({ ...foot.coordinates, label: 'Closest on line' }),
+          ...foot.coordinates,
+        };
       },
     }
   ),
@@ -241,7 +291,7 @@ export const analysisTools: AssistantTool[] = [
   ),
   defineTool(
     'search_osm',
-    'Find named OpenStreetMap objects with a tag around a point or inside a circle (area_type circle uses its radius; radius_km is then ignored). Examples: amenity=place_of_worship, historic=*, natural=peak, amenity=fountain, tourism=museum, man_made=lighthouse. Results have location IDs usable with create_points.',
+    'Find named OpenStreetMap objects with a tag around a point or inside a circle (area_type circle uses its radius; radius_km is then ignored). Examples: amenity=place_of_worship, historic=*, natural=peak, amenity=fountain, tourism=museum, man_made=lighthouse. Results have location IDs usable with create_points. The area is limited to a 50 km radius; results are sorted by distance, and count gives the total when limit cuts the list. A * value can time out: prefer a precise value, or a small radius.',
     {
       tag_key: str,
       tag_value: { type: 'string', description: 'Tag value, or * for any value.' },
@@ -249,6 +299,7 @@ export const analysisTools: AssistantTool[] = [
       area_type: { type: 'string', enum: ['point', 'circle'] },
       area_id: str,
       radius_km: num,
+      limit: { type: 'number', description: `Results to return, ${MAX_RESULTS} at most.` },
     },
     {
       activity: 'osm',
@@ -265,7 +316,8 @@ export const analysisTools: AssistantTool[] = [
                 radiusKm: number(input.radius_km, 0, 50),
               };
         ctx.budget('network');
-        const places = await searchOsmPlaces(
+        const limit = number(input.limit ?? 25, 1, MAX_RESULTS);
+        const { places, partial } = await searchOsmPlaces(
           {
             key: text(input.tag_key, 40),
             value: text(input.tag_value, 60),
@@ -284,7 +336,8 @@ export const analysisTools: AssistantTool[] = [
           .toSorted((a, b) => a.distance - b.distance);
         return {
           count: matches.length,
-          results: matches.slice(0, 25).map((p) => ({
+          ...(partial ? { warning: 'The search ran out of time: other results may exist.' } : {}),
+          results: matches.slice(0, limit).map((p) => ({
             location_id: ctx.registerLocation({ ...p.coordinates, label: p.name }),
             name: p.name,
             tag: p.tag,
