@@ -17,6 +17,17 @@
     "attachPdf": "Joindre le PDF du projet",
     "changed": "{count} modification(s) appliquée(s)",
     "chooseProvider": "Choisissez le fournisseur de cette clé.",
+    "claude": {
+      "applied": "{count} modification(s) appliquée(s) sur la carte (dernière action : {tool})",
+      "author": "Claude",
+      "connected": "Claude est connecté à cette carte.",
+      "connecting": "En attente du serveur MCP GeoChase… Lancez Claude Code ou Claude Desktop avec le serveur geochase.",
+      "enable": "Autoriser Claude à piloter cette carte",
+      "hint": "Claude Code ou Claude Desktop peuvent utiliser les outils de l’assistant sur cette carte via le serveur MCP local de GeoChase, sans clé d’API ici. Chaque action est appliquée tout de suite et s’annule avec Annuler.",
+      "lastAction": "Dernière action : {tool}",
+      "off": "Désactivé.",
+      "title": "Claude (MCP)"
+    },
     "clear": "Nouvelle conversation",
     "clearSelection": "Effacer la sélection",
     "connect": "Charger les modèles",

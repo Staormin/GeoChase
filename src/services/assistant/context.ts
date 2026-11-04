@@ -34,6 +34,18 @@ function samePlace(a: LatLon, b: LatLon | undefined) {
 }
 const sameName = (a: string, b: string) => a.toLocaleLowerCase() === b.toLocaleLowerCase();
 
+/** Places and sources found by lookups. A request owns one; the Claude bridge keeps one per session. */
+export interface ToolMemory {
+  locations: Map<string, Location>;
+  references: Map<string, AISource>;
+  lastLocation: number;
+  /** Forgets the oldest places when full instead of ending the request. */
+  rolling: boolean;
+}
+export function createToolMemory(rolling = false): ToolMemory {
+  return { locations: new Map(), references: new Map(), lastLocation: 0, rolling };
+}
+
 /**
  * Shared state of one request: lookups see the project as the plan would leave
  * it, and every staging goes through here so lookups stay current.
@@ -43,12 +55,12 @@ export function createToolContext(
   settings: AISettings,
   signal: AbortSignal,
   /** Files the request can use: attachments and the project PDF. */
-  documents: AIAttachment[] = []
+  documents: AIAttachment[] = [],
+  memory: ToolMemory = createToolMemory()
 ) {
   const plan = createPlan();
   const geometry = createProjectGeometry(() => project.projection ?? 'mercator');
-  const locations = new Map<string, Location>();
-  const references = new Map<string, AISource>();
+  const { locations, references } = memory;
   const used = { geocodes: 0, research: 0, network: 0 };
   let cache: ReturnType<typeof resolve> | undefined;
 
@@ -220,8 +232,11 @@ export function createToolContext(
   }
 
   function registerLocation(location: Location): string {
-    if (locations.size >= LIMITS.locations) throw new AIError('limit');
-    const id = `place-${locations.size + 1}`;
+    if (locations.size >= LIMITS.locations) {
+      if (!memory.rolling) throw new AIError('limit');
+      locations.delete(locations.keys().next().value!);
+    }
+    const id = `place-${++memory.lastLocation}`;
     locations.set(id, location);
     return id;
   }
