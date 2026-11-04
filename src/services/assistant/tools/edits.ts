@@ -1,9 +1,11 @@
 import type { ToolContext } from '../context';
-import type { AssistantPlacement } from '../plan';
+import type { AssistantChange, AssistantPlacement, AssistantReference } from '../plan';
 import type { AssistantTool } from './shared';
+import { isRecord } from '@/utils/guards';
 import { number, text } from '../context';
 import { pointOnLine } from '../geometry';
-import { bool, defineTool, editableType, num, str } from './shared';
+import { LIMITS } from '../limits';
+import { bool, defineTool, editableType, elementType, num, schema, str } from './shared';
 
 const prepare = { activity: 'prepare', writes: true } as const;
 
@@ -27,6 +29,59 @@ function repositionPoint(ctx: ToolContext, input: Record<string, unknown>) {
 }
 
 /** Includes polygons prepared by this request, whose points carry no back-reference yet. */
+const WITHOUT_EDITS = ['polygon', 'route', 'image', 'note'] as const;
+function hasNoEdits(type: string): type is AssistantChange['type'] {
+  return (WITHOUT_EDITS as readonly string[]).includes(type);
+}
+
+/** What stops an element from being deleted, unless it is deleted in the same call. */
+function blockers(ctx: ToolContext, type: string, id: string) {
+  const { points, lines, polygons } = ctx.current();
+  if (type === 'point')
+    return polygons
+      .filter((polygon) => polygon.pointIds.includes(id))
+      .map((polygon) => ({ type: 'polygon', id: polygon.id, name: polygon.name }));
+  if (type === 'lineSegment')
+    return [
+      ...points
+        .filter((point) => point.construction?.lineId === id)
+        .map((point) => ({ type: 'point', id: point.id, name: point.name })),
+      ...lines
+        .filter((line) => line.angleFrom?.lineId === id)
+        .map((line) => ({ type: 'lineSegment', id: line.id, name: line.name })),
+    ];
+  return [];
+}
+
+/** All or nothing: nothing is staged until every element can go. */
+function deleteElements(ctx: ToolContext, input: Record<string, unknown>) {
+  const { elements } = input;
+  if (!Array.isArray(elements) || elements.length === 0 || elements.length > LIMITS.changes)
+    throw new Error(`Provide between 1 and ${LIMITS.changes} elements`);
+  const targets = elements.map((item: unknown) => {
+    if (!isRecord(item)) throw new Error('Invalid element');
+    return { type: String(item.element_type), id: text(item.element_id) };
+  });
+  const keys = new Set(targets.map(({ type, id }) => `${type}:${id}`));
+  if (keys.size !== targets.length) throw new Error('Duplicate elements');
+  const resolved = targets.map(({ type, id }) => {
+    const ref = hasNoEdits(type)
+      ? { type, id, name: ctx.anyElement(type, id).element.name }
+      : ctx.reference(type, id);
+    const blocker = blockers(ctx, type, id).find((item) => !keys.has(`${item.type}:${item.id}`));
+    if (blocker)
+      throw new Error(
+        `${ref.name} is used by ${blocker.type} ${blocker.name}: include that in the list too.`
+      );
+    return ref;
+  });
+  for (const ref of resolved) {
+    if (hasNoEdits(ref.type)) ctx.remove(ref as AssistantChange);
+    else ctx.edit(ref as AssistantReference, null);
+  }
+  return { status: 'deleted', count: resolved.length };
+}
+
 function isPolygonVertex(ctx: ToolContext, pointId: string) {
   return (
     !!ctx.point(pointId).polygonIds?.length ||
@@ -90,10 +145,16 @@ export const editTools: AssistantTool[] = [
   defineTool(
     'rename_element',
     'Rename an existing element, preserving its ID and geometry.',
-    { element_type: editableType, element_id: str, name: str },
+    { element_type: elementType, element_id: str, name: str },
     {
       ...prepare,
       run(ctx, input) {
+        const type = String(input.element_type);
+        if (hasNoEdits(type)) {
+          const { element } = ctx.anyElement(type, input.element_id);
+          ctx.rename({ type, id: element.id, name: text(input.name) });
+          return { id: element.id, status: 'update_prepared' };
+        }
         const ref = ctx.reference(input.element_type, input.element_id);
         return ctx.edit(ref, { ...ctx.element(ref.type, ref.id), name: text(input.name) });
       },
@@ -133,6 +194,20 @@ export const editTools: AssistantTool[] = [
     { ...prepare, run: repositionPoint }
   ),
   defineTool(
+    'delete_elements',
+    'Delete one or more elements in a single undo step, only those explicitly requested. Either all are deleted or none: an element still used by another one (a point of a polygon, a line with constructions) fails unless that one is in the list too. A deleted element also loses its note.',
+    {
+      elements: {
+        type: 'array',
+        items: schema({
+          element_type: elementType,
+          element_id: str,
+        }),
+      },
+    },
+    { activity: 'prepare', writes: true, bridgeOnly: true, run: deleteElements }
+  ),
+  defineTool(
     'delete_element',
     'Remove only the explicitly requested element, e.g. undo just that circle. Deletions are previewed and require user confirmation. Never delete guessed targets.',
     { element_type: editableType, element_id: str },
@@ -141,7 +216,7 @@ export const editTools: AssistantTool[] = [
       run(ctx, input) {
         const ref = ctx.reference(input.element_type, input.element_id);
         if (ref.type === 'point' && isPolygonVertex(ctx, ref.id))
-          throw new Error('This point belongs to a polygon. Edit the polygon first.');
+          throw new Error('This point belongs to a polygon. Ask the user to edit the polygon.');
         if (
           ref.type === 'lineSegment' &&
           (ctx.current().points.some((p) => p.construction?.lineId === ref.id) ||

@@ -10,6 +10,8 @@ export interface AssistantTool {
   activity: ToolActivity;
   /** Stages project changes, so it counts against the change limit. */
   writes: boolean;
+  /** Offered to Claude only: the in-app chat has no preview for what it does. */
+  bridgeOnly?: boolean;
   run: (ctx: ToolContext, input: Record<string, unknown>) => unknown;
 }
 
@@ -21,6 +23,17 @@ export const editableType = { type: 'string', enum: ['point', 'lineSegment', 'ci
 export const anyType = {
   type: 'string',
   enum: ['point', 'lineSegment', 'circle', 'polygon', 'route'],
+};
+
+/** Elements that have a place on the map. */
+export const placedType = {
+  type: 'string',
+  enum: ['point', 'lineSegment', 'circle', 'polygon', 'route', 'image'],
+};
+/** Every element, notes included. */
+export const elementType = {
+  type: 'string',
+  enum: ['point', 'lineSegment', 'circle', 'polygon', 'route', 'image', 'note'],
 };
 
 /** Strict schema: every property is required and nothing else is accepted. */

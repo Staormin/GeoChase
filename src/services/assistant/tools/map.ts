@@ -1,29 +1,39 @@
+import type { ToolContext } from '../context';
 import type { AssistantTool } from './shared';
-import type { NoteElement } from '@/types/project';
+import type { ElementType, NoteElement } from '@/types/project';
 import { text } from '../context';
-import { anyType, bool, defineTool, str } from './shared';
+import { bool, defineTool, elementType, placedType, str } from './shared';
 
 const prepare = { activity: 'prepare', writes: true } as const;
+
+/** A note has no place of its own: it is found on the map through its element. */
+function focusTarget(ctx: ToolContext, input: Record<string, unknown>) {
+  const { type, element } = ctx.anyElement(input.element_type, input.element_id);
+  if (type !== 'note') return { type, id: element.id };
+  const note = ctx.current().notes.find((item) => item.id === element.id)!;
+  if (!note.linkedElementType || !note.linkedElementId)
+    throw new Error('This note is not attached to an element on the map.');
+  return { type: note.linkedElementType, id: note.linkedElementId };
+}
 
 export const mapTools: AssistantTool[] = [
   defineTool(
     'focus_element',
     'Zoom the map on one element once the request is applied.',
-    { element_type: anyType, element_id: str },
+    { element_type: elementType, element_id: str },
     {
       activity: 'prepare',
       writes: false,
       run(ctx, input) {
-        const { type, element } = ctx.anyElement(input.element_type, input.element_id);
-        ctx.plan.effects.focus = { type, id: element.id };
+        ctx.plan.effects.focus = focusTarget(ctx, input);
         return { status: 'will_focus' };
       },
     }
   ),
   defineTool(
     'set_visibility',
-    'Show or hide an element on the map.',
-    { element_type: anyType, element_id: str, visible: bool },
+    'Show or hide an element on the map. For a note, this shows or hides its map tooltip.',
+    { element_type: elementType, element_id: str, visible: bool },
     {
       ...prepare,
       run(ctx, input) {
@@ -33,7 +43,7 @@ export const mapTools: AssistantTool[] = [
           (v) => !(v.type === type && v.id === element.id)
         );
         ctx.plan.visibility.push({ type, id: element.id, visible: input.visible });
-        return { status: 'prepared' };
+        return { status: 'update_prepared' };
       },
     }
   ),
@@ -50,7 +60,8 @@ export const mapTools: AssistantTool[] = [
       run(ctx, input) {
         if (input.element_type === 'point')
           throw new Error('Points have a fixed style in GeoChase');
-        const { type, element } = ctx.anyElement(input.element_type, input.element_id);
+        const { type: found, element } = ctx.anyElement(input.element_type, input.element_id);
+        const type = found as ElementType;
         const color = text(input.color, 7).toLowerCase();
         if (!/^#[\da-f]{6}$/.test(color)) throw new Error('Use a #rrggbb colour');
         const { plan } = ctx;
@@ -62,18 +73,20 @@ export const mapTools: AssistantTool[] = [
           plan.styles = plan.styles.filter((s) => !(s.type === type && s.id === element.id));
           plan.styles.push({ type, id: element.id, color });
         }
-        return { status: 'prepared' };
+        return { status: 'update_prepared' };
       },
     }
   ),
   defineTool(
     'add_note',
     'Attach a note to an element, or append to its existing note. Use for reasoning, clues or sources the user wants to keep.',
-    { element_type: anyType, element_id: str, title: str, content: str },
+    { element_type: placedType, element_id: str, title: str, content: str },
     {
       ...prepare,
       run(ctx, input) {
-        const { type, element } = ctx.anyElement(input.element_type, input.element_id);
+        if (input.element_type === 'note') throw new Error('Choose the element the note is about');
+        const { type: found, element } = ctx.anyElement(input.element_type, input.element_id);
+        const type = found as ElementType;
         const title = text(input.title);
         const content = text(input.content, 6000);
         const { notes } = ctx.current();

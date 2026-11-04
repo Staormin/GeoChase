@@ -1,5 +1,6 @@
 import type { LatLon } from '../geometry';
 import type {
+  AssistantChange,
   AssistantElement,
   AssistantElementType,
   AssistantReference,
@@ -8,13 +9,13 @@ import type {
 import type { AIAttachment, AISettings, AISource } from './providers';
 import type {
   CircleElement,
-  ElementType,
   ImageElement,
   LineSegmentElement,
   NoteElement,
   PointElement,
   PolygonElement,
   RouteElement,
+  VisibilityElementType,
 } from '@/types/project';
 import { readImageAsset } from '../imageAssets';
 import { createProjectGeometry } from '../projectGeometry';
@@ -39,11 +40,14 @@ export interface ToolMemory {
   locations: Map<string, Location>;
   references: Map<string, AISource>;
   lastLocation: number;
-  /** Forgets the oldest places when full instead of ending the request. */
-  rolling: boolean;
+  /**
+   * Marks a bridge session. Its IDs contain this tag, so an ID from an earlier session fails
+   * instead of naming another place, and the oldest places are forgotten when full.
+   */
+  session?: string;
 }
-export function createToolMemory(rolling = false): ToolMemory {
-  return { locations: new Map(), references: new Map(), lastLocation: 0, rolling };
+export function createToolMemory(session?: string): ToolMemory {
+  return { locations: new Map(), references: new Map(), lastLocation: 0, session };
 }
 
 /**
@@ -64,20 +68,35 @@ export function createToolContext(
   const used = { geocodes: 0, research: 0, network: 0 };
   let cache: ReturnType<typeof resolve> | undefined;
 
+  /** A list as the plan leaves it: without what it deletes, under its new names. */
+  function live<T extends { id: string }>(
+    type: AssistantChange['type'],
+    list: T[],
+    nameKey: 'name' | 'title' = 'name'
+  ) {
+    const matches = (change: AssistantChange, item: T) =>
+      change.type === type && change.id === item.id;
+    return list
+      .filter((item) => !plan.removals.some((change) => matches(change, item)))
+      .map((item) => {
+        const renamed = plan.renames.find((change) => matches(change, item));
+        return renamed ? { ...item, [nameKey]: renamed.name } : item;
+      });
+  }
   function resolve() {
     return {
       points: resolveElements('point', project.points, plan.points, plan.edits),
       lines: resolveElements('lineSegment', project.lines, plan.lines, plan.edits),
       circles: resolveElements('circle', project.circles, plan.circles, plan.edits),
-      polygons: [...(project.polygons ?? []), ...plan.polygons],
-      routes: [...(project.routes ?? []), ...plan.routes],
-      notes: [...(project.notes ?? []), ...plan.notes],
-      images: [
+      polygons: live('polygon', [...(project.polygons ?? []), ...plan.polygons]),
+      routes: live('route', [...(project.routes ?? []), ...plan.routes]),
+      notes: live('note', [...(project.notes ?? []), ...plan.notes], 'title'),
+      images: live('image', [
         ...(project.images ?? []).map(
           (image) => plan.imageEdits.find((edit) => edit.id === image.id)?.after ?? image
         ),
         ...plan.images,
-      ],
+      ]),
     };
   }
   /** Project state including staged changes, rebuilt only after a change. */
@@ -102,6 +121,8 @@ export function createToolContext(
       circle: state.circles,
       polygon: state.polygons,
       route: state.routes,
+      image: state.images,
+      note: state.notes.map((note) => ({ ...note, name: note.title })),
     } as Record<string, { id: string; name: string }[]>;
   };
   function element(type: unknown, id: unknown): AssistantElement {
@@ -112,7 +133,7 @@ export function createToolContext(
   function anyElement(type: unknown, id: unknown) {
     const list = lists()[String(type)];
     if (!list) throw new Error('Unknown element type');
-    return { type: type as ElementType, element: find(list, id, String(type)) };
+    return { type: type as VisibilityElementType, element: find(list, id, String(type)) };
   }
 
   function stage<T extends { id: string }>(list: T[], created: T, existing: T | undefined): Staged {
@@ -206,6 +227,20 @@ export function createToolContext(
     return { id: ref.id, status: after ? 'update_prepared' : 'deletion_prepared' };
   }
 
+  /** Stages the deletion of an element that has no edit. */
+  function remove(change: AssistantChange) {
+    plan.removals.push(change);
+    changed();
+  }
+  /** Stages a new name for an element that has no edit. */
+  function rename(change: AssistantChange) {
+    plan.renames = plan.renames.filter(
+      ({ type, id }) => !(type === change.type && id === change.id)
+    );
+    plan.renames.push(change);
+    changed();
+  }
+
   /** New overlay with its image bytes, saved only if the plan applies. */
   function stageImage(image: ImageElement, blob: Blob) {
     plan.images.push(image);
@@ -233,16 +268,22 @@ export function createToolContext(
 
   function registerLocation(location: Location): string {
     if (locations.size >= LIMITS.locations) {
-      if (!memory.rolling) throw new AIError('limit');
+      if (!memory.session) throw new AIError('limit');
       locations.delete(locations.keys().next().value!);
     }
-    const id = `place-${++memory.lastLocation}`;
+    const number = ++memory.lastLocation;
+    const id = memory.session ? `place-${memory.session}-${number}` : `place-${number}`;
     locations.set(id, location);
     return id;
   }
   function location(id: unknown): Location {
     const found = locations.get(text(id));
-    if (!found) throw new Error('Unknown location ID. Use search_places first.');
+    if (!found)
+      throw new Error(
+        memory.session
+          ? 'Unknown location ID. IDs stop working when the GeoChase page reloads: search again.'
+          : 'Unknown location ID. Use search_places first.'
+      );
     return found;
   }
   /** Counts calls to external services; geocodes and research end the request when exceeded. */
@@ -262,6 +303,8 @@ export function createToolContext(
     signal,
     geometry,
     references,
+    /** A bridge session: Claude researches on its own, so its source URLs are accepted. */
+    bridged: !!memory.session,
     current,
     point: (id: unknown) => find(current().points, id, 'point'),
     line: (id: unknown) => find(current().lines, id, 'line'),
@@ -276,6 +319,8 @@ export function createToolContext(
     anyElement,
     reference,
     edit,
+    remove,
+    rename,
     stagePoint,
     stageLine,
     stageCircle,

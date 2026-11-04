@@ -9,6 +9,7 @@ import type {
   PolygonElement,
   ProjectProjection,
   RouteElement,
+  VisibilityElementType,
 } from '@/types/project';
 
 /** Element types the assistant can rename, move, resize or delete. */
@@ -31,6 +32,12 @@ export interface AssistantEdit extends AssistantReference {
   before: AssistantElement;
   after: AssistantElement | null;
 }
+/** An element without geometry edits, deleted or renamed; a note's name is its title. */
+export interface AssistantChange {
+  type: 'polygon' | 'route' | 'image' | 'note';
+  id: string;
+  name: string;
+}
 export interface AssistantChoice {
   question: string;
   elements: AssistantReference[];
@@ -41,7 +48,7 @@ export interface AssistantStyle {
   color: string;
 }
 export interface AssistantVisibility {
-  type: ElementType;
+  type: VisibilityElementType;
   id: string;
   visible: boolean;
 }
@@ -74,6 +81,8 @@ export interface AssistantPlan {
   imageAssets: Record<string, Blob>;
   // Changes to existing elements.
   edits: AssistantEdit[];
+  removals: AssistantChange[];
+  renames: AssistantChange[];
   imageEdits: AssistantImageEdit[];
   styles: AssistantStyle[];
   visibility: AssistantVisibility[];
@@ -111,6 +120,8 @@ export function createPlan(): AssistantPlan {
     images: [],
     imageAssets: {},
     edits: [],
+    removals: [],
+    renames: [],
     imageEdits: [],
     styles: [],
     visibility: [],
@@ -158,6 +169,8 @@ export function planSize(plan: AssistantPlan): number {
     plan.images.length +
     plan.imageEdits.length +
     plan.edits.length +
+    plan.removals.length +
+    plan.renames.length +
     plan.styles.length +
     plan.visibility.length +
     plan.noteUpdates.length
@@ -208,6 +221,7 @@ export function changedReferences(plan: AssistantPlan): AssistantReference[] {
 export function needsPreview(plan: AssistantPlan): boolean {
   return (
     plan.imageEdits.length > 0 ||
+    plan.removals.length > 0 ||
     plan.edits.some(
       (edit) =>
         !edit.after ||

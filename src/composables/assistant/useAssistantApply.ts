@@ -1,6 +1,7 @@
 import type { useAssistantPreview } from './useAssistantPreview';
 import type { AssistantPlan, AssistantReference } from '@/services/assistant/plan';
 import type { CircleElement, ElementType, LineSegmentElement, PointElement } from '@/types/project';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import { createdElements, planSize } from '@/services/assistant/plan';
 import { AIError } from '@/services/assistant/providers';
 import { writeImageAsset } from '@/services/imageAssets';
@@ -46,8 +47,26 @@ export function useAssistantApply(preview: ReturnType<typeof useAssistantPreview
     return list.find((item) => item.id === ref.id);
   }
 
-  /** Zooms on any element type, including polygons and routes. */
+  function focusImage(id: string) {
+    const image = layers.images.find((item) => item.id === id);
+    if (!image) return;
+    const [x, y] = fromLonLat([image.center.lon, image.center.lat]) as [number, number];
+    // Half the diagonal, so that a rotated image stays in frame.
+    const reach = Math.hypot(image.width, image.height) / 2;
+    const [west, south] = toLonLat([x - reach, y - reach]) as [number, number];
+    const [east, north] = toLonLat([x + reach, y + reach]) as [number, number];
+    map.flyToBoundsWithPanels([
+      [south, west],
+      [north, east],
+    ]);
+  }
+
+  /** Zooms on any element type, including polygons, routes and image overlays. */
   function focus(type: ElementType, id: string) {
+    if (type === 'image') {
+      focusImage(id);
+      return;
+    }
     if (isLinkable(type)) {
       const element = currentElement({ type, id });
       if (element) preview.focus({ type, id, name: element.name }, element);
@@ -72,12 +91,30 @@ export function useAssistantApply(preview: ReturnType<typeof useAssistantPreview
     ]);
   }
 
+  function writeRemovals(plan: AssistantPlan) {
+    for (const { type, id } of plan.removals) {
+      if (type === 'note') layers.deleteNote(id);
+      else drawing.deleteElement(type, id);
+    }
+  }
+  function writeRenames(plan: AssistantPlan) {
+    const renamers = {
+      note: (id: string, name: string) => layers.updateNote(id, { title: name }),
+      polygon: (id: string, name: string) => layers.updatePolygon(id, { name }),
+      route: (id: string, name: string) => layers.updateRoute(id, { name }),
+      image: (id: string, name: string) => layers.updateImage(id, { name }),
+    };
+    for (const { type, id, name } of plan.renames) renamers[type](id, name);
+  }
+
   function writeChanges(plan: AssistantPlan) {
     const created = createdElements(plan);
     const createdIds = new Set(
       [...plan.points, ...plan.lines, ...plan.circles].map((element) => element.id)
     );
     const existingEdits = plan.edits.filter((edit) => !createdIds.has(edit.id));
+    // First, so that polygons are gone before their points.
+    writeRemovals(plan);
     // Apply existing point edits before lines, whose endpoint IDs are inferred by the store.
     for (const edit of existingEdits) if (!edit.after) drawing.deleteElement(edit.type, edit.id);
     for (const edit of existingEdits.filter((edit) => edit.type === 'point' && edit.after)) {
@@ -127,6 +164,7 @@ export function useAssistantApply(preview: ReturnType<typeof useAssistantPreview
     }
     for (const update of plan.noteUpdates)
       layers.updateNote(update.id, { content: update.content });
+    writeRenames(plan);
     for (const style of plan.styles) drawing.updateElementColor(style.type, style.id, style.color);
     for (const item of plan.visibility) ui.setElementVisibility(item.type, item.id, item.visible);
     projects.autoSaveActiveProject(layers.exportLayers());

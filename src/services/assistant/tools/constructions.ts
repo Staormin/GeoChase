@@ -9,6 +9,7 @@ import {
   centroid,
   circleIntersections,
   circleLineIntersections,
+  closestOnLine,
   equidistantMidpoint,
   equidistantPoint,
   extendedLineIntersection,
@@ -60,6 +61,42 @@ function azimuthLine(ctx: ToolContext, input: Record<string, unknown>, relative:
     startPointId: start.id,
     angleFrom,
   });
+}
+
+/** The line from a point down to the closest place of a line, with a point at its foot. */
+function perpendicularFromPoint(ctx: ToolContext, input: Record<string, unknown>) {
+  const from = ctx.point(input.point_id);
+  const line = ctx.line(input.line_id);
+  const name = text(input.name);
+  const end = ctx.geometry.getSegmentEndpoint(line);
+  if (line.mode === 'parallel' || !end) throw new Error('Choose a finite segment');
+  if (ctx.geometry.isPointOnLine(line, from.coordinates))
+    throw new Error('This point is on the line. Use create_perpendicular.');
+  const foot = closestOnLine(line.center, end, from.coordinates, ctx.geometry);
+  if (!foot.withinLine)
+    throw new Error(
+      'The foot of the perpendicular is beyond an end of this line. Use extend_line first.'
+    );
+  const { coordinates, construction } = pointOnLine(
+    line,
+    { position: foot.fraction, unit: 'fraction', from_end: false },
+    ctx.geometry
+  );
+  const staged = ctx.stagePoint({
+    name: text(input.foot_name),
+    coordinates,
+    lineId: line.id,
+    construction,
+  });
+  const drawn = ctx.stageLine({
+    name,
+    mode: 'coordinate',
+    center: { ...from.coordinates },
+    endpoint: { ...coordinates },
+    startPointId: from.id,
+    endPointId: staged.id,
+  });
+  return { ...drawn, foot_point_id: staged.id, coordinates, distance_km: foot.distanceKm };
 }
 
 function perpendicular(ctx: ToolContext, input: Record<string, unknown>) {
@@ -153,7 +190,7 @@ function keepCrossings(ctx: ToolContext, points: LatLon[], choice: unknown, name
 export const constructionTools: AssistantTool[] = [
   defineTool(
     'create_point_on_line',
-    'Use GeoChase’s point-on-segment tool on an existing or prepared line. position is a fraction of the displayed path (0.5 for midpoint, 1/3 for one third) or a distance in kilometers. from_end reverses the origin. Default to the line start unless the user specifies the end. Read the project to identify the line; ask if ambiguous. No geocoding is needed.',
+    'Create a point on an existing or prepared line. position is a fraction of the displayed path (0.5 for midpoint, 1/3 for one third) or a distance in kilometers. from_end reverses the origin. Default to the line start unless the user specifies the end. Read the project to identify the line; ask if ambiguous. No geocoding is needed.',
     {
       line_id: str,
       name: str,
@@ -223,6 +260,12 @@ export const constructionTools: AssistantTool[] = [
     { ...prepare, run: (ctx, input) => azimuthLine(ctx, input, false) }
   ),
   defineTool(
+    'create_perpendicular_from_point',
+    'Drop a perpendicular from a point that is NOT on a line: creates the point at its foot on the line and the segment joining them, the shortest ground distance to the line. Fails when the foot is beyond an end of the line. To only get the distance, use measure_point_to_line.',
+    { point_id: str, line_id: str, name: str, foot_name: str },
+    { ...prepare, run: perpendicularFromPoint }
+  ),
+  defineTool(
     'create_perpendicular',
     'Create a perpendicular from a point ON a reference line, choosing north/south/east/west in GeoChase. Always use this tool for a perpendicular with a compass direction: do not guess +90 versus -90. Ask which direction when unspecified.',
     {
@@ -236,13 +279,13 @@ export const constructionTools: AssistantTool[] = [
   ),
   defineTool(
     'create_angle_line',
-    'Use the existing angle-line tool: start from a point ON a reference line, rotate its local bearing by angle_degrees (0 parallel; use create_perpendicular for a compass-directed perpendicular), extend distance_km. Ask for missing distance or side.',
+    'Create a line from a point ON a reference line: rotate its local bearing by angle_degrees (0 parallel; use create_perpendicular for a compass-directed perpendicular), extend distance_km. Ask for missing distance or side.',
     { point_id: str, line_id: str, angle_degrees: num, distance_km: num, name: str },
     { ...prepare, run: (ctx, input) => azimuthLine(ctx, input, true) }
   ),
   defineTool(
     'create_parallel',
-    'Create the existing latitude-parallel tool through a project point (east–west latitude circle, not a line parallel to an arbitrary segment).',
+    'Create a latitude parallel through a project point: an east–west circle of latitude, not a line parallel to an arbitrary segment.',
     { point_id: str, name: str },
     {
       ...prepare,

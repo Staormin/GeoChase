@@ -12,6 +12,8 @@ import {
   bridgeTools,
   CAPTURE_MAP,
   isBridgeTool,
+  REDO,
+  UNDO,
   uniqueReferences,
 } from '@/services/assistant/bridge';
 import { createToolMemory } from '@/services/assistant/context';
@@ -64,8 +66,8 @@ export function useClaudeBridge() {
   let socket: WebSocket | undefined;
   let retry = 0;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
-  // Places found by earlier calls stay usable by later ones, for this project only.
-  let memory = createToolMemory(true);
+  // Places found by earlier calls stay usable by later ones, whatever the project.
+  const memory = createToolMemory(crypto.randomUUID().slice(0, 8));
   // Calls run one at a time, in order, like a single user at the keyboard.
   let queue: Promise<unknown> = Promise.resolve();
   const running = new Map<string, AbortController>();
@@ -104,6 +106,21 @@ export function useClaudeBridge() {
     });
   }
 
+  async function historyStep(call: BridgeCall): Promise<BridgeResult> {
+    const undo = call.name === UNDO;
+    if (!(undo ? history.canUndo : history.canRedo))
+      return bridgeError(call.id, `There is nothing to ${call.name}.`);
+    if (undo) history.undo();
+    else history.redo();
+    await history.flush();
+    lastAction.value = call.name;
+    return bridgeResult(call.id, {
+      status: undo ? 'undone' : 'redone',
+      undo_steps: history.undoCount,
+      redo_steps: history.redoCount,
+    });
+  }
+
   async function run(call: BridgeCall, signal: AbortSignal): Promise<BridgeResult> {
     if (!isBridgeTool(call.name)) return bridgeError(call.id, `Unknown tool ${call.name}`);
     const reason = unavailableReason.value;
@@ -120,6 +137,7 @@ export function useClaudeBridge() {
       return bridgeResult(call.id, withImages({ map: capture.description, ...warning }, [capture]));
     }
     await history.flush();
+    if (call.name === UNDO || call.name === REDO) return historyStep(call);
     // Plain copies: the store's reactive arrays cannot be cloned, and tools must not touch them.
     const baseline = JSON.stringify(layers.exportLayers());
     const snapshot = JSON.parse(baseline) as LayerSnapshot;
@@ -176,8 +194,14 @@ export function useClaudeBridge() {
     running.set(call.id, controller);
     queue = queue.then(async () => {
       let result: BridgeResult;
+      // A cancelled call that never settles must not hold back the ones after it.
+      const cancelled = new Promise<never>((_, reject) =>
+        controller.signal.addEventListener('abort', () => reject(new Error('Cancelled.')), {
+          once: true,
+        })
+      );
       try {
-        result = await run(call, controller.signal);
+        result = await Promise.race([run(call, controller.signal), cancelled]);
       } catch (error) {
         result = bridgeError(
           call.id,
@@ -253,7 +277,6 @@ export function useClaudeBridge() {
     () => projects.activeProjectId,
     () => {
       for (const controller of running.values()) controller.abort();
-      memory = createToolMemory(true);
       lastAction.value = '';
       hello();
     }
