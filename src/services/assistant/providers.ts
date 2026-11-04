@@ -541,7 +541,8 @@ const TOOL_IMAGES = Symbol('toolImages');
 export function withImages<T extends object>(data: T, images: AIAttachment[]): T {
   return Object.assign(data, { [TOOL_IMAGES]: images });
 }
-function imagesOf(output: unknown): AIAttachment[] {
+/** Images a tool result carries for the model (see withImages). */
+export function imagesOf(output: unknown): AIAttachment[] {
   const images =
     typeof output === 'object' && output !== null
       ? (output as { [TOOL_IMAGES]?: AIAttachment[] })[TOOL_IMAGES]

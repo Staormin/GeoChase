@@ -88,6 +88,81 @@ npm run build  # Production build
 
 See in-app tutorial (help icon) for detailed instructions.
 
+## Driving GeoChase from Claude (MCP)
+
+Claude Code or Claude Desktop can use the in-app assistant's tools (geocoding, OSM
+search, constructions, edits, routes, overlays, map capture…) directly on the map open
+in your browser, without an API key in GeoChase. The map stays on the website; the MCP
+server runs on your own computer, and Claude starts and stops it for you.
+
+```
+Claude ⇄ stdio (MCP) ⇄ geochase-mcp, on your computer ⇄ ws://127.0.0.1:47777 ⇄ GeoChase tab
+```
+
+You need [Node.js](https://nodejs.org) 20 or later.
+
+1. Add the server to Claude, once:
+   - **Claude Code**:
+
+     ```bash
+     claude mcp add --scope user geochase -- npx -y geochase-mcp
+     ```
+
+   - **Claude Desktop**: add this to `claude_desktop_config.json` (Settings → Developer →
+     Edit Config), then restart the app:
+
+     ```json
+     {
+       "mcpServers": {
+         "geochase": { "command": "npx", "args": ["-y", "geochase-mcp"] }
+       }
+     }
+     ```
+
+2. In GeoChase, open the assistant panel (magic wand, top right), then its settings, and
+   turn on **Let Claude control this map**. This choice is remembered in your browser.
+3. Keep GeoChase open on a project, and ask Claude, for example: "Place the castles of
+   Fontainebleau and Chambord, then draw a 20 km circle around each."
+
+Each tool call is applied at once as one undo step, and Undo reverts it. Chrome and Edge
+may ask you to allow the page to access your local network; Safari may block the
+connection from the public site. See [mcp/README.md](mcp/README.md) for details,
+security and configuration.
+
+### Working on the server
+
+The server is a separate npm package in [mcp/](mcp/), with its own dependencies; the
+app doesn't depend on it. From this repository, Claude Code uses the local source through
+`.mcp.json`, once its dependencies are installed:
+
+```bash
+npm install --prefix mcp
+```
+
+### Publishing the server
+
+[publish-mcp.yml](.github/workflows/publish-mcp.yml) publishes `geochase-mcp` when a
+change to `mcp/` reaches `main` with a version npm doesn't have yet. Any other change
+publishes nothing. To release, bump the version and merge:
+
+```bash
+npm version patch --prefix mcp --no-git-tag-version
+```
+
+It uses npm trusted publishing, so there is no token to store. The first release needs
+these manual steps, because npm can only trust a workflow for a package that exists:
+
+1. Publish once from your computer:
+
+   ```bash
+   cd mcp && npm publish
+   ```
+
+2. On npmjs.com, open the package's settings and add a trusted publisher: GitHub Actions,
+   `Staormin` / `GeoChase`, workflow `publish-mcp.yml`, with `npm publish` allowed.
+3. Within 2 days, release a new version as above. npm expires a trusted publisher that
+   hasn't published yet.
+
 ## Technology Stack
 
 - **Frontend**: Vue 3, Vuetify 4, TypeScript

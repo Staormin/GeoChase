@@ -1,0 +1,48 @@
+{
+  "name": "geochase-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that lets Claude drive the GeoChase map open in your browser",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "geochase",
+    "map"
+  ],
+  "homepage": "https://github.com/Staormin/GeoChase/tree/main/mcp#readme",
+  "bugs": "https://github.com/Staormin/GeoChase/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Staormin/GeoChase.git",
+    "directory": "mcp"
+  },
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "geochase-mcp": "dist/server.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "start": "node src/server.ts",
+    "prepack": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "ws": "^8.22.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/ws": "^8.18.2",
+    "typescript": "^7.0.2"
+  }
+}

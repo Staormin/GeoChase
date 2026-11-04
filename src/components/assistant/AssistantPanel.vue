@@ -36,6 +36,11 @@
       </header>
 
       <div ref="scrollArea" class="assistant-scroll">
+        <AssistantClaudeBridge
+          v-if="configOpen || !assistant.connected"
+          :last-action="bridge.lastAction.value"
+        />
+
         <AssistantSettings
           v-if="configOpen || !assistant.connected"
           :busy="request.busy.value"
@@ -136,6 +141,7 @@ import { useI18n } from 'vue-i18n';
 import { useDisplay } from 'vuetify';
 import AssistantComposer from '@/components/assistant/AssistantComposer.vue';
 import { useAssistantRequest } from '@/composables/assistant/useAssistantRequest';
+import { useClaudeBridge } from '@/composables/assistant/useClaudeBridge';
 import { AIError } from '@/services/assistant/providers';
 import { useAssistantStore } from '@/stores/assistant';
 import { useHistoryStore } from '@/stores/history';
@@ -146,6 +152,8 @@ const panelWidth = computed(() => Math.min(440, width.value));
 const assistant = useAssistantStore();
 const history = useHistoryStore();
 const request = useAssistantRequest();
+// Lives with the panel, which stays mounted while closed, so Claude can work with it hidden.
+const bridge = useClaudeBridge();
 const configOpen = ref(!assistant.settings.apiKey);
 const connecting = ref(false);
 const scrollArea = ref<HTMLElement>();

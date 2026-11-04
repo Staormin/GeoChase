@@ -10,7 +10,7 @@ export default vuetify(
   prettier,
   // Ignore configuration
   {
-    ignores: ['.github/**', '*.yml', '*.yaml'],
+    ignores: ['.github/**', '*.yml', '*.yaml', 'mcp/dist/**'],
   },
   // JSON translation file validation
   {

@@ -1,3 +1,4 @@
+import type { LayerSnapshot } from './useAssistantProject';
 import type { AssistantPlan, AssistantReference } from '@/services/assistant/plan';
 import type { AIAttachment } from '@/services/assistant/providers';
 import type { ToolActivity } from '@/services/assistant/tools';
@@ -6,17 +7,15 @@ import { useI18n } from 'vue-i18n';
 import { runAssistant } from '@/services/assistant/agent';
 import { changedReferences, needsPreview, visibleChanges } from '@/services/assistant/plan';
 import { AIError } from '@/services/assistant/providers';
-import { PROJECT_PDF } from '@/services/assistant/tools/overlays';
 import { useAssistantStore } from '@/stores/assistant';
 import { useHistoryStore } from '@/stores/history';
-import { useImageMapStore } from '@/stores/imageMap';
 import { useLayersStore } from '@/stores/layers';
 import { useProjectsStore } from '@/stores/projects';
 import { useUIStore } from '@/stores/ui';
 import { useAssistantApply } from './useAssistantApply';
 import { useAssistantPreview } from './useAssistantPreview';
+import { useAssistantProject } from './useAssistantProject';
 
-type LayerSnapshot = ReturnType<ReturnType<typeof useLayersStore>['exportLayers']>;
 interface Pending {
   text: string;
   plan: AssistantPlan;
@@ -49,11 +48,13 @@ export function useAssistantRequest() {
   const assistant = useAssistantStore();
   const layers = useLayersStore();
   const projects = useProjectsStore();
-  const imageMap = useImageMapStore();
   const ui = useUIStore();
   const history = useHistoryStore();
   const preview = useAssistantPreview();
   const applier = useAssistantApply(preview);
+  const { unavailable, selected, projectDocuments, projectContext } = useAssistantProject(
+    applier.currentElement
+  );
 
   const busy = ref(false);
   const stopped = ref(false);
@@ -78,39 +79,6 @@ export function useAssistantRequest() {
         : `assistant.activity${activity.value[0]!.toUpperCase()}${activity.value.slice(1)}`
     )
   );
-  /** Why requests are blocked right now, or '' when they are allowed. */
-  const unavailable = computed(() =>
-    projects.activeProject
-      ? imageMap.isImageProject
-        ? t('assistant.imageProject')
-        : ui.gameMode ||
-            ui.tools.activeTool ||
-            ui.imageTransformActive ||
-            ui.intersectionLineEdit ||
-            ui.openModals.size > 0
-          ? t('assistant.finishEditing')
-          : ''
-      : t('assistant.noProject')
-  );
-  const selected = computed<AssistantReference | undefined>(() => {
-    const ref = ui.selectedMapElement;
-    if (!ref || !['point', 'lineSegment', 'circle'].includes(ref.elementType)) return;
-    const candidate = {
-      type: ref.elementType as AssistantReference['type'],
-      id: ref.elementId,
-      name: '',
-    };
-    const element = applier.currentElement(candidate);
-    return element ? { ...candidate, name: element.name } : undefined;
-  });
-
-  /** The project PDF, which the tools can turn into an overlay without sending it to the model. */
-  function projectDocuments(): AIAttachment[] {
-    const pdf = projects.getPdfData();
-    if (!pdf || pdf.password) return [];
-    const data = pdf.data.includes(',') ? pdf.data.slice(pdf.data.indexOf(',') + 1) : pdf.data;
-    return [{ name: PROJECT_PDF, mimeType: 'application/pdf', data }];
-  }
   /** Links for the answer, keeping placements recorded by earlier answers. */
   function answerElements(plan: AssistantPlan): AssistantReference[] {
     return changedReferences(plan).map((ref) => {
@@ -168,22 +136,13 @@ export function useAssistantRequest() {
       const snapshot = JSON.parse(baseline) as LayerSnapshot;
       const result = await runAssistant({
         settings: { ...assistant.settings },
-        context: {
-          name: projects.activeProject!.name,
-          projection,
-          selection: selected.value ? [selected.value] : [],
-          recent: previous
+        context: projectContext(
+          snapshot,
+          previous
             .flatMap((m) => m.elements ?? [])
             .filter((ref) => !!applier.currentElement(ref))
-            .slice(-20),
-          points: snapshot.points,
-          circles: snapshot.circles,
-          lines: snapshot.lineSegments,
-          polygons: snapshot.polygons,
-          routes: snapshot.routes ?? [],
-          notes: snapshot.notes,
-          images: snapshot.images ?? [],
-        },
+            .slice(-20)
+        ),
         prompt: request,
         attachments,
         earlierAttachments: assistant.rememberedAttachments,

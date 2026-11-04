@@ -1,3 +1,4 @@
+import type { ToolMemory } from './context';
 import type { ProjectContext } from './plan';
 import type { AIAttachment, AISettings } from './providers';
 import type { ToolActivity } from './tools';
@@ -13,9 +14,10 @@ export function createAssistantExecutor(
   context: ProjectContext,
   settings: AISettings,
   signal: AbortSignal,
-  documents: AIAttachment[] = []
+  documents: AIAttachment[] = [],
+  memory?: ToolMemory
 ) {
-  const ctx = createToolContext(context, settings, signal, documents);
+  const ctx = createToolContext(context, settings, signal, documents, memory);
   async function execute(name: string, input: unknown): Promise<unknown> {
     signal.throwIfAborted();
     if (!isRecord(input)) throw new Error('Arguments must be an object');

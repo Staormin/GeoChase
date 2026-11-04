@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "geochase": {
+      "command": "node",
+      "args": ["mcp/src/server.ts"]
+    }
+  }
+}

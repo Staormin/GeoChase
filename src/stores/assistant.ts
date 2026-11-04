@@ -21,12 +21,18 @@ export interface AssistantMessage {
   elements?: AssistantReference[];
   choice?: AssistantChoice;
   attachments?: string[];
+  /** Written by Claude through the MCP bridge rather than by the in-app assistant. */
+  claude?: boolean;
+  /** Changes this message sums up: Claude's successive calls share one message. */
+  claudeChanges?: number;
 }
+export type BridgeState = 'off' | 'connecting' | 'connected';
 
 const SETTINGS_KEY = 'geochase_assistant_settings';
 const SECRET_KEY = 'geochase_assistant_key';
 // One conversation per project, kept apart from project data, exports and history.
 const CHAT_KEY = 'geochase_assistant_chat_';
+const BRIDGE_KEY = 'geochase_claude_bridge';
 
 export const useAssistantStore = defineStore('assistant', () => {
   const projects = useProjectsStore();
@@ -38,6 +44,22 @@ export const useAssistantStore = defineStore('assistant', () => {
   const messages = ref<AssistantMessage[]>([]);
   // Latest attachments, re-sent with later requests. Kept in memory only: too large to save.
   const rememberedAttachments = ref<AIAttachment[]>([]);
+  // Claude bridge: whether this browser accepts commands from the local MCP server.
+  const bridgeEnabled = ref(false);
+  const bridgeState = ref<BridgeState>('off');
+  try {
+    bridgeEnabled.value = localStorage.getItem(BRIDGE_KEY) === '1';
+  } catch {
+    /* Storage unavailable: the bridge stays off until enabled for this session. */
+  }
+  watch(bridgeEnabled, (enabled) => {
+    try {
+      if (enabled) localStorage.setItem(BRIDGE_KEY, '1');
+      else localStorage.removeItem(BRIDGE_KEY);
+    } catch {
+      /* Session-only setting. */
+    }
+  });
   try {
     const saved: unknown = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
     if (isRecord(saved) && ['openai', 'anthropic', 'gemini'].includes(String(saved.provider))) {
@@ -156,5 +178,7 @@ export const useAssistantStore = defineStore('assistant', () => {
     rememberedAttachments,
     rememberAttachments,
     clearConversation,
+    bridgeEnabled,
+    bridgeState,
   };
 });
